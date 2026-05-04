@@ -129,8 +129,8 @@ function printAccident(acc: AccidentState, weather: Weather | null) {
 </table>
 <div class="sec">Ответственные лица</div>
 <table>
-  <tr><td>Командир отряда</td><td>${acc.commanderSquad}</td></tr>
-  <tr><td>Командир взвода / пункта</td><td>${acc.commanderPlatoon}</td></tr>
+  <tr><td>По отряду</td><td>${acc.commanderSquad}</td></tr>
+  <tr><td>По взводу / пункту</td><td>${acc.commanderPlatoon}</td></tr>
   <tr><td>Командир отделения</td><td>${acc.commanderUnit}</td></tr>
   <tr><td>Дежурный у средств связи</td><td>${acc.commDuty}</td></tr>
 </table>
@@ -287,8 +287,8 @@ export default function TabloPage() {
           {/* Ответственные */}
           <div className="grid grid-cols-2 gap-x-8 gap-y-1 flex-1 min-w-0">
             {[
-              { label: "Командир отряда",      value: acc.commanderSquad },
-              { label: "Командир взвода",       value: acc.commanderPlatoon },
+              { label: "По отряду",             value: acc.commanderSquad },
+              { label: "По взводу / пункту",    value: acc.commanderPlatoon },
               { label: "Командир отделения",    value: acc.commanderUnit },
               { label: "Деж. у средств связи",  value: acc.commDuty },
             ].map(r => (

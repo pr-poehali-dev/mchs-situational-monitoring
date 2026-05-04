@@ -252,10 +252,10 @@ function AccidentPanel() {
         <div className="space-y-3">
           <div className="text-xs uppercase tracking-widest mb-1" style={{ color: "hsl(var(--muted-foreground))" }}>Ответственные лица</div>
           {([
-            { label: "Командир отряда",          field: "commanderSquad"   as const },
-            { label: "Командир взвода / пункта",  field: "commanderPlatoon" as const },
-            { label: "Командир отделения",        field: "commanderUnit"    as const },
-            { label: "Деж. у средств связи",      field: "commDuty"         as const },
+            { label: "По отряду",              field: "commanderSquad"   as const },
+            { label: "По взводу / пункту",     field: "commanderPlatoon" as const },
+            { label: "Командир отделения",     field: "commanderUnit"    as const },
+            { label: "Деж. у средств связи",   field: "commDuty"         as const },
           ]).map(({ label, field }) => (
             <div key={field}>
               <label className="text-xs block mb-1" style={{ color: "hsl(var(--muted-foreground))" }}>{label}</label>
