@@ -22,7 +22,7 @@ import {
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-type SectionId = "dashboard" | "journal" | "alerts" | "analytics" | "archive" | "systems" | "directory";
+type SectionId = "dashboard" | "journal" | "alerts" | "archive" | "systems" | "directory";
 
 interface Unit {
   id: string;
@@ -674,86 +674,6 @@ function Alerts() {
   );
 }
 
-function Analytics() {
-  const hours = [
-    { hour: "08:00", incidents: 2 },
-    { hour: "09:00", incidents: 5 },
-    { hour: "10:00", incidents: 3 },
-    { hour: "11:00", incidents: 7 },
-    { hour: "12:00", incidents: 4 },
-    { hour: "13:00", incidents: 6 },
-    { hour: "14:00", incidents: 8 },
-    { hour: "15:00", incidents: 3 },
-  ];
-  const maxVal = Math.max(...hours.map(h => h.incidents));
-
-  return (
-    <div className="fade-in space-y-4">
-      <div className="grid grid-cols-3 gap-3">
-        {[
-          { label: "Вызовов за смену", value: "4", delta: "-1", up: true },
-          { label: "Среднее время ввода отряда", value: "9.2 мин", delta: "-1.1", up: true },
-          { label: "Закрыто / ликвидировано", value: "3", delta: "75%", up: true },
-        ].map(s => (
-          <div key={s.label} className="panel-card p-4">
-            <div className="text-xs mb-1" style={{ color: "hsl(var(--muted-foreground))" }}>{s.label}</div>
-            <div className="text-3xl font-bold" style={{ fontFamily: "Oswald" }}>{s.value}</div>
-            <div className="text-xs mt-1" style={{ color: s.up ? "hsl(var(--status-active))" : "hsl(var(--status-critical))" }}>
-              {s.delta} к прошлой смене
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <div className="panel-card p-4">
-        <h3 className="text-sm font-semibold uppercase tracking-widest mb-4" style={{ fontFamily: "Oswald" }}>
-          Активность по часам смены
-        </h3>
-        <div className="flex items-end gap-2" style={{ height: 120 }}>
-          {hours.map(h => (
-            <div key={h.hour} className="flex-1 flex flex-col items-center gap-1 h-full">
-              <div className="flex-1 w-full flex items-end">
-                <div
-                  className="w-full rounded-sm transition-all"
-                  style={{
-                    height: `${(h.incidents / maxVal) * 100}%`,
-                    background: "hsl(var(--primary) / 0.7)"
-                  }}
-                />
-              </div>
-              <div className="text-xs mono" style={{ color: "hsl(var(--muted-foreground))", fontSize: 9 }}>{h.hour}</div>
-            </div>
-          ))}
-        </div>
-        <div className="flex gap-4 mt-2">
-          <div className="flex items-center gap-1.5 text-xs" style={{ color: "hsl(var(--muted-foreground))" }}>
-            <div className="w-3 h-2 rounded-sm" style={{ background: "hsl(var(--primary))" }} /> Инциденты
-          </div>
-        </div>
-      </div>
-
-      <div className="panel-card p-4">
-        <h3 className="text-sm font-semibold uppercase tracking-widest mb-3" style={{ fontFamily: "Oswald" }}>
-          Нагрузка по подразделениям
-        </h3>
-        <div className="space-y-2">
-          {UNITS.slice(0, 5).map((u, i) => {
-            const pct = [85, 62, 44, 30, 18][i];
-            return (
-              <div key={u.id} className="flex items-center gap-3">
-                <span className="text-xs w-28 truncate" style={{ color: "hsl(var(--muted-foreground))" }}>{u.name}</span>
-                <div className="flex-1 h-1.5 rounded-full" style={{ background: "hsl(var(--secondary))" }}>
-                  <div className="h-full rounded-full" style={{ width: `${pct}%`, background: "hsl(var(--primary))" }} />
-                </div>
-                <span className="mono text-xs w-8 text-right" style={{ color: "hsl(var(--muted-foreground))" }}>{pct}%</span>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    </div>
-  );
-}
 
 function Archive() {
   const [dateFrom, setDateFrom] = useState("2026-05-01");
@@ -1109,7 +1029,7 @@ const NAV: { id: SectionId; label: string; icon: string; badge?: number }[] = [
   { id: "dashboard",  label: "Главная панель",   icon: "LayoutDashboard" },
   { id: "journal",    label: "Журнал событий",    icon: "ScrollText" },
   { id: "alerts",     label: "Уведомления",       icon: "Bell", badge: 2 },
-  { id: "analytics",  label: "Аналитика",         icon: "BarChart3" },
+
   { id: "archive",    label: "Архив",             icon: "Archive" },
   { id: "systems",    label: "Внешние системы",   icon: "Network" },
   { id: "directory",  label: "Справочники",       icon: "BookOpen" },
@@ -1126,7 +1046,7 @@ export default function Index() {
       case "dashboard": return <Dashboard />;
       case "journal": return <Journal />;
       case "alerts": return <Alerts />;
-      case "analytics": return <Analytics />;
+
       case "archive":    return <Archive />;
       case "systems":    return <Systems />;
       case "directory":  return <DirectorySection />;
