@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import {
   type AccidentState,
   ACCIDENT_TYPES,
+  WEATHER_CONDITIONS,
   DEFAULT_STATE,
   loadAccident,
   saveAccident,
@@ -118,6 +119,7 @@ ${weather ? `<div class="sec">Погодные условия</div><table>
   <tr><td>Влажность</td><td>${weather.humidity}%</td></tr>
   <tr><td>Давление</td><td>${weather.pressure} мм рт. ст.</td></tr>
   <tr><td>Описание</td><td>${weather.desc}</td></tr>
+  ${acc.weatherCondition ? `<tr><td>Особые условия</td><td><b>${WEATHER_CONDITIONS.find(w => w.id === acc.weatherCondition)?.icon ?? ""} ${WEATHER_CONDITIONS.find(w => w.id === acc.weatherCondition)?.label ?? ""}</b></td></tr>` : ""}
 </table>` : ""}
 <div class="sig"><div>Дежурный оператор</div><div>Принял командир</div></div>
 <div class="footer">Распечатано: ${new Date().toLocaleString("ru-RU")} | ФГУП ВГСЧ МЧС России | АРМ Дежурного</div>
@@ -343,6 +345,19 @@ export default function TabloPage() {
                       </div>
                       <div style={{ fontSize: 16, color: "hsl(210 10% 55%)", marginTop: 6 }}>{weather.desc}</div>
                     </div>
+                    {/* Ручное условие из АРМ */}
+                    {acc.weatherCondition && (() => {
+                      const wc = WEATHER_CONDITIONS.find(w => w.id === acc.weatherCondition);
+                      return wc ? (
+                        <div className="ml-4 rounded-lg px-5 py-3 flex items-center gap-3"
+                          style={{ background: "hsl(45 80% 20%)", border: "1px solid hsl(45 80% 35%)" }}>
+                          <span style={{ fontSize: 32 }}>{wc.icon}</span>
+                          <div style={{ fontFamily: "Oswald, sans-serif", fontSize: 22, fontWeight: 700, color: "hsl(45 90% 70%)", textTransform: "uppercase" }}>
+                            {wc.label}
+                          </div>
+                        </div>
+                      ) : null;
+                    })()}
                   </div>
                   <div className="grid grid-cols-3 gap-4 mt-6">
                     {[

@@ -1,6 +1,7 @@
 // Общий стор через localStorage — синхронизирует АРМ ↔ Табло в реальном времени
 
 export type AccidentType = "fire" | "explosion" | "flood" | "collapse" | "water_break";
+export type WeatherCondition = "" | "ice" | "fog" | "rain" | "snow" | "storm";
 
 export interface AccidentState {
   active: boolean;
@@ -13,6 +14,7 @@ export interface AccidentState {
   commDuty: string;
   startedAt: string;
   startedAtMsk: string;
+  weatherCondition: WeatherCondition;
   updatedAt: number;
 }
 
@@ -24,9 +26,17 @@ export const ACCIDENT_TYPES: { id: AccidentType; label: string; color: string; b
   { id: "water_break", label: "ПРОРЫВ ВОДЫ",  color: "#00aacc", bg: "rgba(0,170,204,0.12)" },
 ];
 
+export const WEATHER_CONDITIONS: { id: WeatherCondition; label: string; icon: string }[] = [
+  { id: "",      label: "Не указано", icon: "—"  },
+  { id: "ice",   label: "Гололедица", icon: "🧊" },
+  { id: "fog",   label: "Туман",      icon: "🌫️" },
+  { id: "rain",  label: "Дождь",      icon: "🌧️" },
+  { id: "snow",  label: "Снег",       icon: "❄️" },
+  { id: "storm", label: "Шторм",      icon: "⛈️" },
+];
+
 const STORAGE_KEY = "vgsch_accident_state";
 
-// Пустые строки вместо undefined — Select всегда имеет валидное значение
 export const DEFAULT_STATE: AccidentState = {
   active: false,
   type: "fire",
@@ -38,13 +48,14 @@ export const DEFAULT_STATE: AccidentState = {
   commDuty: "",
   startedAt: "",
   startedAtMsk: "",
+  weatherCondition: "",
   updatedAt: 0,
 };
 
 function safeMerge(parsed: unknown): AccidentState {
   const p = (parsed && typeof parsed === "object" ? parsed : {}) as Partial<AccidentState>;
   return {
-    active:           typeof p.active === "boolean"   ? p.active           : false,
+    active:           typeof p.active === "boolean" ? p.active : false,
     type:             p.type ?? "fire",
     opo:              p.opo ?? "",
     location:         p.location ?? "",
@@ -54,6 +65,7 @@ function safeMerge(parsed: unknown): AccidentState {
     commDuty:         p.commDuty ?? "",
     startedAt:        p.startedAt ?? "",
     startedAtMsk:     p.startedAtMsk ?? "",
+    weatherCondition: p.weatherCondition ?? "",
     updatedAt:        p.updatedAt ?? 0,
   };
 }
@@ -83,9 +95,7 @@ export function clearAccident() {
 export function subscribeAccident(onChange: (s: AccidentState) => void) {
   const handler = (e: StorageEvent) => {
     if (e.key === STORAGE_KEY && e.newValue) {
-      try {
-        onChange(safeMerge(JSON.parse(e.newValue)));
-      } catch { /* ignore */ }
+      try { onChange(safeMerge(JSON.parse(e.newValue))); } catch { /* ignore */ }
     }
   };
   window.addEventListener("storage", handler);

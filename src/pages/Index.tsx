@@ -3,6 +3,7 @@ import Icon from "@/components/ui/icon";
 import {
   type AccidentState,
   ACCIDENT_TYPES,
+  WEATHER_CONDITIONS,
   DEFAULT_STATE,
   loadAccident,
   saveAccident,
@@ -243,6 +244,24 @@ function AccidentPanel() {
           <div>
             <label className="text-xs uppercase tracking-widest block mb-1" style={{ color: "hsl(var(--muted-foreground))" }}>Место аварии (уточнение)</label>
             <input style={sel} value={acc.location} onChange={e => update({ location: e.target.value })} placeholder="напр. гор. -620 м, камера №7" />
+          </div>
+          <div>
+            <label className="text-xs uppercase tracking-widest block mb-2" style={{ color: "hsl(var(--muted-foreground))" }}>Погодные условия</label>
+            <div className="grid grid-cols-3 gap-1">
+              {WEATHER_CONDITIONS.map(w => (
+                <button key={w.id} onClick={() => update({ weatherCondition: w.id })}
+                  className="px-2 py-1.5 rounded text-xs transition-all text-left flex items-center gap-1"
+                  style={{
+                    background: acc.weatherCondition === w.id ? "hsl(var(--primary) / 0.2)" : "hsl(var(--secondary))",
+                    border: `1px solid ${acc.weatherCondition === w.id ? "hsl(var(--primary) / 0.5)" : "hsl(var(--border))"}`,
+                    color: acc.weatherCondition === w.id ? "hsl(var(--primary))" : "hsl(var(--muted-foreground))",
+                    fontWeight: acc.weatherCondition === w.id ? 600 : 400,
+                  }}>
+                  <span>{w.icon}</span>
+                  <span>{w.label}</span>
+                </button>
+              ))}
+            </div>
           </div>
           {acc.active && (
             <div className="rounded p-3" style={{ background: "hsl(var(--status-critical) / 0.08)", border: "1px solid hsl(var(--status-critical) / 0.3)" }}>
