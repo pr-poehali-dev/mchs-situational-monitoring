@@ -3,18 +3,26 @@ import Icon from "@/components/ui/icon";
 import {
   type AccidentState,
   ACCIDENT_TYPES,
-  OPO_LIST,
-  PERSONNEL,
   DEFAULT_STATE,
   loadAccident,
   saveAccident,
   clearAccident,
   subscribeAccident,
 } from "@/lib/accidentStore";
+import {
+  type Directory,
+  type PersonEntry,
+  type OpoEntry,
+  loadDirectory,
+  saveDirectory,
+  subscribeDirectory,
+  opoLabel,
+  uid,
+} from "@/lib/directoryStore";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-type SectionId = "dashboard" | "tablo" | "statuses" | "journal" | "alerts" | "analytics" | "archive" | "systems";
+type SectionId = "dashboard" | "tablo" | "statuses" | "journal" | "alerts" | "analytics" | "archive" | "systems" | "directory";
 
 interface Unit {
   id: string;
@@ -130,9 +138,10 @@ function StatusDot({ status }: { status: Unit["status"] }) {
 
 function AccidentPanel() {
   const [acc, setAcc] = useState<AccidentState>(loadAccident);
+  const [dir, setDir] = useState<Directory>(loadDirectory);
 
-  // Подписка на изменения из Табло (если там нажали «Отбой»)
   useEffect(() => subscribeAccident(setAcc), []);
+  useEffect(() => subscribeDirectory(setDir), []);
 
   const update = (patch: Partial<AccidentState>) => {
     const next = { ...acc, ...patch };
@@ -149,35 +158,23 @@ function AccidentPanel() {
     saveAccident(next);
   };
 
-  const cancel = () => {
-    clearAccident();
-    setAcc({ ...DEFAULT_STATE });
-  };
-
+  const cancel = () => { clearAccident(); setAcc({ ...DEFAULT_STATE }); };
   const atype = ACCIDENT_TYPES.find(t => t.id === acc.type)!;
 
   const sel: React.CSSProperties = {
-    background: "hsl(var(--secondary))",
-    border: "1px solid hsl(var(--border))",
-    color: "hsl(var(--foreground))",
-    padding: "5px 8px",
-    borderRadius: 4,
-    fontSize: 12,
-    fontFamily: "IBM Plex Sans, sans-serif",
-    width: "100%",
-    outline: "none",
+    background: "hsl(var(--secondary))", border: "1px solid hsl(var(--border))",
+    color: "hsl(var(--foreground))", padding: "5px 8px", borderRadius: 4,
+    fontSize: 12, fontFamily: "IBM Plex Sans, sans-serif", width: "100%", outline: "none",
   };
 
-  const inp: React.CSSProperties = { ...sel };
+  const personNames = dir.personnel.map(p => p.name);
+  const opoLabels   = dir.opo.map(opoLabel);
 
   return (
     <div className="panel-card">
-      {/* Шапка */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-border">
         <div className="flex items-center gap-2">
-          <h2 className="text-sm font-semibold uppercase tracking-widest" style={{ fontFamily: "Oswald" }}>
-            Управление аварией
-          </h2>
+          <h2 className="text-sm font-semibold uppercase tracking-widest" style={{ fontFamily: "Oswald" }}>Управление аварией</h2>
           {acc.active && (
             <span className="tag blink text-xs" style={{ background: "hsl(var(--status-critical) / 0.15)", color: "hsl(var(--status-critical))" }}>
               АВАРИЯ ОБЪЯВЛЕНА
@@ -189,103 +186,91 @@ function AccidentPanel() {
           className="flex items-center gap-1.5 text-xs px-2 py-1 rounded border border-border hover:bg-secondary transition-colors"
           style={{ color: "hsl(var(--muted-foreground))" }}
         >
-          <Icon name="Monitor" size={12} />
-          Открыть табло
+          <Icon name="Monitor" size={12} />Открыть табло
         </button>
       </div>
 
       <div className="p-4 grid grid-cols-3 gap-4">
-        {/* Колонка 1: тип + ОПО */}
+        {/* Вид аварии */}
         <div className="space-y-3">
-          <div>
-            <div className="text-xs uppercase tracking-widest mb-2" style={{ color: "hsl(var(--muted-foreground))" }}>Вид аварии</div>
-            <div className="space-y-1">
-              {ACCIDENT_TYPES.map(t => (
-                <button
-                  key={t.id}
-                  onClick={() => update({ type: t.id })}
-                  className="w-full text-left px-3 py-1.5 rounded text-xs transition-all"
-                  style={{
-                    background: acc.type === t.id ? t.bg : "hsl(var(--secondary))",
-                    border: `1px solid ${acc.type === t.id ? t.color + "55" : "hsl(var(--border))"}`,
-                    color: acc.type === t.id ? t.color : "hsl(var(--muted-foreground))",
-                    fontFamily: "Oswald, sans-serif",
-                    fontWeight: acc.type === t.id ? 700 : 400,
-                    letterSpacing: "0.04em",
-                  }}
-                >
-                  {t.label}
-                </button>
-              ))}
-            </div>
+          <div className="text-xs uppercase tracking-widest mb-2" style={{ color: "hsl(var(--muted-foreground))" }}>Вид аварии</div>
+          <div className="space-y-1">
+            {ACCIDENT_TYPES.map(t => (
+              <button key={t.id} onClick={() => update({ type: t.id })}
+                className="w-full text-left px-3 py-1.5 rounded text-xs transition-all"
+                style={{
+                  background: acc.type === t.id ? t.bg : "hsl(var(--secondary))",
+                  border: `1px solid ${acc.type === t.id ? t.color + "55" : "hsl(var(--border))"}`,
+                  color: acc.type === t.id ? t.color : "hsl(var(--muted-foreground))",
+                  fontFamily: "Oswald, sans-serif", fontWeight: acc.type === t.id ? 700 : 400, letterSpacing: "0.04em",
+                }}
+              >{t.label}</button>
+            ))}
           </div>
         </div>
 
-        {/* Колонка 2: ОПО + место + кнопка */}
+        {/* ОПО + место + кнопка */}
         <div className="space-y-3">
           <div>
             <label className="text-xs uppercase tracking-widest block mb-1" style={{ color: "hsl(var(--muted-foreground))" }}>ОПО</label>
             <select style={sel} value={acc.opo} onChange={e => update({ opo: e.target.value })}>
-              {OPO_LIST.map(o => <option key={o} value={o}>{o}</option>)}
+              {opoLabels.length > 0
+                ? opoLabels.map(o => <option key={o} value={o}>{o}</option>)
+                : <option value="">— справочник пуст —</option>}
             </select>
           </div>
           <div>
             <label className="text-xs uppercase tracking-widest block mb-1" style={{ color: "hsl(var(--muted-foreground))" }}>Место аварии (уточнение)</label>
-            <input style={inp} value={acc.location} onChange={e => update({ location: e.target.value })} placeholder="напр. гор. -620 м, камера №7" />
+            <input style={sel} value={acc.location} onChange={e => update({ location: e.target.value })} placeholder="напр. гор. -620 м, камера №7" />
           </div>
-
-          {/* Статус активной аварии */}
           {acc.active && (
             <div className="rounded p-3" style={{ background: "hsl(var(--status-critical) / 0.08)", border: "1px solid hsl(var(--status-critical) / 0.3)" }}>
               <div className="text-xs mb-1" style={{ color: "hsl(var(--muted-foreground))" }}>Объявлено</div>
-              <div className="font-semibold" style={{ fontFamily: "Oswald", color: "hsl(var(--status-critical))", fontSize: 18 }}>
-                {atype.label}
-              </div>
-              <div className="mono text-xs mt-1" style={{ color: "hsl(var(--muted-foreground))" }}>
-                {acc.startedAt} (МСК: {acc.startedAtMsk})
-              </div>
+              <div className="font-semibold" style={{ fontFamily: "Oswald", color: "hsl(var(--status-critical))", fontSize: 18 }}>{atype.label}</div>
+              <div className="mono text-xs mt-1" style={{ color: "hsl(var(--muted-foreground))" }}>{acc.startedAt} (МСК: {acc.startedAtMsk})</div>
               <div className="text-xs mt-1 truncate" style={{ color: "hsl(var(--muted-foreground))" }}>{acc.opo}</div>
             </div>
           )}
-
-          {/* Кнопка */}
           <div className="pt-1">
             {!acc.active ? (
-              <button
-                onClick={declare}
+              <button onClick={declare}
                 className="w-full py-3 rounded font-bold uppercase tracking-widest transition-all hover:opacity-90"
-                style={{ background: "hsl(var(--status-critical))", color: "white", fontFamily: "Oswald", fontSize: 15, letterSpacing: "0.1em" }}
-              >
+                style={{ background: "hsl(var(--status-critical))", color: "white", fontFamily: "Oswald", fontSize: 15, letterSpacing: "0.1em" }}>
                 🚨 ОБЪЯВИТЬ АВАРИЮ
               </button>
             ) : (
-              <button
-                onClick={cancel}
+              <button onClick={cancel}
                 className="w-full py-2 rounded border border-border hover:bg-secondary transition-colors text-sm"
-                style={{ color: "hsl(var(--muted-foreground))" }}
-              >
+                style={{ color: "hsl(var(--muted-foreground))" }}>
                 Отбой аварии
               </button>
             )}
           </div>
         </div>
 
-        {/* Колонка 3: ответственные */}
+        {/* Ответственные из справочника */}
         <div className="space-y-3">
           <div className="text-xs uppercase tracking-widest mb-1" style={{ color: "hsl(var(--muted-foreground))" }}>Ответственные лица</div>
-          {[
-            { label: "Командир отряда",       field: "commanderSquad"   as const },
-            { label: "Командир взвода / пункта", field: "commanderPlatoon" as const },
-            { label: "Командир отделения",     field: "commanderUnit"    as const },
-            { label: "Деж. у средств связи",   field: "commDuty"         as const },
-          ].map(({ label, field }) => (
+          {([
+            { label: "Командир отряда",          field: "commanderSquad"   as const },
+            { label: "Командир взвода / пункта",  field: "commanderPlatoon" as const },
+            { label: "Командир отделения",        field: "commanderUnit"    as const },
+            { label: "Деж. у средств связи",      field: "commDuty"         as const },
+          ]).map(({ label, field }) => (
             <div key={field}>
               <label className="text-xs block mb-1" style={{ color: "hsl(var(--muted-foreground))" }}>{label}</label>
               <select style={sel} value={acc[field]} onChange={e => update({ [field]: e.target.value })}>
-                {PERSONNEL.map(p => <option key={p} value={p}>{p}</option>)}
+                {personNames.length > 0
+                  ? personNames.map(p => <option key={p} value={p}>{p}</option>)
+                  : <option value="">— справочник пуст —</option>}
               </select>
             </div>
           ))}
+          {dir.personnel.length === 0 && (
+            <p className="text-xs" style={{ color: "hsl(var(--muted-foreground))" }}>
+              Добавьте сотрудников в разделе <b>Справочники</b>
+            </p>
+          )}
         </div>
       </div>
     </div>
@@ -909,17 +894,230 @@ function Systems() {
   );
 }
 
+// ─── Directory Section ────────────────────────────────────────────────────────
+
+function DirectorySection() {
+  const [dir, setDir] = useState<Directory>(loadDirectory);
+  const [tab, setTab] = useState<"personnel" | "opo">("personnel");
+
+  // Форма персонала
+  const [pForm, setPForm] = useState<Omit<PersonEntry, "id">>({ name: "", rank: "", phone: "" });
+  const [pEdit, setPEdit] = useState<string | null>(null);
+
+  // Форма ОПО
+  const [oForm, setOForm] = useState<Omit<OpoEntry, "id">>({ name: "", horizon: "", area: "" });
+  const [oEdit, setOEdit] = useState<string | null>(null);
+
+  const persist = (next: Directory) => { setDir(next); saveDirectory(next); };
+
+  // ── Персонал CRUD ──
+  const saveP = () => {
+    if (!pForm.name.trim()) return;
+    if (pEdit) {
+      persist({ ...dir, personnel: dir.personnel.map(p => p.id === pEdit ? { id: pEdit, ...pForm } : p) });
+      setPEdit(null);
+    } else {
+      persist({ ...dir, personnel: [...dir.personnel, { id: uid(), ...pForm }] });
+    }
+    setPForm({ name: "", rank: "", phone: "" });
+  };
+  const editP = (p: PersonEntry) => { setPEdit(p.id); setPForm({ name: p.name, rank: p.rank, phone: p.phone }); };
+  const delP  = (id: string) => persist({ ...dir, personnel: dir.personnel.filter(p => p.id !== id) });
+  const cancelP = () => { setPEdit(null); setPForm({ name: "", rank: "", phone: "" }); };
+
+  // ── ОПО CRUD ──
+  const saveO = () => {
+    if (!oForm.name.trim()) return;
+    if (oEdit) {
+      persist({ ...dir, opo: dir.opo.map(o => o.id === oEdit ? { id: oEdit, ...oForm } : o) });
+      setOEdit(null);
+    } else {
+      persist({ ...dir, opo: [...dir.opo, { id: uid(), ...oForm }] });
+    }
+    setOForm({ name: "", horizon: "", area: "" });
+  };
+  const editO = (o: OpoEntry) => { setOEdit(o.id); setOForm({ name: o.name, horizon: o.horizon, area: o.area }); };
+  const delO  = (id: string) => persist({ ...dir, opo: dir.opo.filter(o => o.id !== id) });
+  const cancelO = () => { setOEdit(null); setOForm({ name: "", horizon: "", area: "" }); };
+
+  const inputCls: React.CSSProperties = {
+    background: "hsl(var(--secondary))", border: "1px solid hsl(var(--border))",
+    color: "hsl(var(--foreground))", padding: "5px 10px", borderRadius: 4,
+    fontSize: 12, fontFamily: "IBM Plex Sans, sans-serif", outline: "none", width: "100%",
+  };
+
+  return (
+    <div className="fade-in space-y-4">
+      {/* Вкладки */}
+      <div className="flex gap-2">
+        {([["personnel", "Личный состав", "Users"], ["opo", "Объекты ОПО", "Building2"]] as const).map(([id, label, icon]) => (
+          <button key={id} onClick={() => setTab(id)}
+            className="flex items-center gap-2 px-4 py-2 rounded text-sm transition-all"
+            style={{
+              background: tab === id ? "hsl(var(--primary))" : "hsl(var(--secondary))",
+              color: tab === id ? "hsl(var(--primary-foreground))" : "hsl(var(--muted-foreground))",
+              fontFamily: "Oswald, sans-serif", letterSpacing: "0.04em",
+            }}>
+            <Icon name={icon} fallback="Circle" size={14} />{label}
+          </button>
+        ))}
+      </div>
+
+      {/* ── Личный состав ── */}
+      {tab === "personnel" && (
+        <div className="grid grid-cols-3 gap-4">
+          {/* Форма */}
+          <div className="panel-card p-4 space-y-3">
+            <h3 className="text-sm font-semibold uppercase tracking-widest" style={{ fontFamily: "Oswald" }}>
+              {pEdit ? "Редактировать" : "Добавить сотрудника"}
+            </h3>
+            {([
+              { label: "ФИО *", key: "name", placeholder: "Иванов А.С." },
+              { label: "Должность", key: "rank", placeholder: "Командир отряда" },
+              { label: "Телефон", key: "phone", placeholder: "+7 (912) 000-00-00" },
+            ] as const).map(f => (
+              <div key={f.key}>
+                <label className="text-xs block mb-1" style={{ color: "hsl(var(--muted-foreground))" }}>{f.label}</label>
+                <input style={inputCls} placeholder={f.placeholder}
+                  value={pForm[f.key]} onChange={e => setPForm(p => ({ ...p, [f.key]: e.target.value }))} />
+              </div>
+            ))}
+            <div className="flex gap-2 pt-1">
+              <button onClick={saveP}
+                className="flex-1 py-2 rounded text-sm font-medium transition-all hover:opacity-90"
+                style={{ background: "hsl(var(--primary))", color: "hsl(var(--primary-foreground))", fontFamily: "Oswald" }}>
+                {pEdit ? "Сохранить" : "Добавить"}
+              </button>
+              {pEdit && (
+                <button onClick={cancelP}
+                  className="px-3 py-2 rounded border border-border text-sm hover:bg-secondary transition-colors"
+                  style={{ color: "hsl(var(--muted-foreground))" }}>
+                  Отмена
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Список */}
+          <div className="panel-card col-span-2">
+            <div className="px-4 py-3 border-b border-border flex items-center justify-between">
+              <h3 className="text-sm font-semibold uppercase tracking-widest" style={{ fontFamily: "Oswald" }}>Список</h3>
+              <span className="tag" style={{ background: "hsl(var(--muted))", color: "hsl(var(--muted-foreground))" }}>
+                {dir.personnel.length} записей
+              </span>
+            </div>
+            {dir.personnel.length === 0 ? (
+              <div className="p-8 text-center text-sm" style={{ color: "hsl(var(--muted-foreground))" }}>Список пуст — добавьте сотрудников</div>
+            ) : (
+              <div className="divide-y divide-border">
+                {dir.personnel.map(p => (
+                  <div key={p.id} className="flex items-center gap-3 px-4 py-2.5 hover:bg-secondary/30 transition-colors">
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium text-sm">{p.name}</div>
+                      <div className="text-xs" style={{ color: "hsl(var(--muted-foreground))" }}>
+                        {p.rank}{p.phone ? ` · ${p.phone}` : ""}
+                      </div>
+                    </div>
+                    <button onClick={() => editP(p)} className="text-xs px-2 py-1 rounded border border-border hover:bg-secondary transition-colors flex-shrink-0">
+                      Изменить
+                    </button>
+                    <button onClick={() => delP(p.id)} className="text-xs px-2 py-1 rounded border transition-colors flex-shrink-0"
+                      style={{ borderColor: "hsl(var(--status-critical) / 0.3)", color: "hsl(var(--status-critical))" }}>
+                      Удалить
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ── Объекты ОПО ── */}
+      {tab === "opo" && (
+        <div className="grid grid-cols-3 gap-4">
+          {/* Форма */}
+          <div className="panel-card p-4 space-y-3">
+            <h3 className="text-sm font-semibold uppercase tracking-widest" style={{ fontFamily: "Oswald" }}>
+              {oEdit ? "Редактировать" : "Добавить ОПО"}
+            </h3>
+            {([
+              { label: "Наименование объекта *", key: "name", placeholder: "Шахта «Северная»" },
+              { label: "Горизонт / уровень", key: "horizon", placeholder: "-480 м" },
+              { label: "Участок / зона", key: "area", placeholder: "Участок №3" },
+            ] as const).map(f => (
+              <div key={f.key}>
+                <label className="text-xs block mb-1" style={{ color: "hsl(var(--muted-foreground))" }}>{f.label}</label>
+                <input style={inputCls} placeholder={f.placeholder}
+                  value={oForm[f.key]} onChange={e => setOForm(o => ({ ...o, [f.key]: e.target.value }))} />
+              </div>
+            ))}
+            <div className="flex gap-2 pt-1">
+              <button onClick={saveO}
+                className="flex-1 py-2 rounded text-sm font-medium transition-all hover:opacity-90"
+                style={{ background: "hsl(var(--primary))", color: "hsl(var(--primary-foreground))", fontFamily: "Oswald" }}>
+                {oEdit ? "Сохранить" : "Добавить"}
+              </button>
+              {oEdit && (
+                <button onClick={cancelO}
+                  className="px-3 py-2 rounded border border-border text-sm hover:bg-secondary transition-colors"
+                  style={{ color: "hsl(var(--muted-foreground))" }}>
+                  Отмена
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Список */}
+          <div className="panel-card col-span-2">
+            <div className="px-4 py-3 border-b border-border flex items-center justify-between">
+              <h3 className="text-sm font-semibold uppercase tracking-widest" style={{ fontFamily: "Oswald" }}>Список объектов</h3>
+              <span className="tag" style={{ background: "hsl(var(--muted))", color: "hsl(var(--muted-foreground))" }}>
+                {dir.opo.length} записей
+              </span>
+            </div>
+            {dir.opo.length === 0 ? (
+              <div className="p-8 text-center text-sm" style={{ color: "hsl(var(--muted-foreground))" }}>Список пуст — добавьте объекты ОПО</div>
+            ) : (
+              <div className="divide-y divide-border">
+                {dir.opo.map(o => (
+                  <div key={o.id} className="flex items-center gap-3 px-4 py-2.5 hover:bg-secondary/30 transition-colors">
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium text-sm">{o.name}</div>
+                      <div className="text-xs mono" style={{ color: "hsl(var(--muted-foreground))" }}>
+                        {o.horizon}{o.area ? ` · ${o.area}` : ""}
+                      </div>
+                    </div>
+                    <button onClick={() => editO(o)} className="text-xs px-2 py-1 rounded border border-border hover:bg-secondary transition-colors flex-shrink-0">
+                      Изменить
+                    </button>
+                    <button onClick={() => delO(o.id)} className="text-xs px-2 py-1 rounded border transition-colors flex-shrink-0"
+                      style={{ borderColor: "hsl(var(--status-critical) / 0.3)", color: "hsl(var(--status-critical))" }}>
+                      Удалить
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Nav config ───────────────────────────────────────────────────────────────
 
 const NAV: { id: SectionId; label: string; icon: string; badge?: number }[] = [
-  { id: "dashboard", label: "Главная панель", icon: "LayoutDashboard" },
-  { id: "tablo", label: "Табло", icon: "Monitor" },
-  { id: "statuses", label: "Статусы", icon: "Activity" },
-  { id: "journal", label: "Журнал событий", icon: "ScrollText" },
-  { id: "alerts", label: "Уведомления", icon: "Bell", badge: 2 },
-  { id: "analytics", label: "Аналитика", icon: "BarChart3" },
-  { id: "archive", label: "Архив", icon: "Archive" },
-  { id: "systems", label: "Внешние системы", icon: "Network" },
+  { id: "dashboard",  label: "Главная панель",   icon: "LayoutDashboard" },
+  { id: "tablo",      label: "Табло",             icon: "Monitor" },
+  { id: "statuses",   label: "Статусы",           icon: "Activity" },
+  { id: "journal",    label: "Журнал событий",    icon: "ScrollText" },
+  { id: "alerts",     label: "Уведомления",       icon: "Bell", badge: 2 },
+  { id: "analytics",  label: "Аналитика",         icon: "BarChart3" },
+  { id: "archive",    label: "Архив",             icon: "Archive" },
+  { id: "systems",    label: "Внешние системы",   icon: "Network" },
+  { id: "directory",  label: "Справочники",       icon: "BookOpen" },
 ];
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
@@ -936,8 +1134,9 @@ export default function Index() {
       case "journal": return <Journal />;
       case "alerts": return <Alerts />;
       case "analytics": return <Analytics />;
-      case "archive": return <Archive />;
-      case "systems": return <Systems />;
+      case "archive":    return <Archive />;
+      case "systems":    return <Systems />;
+      case "directory":  return <DirectorySection />;
     }
   };
 
