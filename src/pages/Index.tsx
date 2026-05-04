@@ -1179,8 +1179,6 @@ export default function Index() {
 
         <div className="px-4 py-3 border-b border-border">
           <Clock />
-          <div className="text-xs mt-1" style={{ color: "hsl(var(--muted-foreground))" }}>Иванов А.С.</div>
-          <div style={{ color: "hsl(var(--muted-foreground))", fontSize: 10 }}>Смена: 08:00–20:00</div>
         </div>
 
         <nav className="flex-1 p-2 space-y-0.5 overflow-y-auto scrollbar-thin">
