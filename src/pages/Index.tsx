@@ -14,7 +14,7 @@ import {
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-type SectionId = "dashboard" | "tablo" | "statuses" | "journal" | "alerts" | "analytics" | "archive" | "systems" | "gas";
+type SectionId = "dashboard" | "tablo" | "statuses" | "journal" | "alerts" | "analytics" | "archive" | "systems";
 
 interface Unit {
   id: string;
@@ -848,7 +848,6 @@ function Systems() {
   const systems = [
     { name: "АСУ ВГСЧ", type: "Основная система управления", status: "active" as const, lastSync: "08:47:10", version: "v3.1.4", latency: "38 мс" },
     { name: "АИАС ВГСЧ", type: "Аварийно-инф. система", status: "active" as const, lastSync: "08:47:05", version: "v2.4", latency: "95 мс" },
-    { name: "АГК (газ. контроль)", type: "Мониторинг атмосферы", status: "active" as const, lastSync: "08:45:00", version: "v5.0", latency: "62 мс" },
     { name: "ПРТС (позицион.)", type: "Позиционирование в шахте", status: "warning" as const, lastSync: "08:32:15", version: "v1.9", latency: ">400 мс" },
     { name: "Штаб ВГСЧ (API)", type: "API-интеграция со штабом", status: "active" as const, lastSync: "08:46:00", version: "REST 1.5", latency: "130 мс" },
     { name: "МЧС России (ЕДДС)", type: "Единая диспетч. служба", status: "idle" as const, lastSync: "07:00:00", version: "v4.0", latency: "—" },
@@ -910,214 +909,12 @@ function Systems() {
   );
 }
 
-// ─── Gas Monitor ──────────────────────────────────────────────────────────────
-
-interface GasSensor {
-  id: string;
-  location: string;
-  horizon: string;
-  ch4: number;
-  co: number;
-  o2: number;
-  h2s: number;
-  status: "normal" | "warning" | "critical";
-  updated: string;
-}
-
-const GAS_LIMITS = {
-  ch4: { warning: 0.5, critical: 1.0 },
-  co:  { warning: 17,  critical: 34  },
-  o2:  { warning: 19,  critical: 17  },
-  h2s: { warning: 3,   critical: 10  },
-};
-
-const INITIAL_SENSORS: GasSensor[] = [
-  { id: "ДГ-01", location: "Уч. №1, гор. -320 м", horizon: "-320", ch4: 0.12, co: 4,  o2: 20.4, h2s: 0.5, status: "normal",   updated: "08:47:05" },
-  { id: "ДГ-02", location: "Уч. №3, гор. -480 м", horizon: "-480", ch4: 0.48, co: 14, o2: 20.1, h2s: 1.2, status: "warning",  updated: "08:47:08" },
-  { id: "ДГ-03", location: "Уч. №7, гор. -620 м", horizon: "-620", ch4: 1.14, co: 38, o2: 19.2, h2s: 2.1, status: "critical", updated: "08:47:11" },
-  { id: "ДГ-04", location: "Уч. №2, гор. -320 м", horizon: "-320", ch4: 0.08, co: 2,  o2: 20.6, h2s: 0.1, status: "normal",   updated: "08:47:03" },
-  { id: "ДГ-05", location: "Уч. №5, гор. -480 м", horizon: "-480", ch4: 0.31, co: 8,  o2: 20.3, h2s: 0.8, status: "normal",   updated: "08:47:07" },
-  { id: "ДГ-06", location: "Уч. №9, гор. -620 м", horizon: "-620", ch4: 0.62, co: 21, o2: 19.7, h2s: 1.9, status: "warning",  updated: "08:47:10" },
-];
-
-function GasValue({ label, value, unit, warnAt, critAt, lower = false }: {
-  label: string; value: number; unit: string; warnAt: number; critAt: number; lower?: boolean;
-}) {
-  const isWarn = lower ? value <= warnAt : value >= warnAt;
-  const isCrit = lower ? value <= critAt : value >= critAt;
-  const color = isCrit
-    ? "hsl(var(--status-critical))"
-    : isWarn
-    ? "hsl(var(--status-warning))"
-    : "hsl(var(--status-active))";
-
-  const pct = lower
-    ? Math.min(100, Math.max(0, ((value - 15) / (21 - 15)) * 100))
-    : Math.min(100, (value / (critAt * 1.5)) * 100);
-
-  return (
-    <div className="flex-1 min-w-0">
-      <div className="flex items-center justify-between mb-1">
-        <span className="text-xs" style={{ color: "hsl(var(--muted-foreground))" }}>{label}</span>
-        <span className="mono text-sm font-semibold" style={{ color }}>
-          {value.toFixed(2)} <span className="text-xs font-normal">{unit}</span>
-        </span>
-      </div>
-      <div className="h-1 rounded-full w-full" style={{ background: "hsl(var(--secondary))" }}>
-        <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: color }} />
-      </div>
-    </div>
-  );
-}
-
-function GasMonitor() {
-  const [sensors, setSensors] = useState<GasSensor[]>(INITIAL_SENSORS);
-  const [tick, setTick] = useState(0);
-
-  useEffect(() => {
-    const t = setInterval(() => {
-      setTick(p => p + 1);
-      setSensors(prev => prev.map(s => {
-        const rnd = (v: number, d: number) => Math.max(0, +(v + (Math.random() - 0.5) * d).toFixed(2));
-        const ch4 = rnd(s.ch4, 0.04);
-        const co  = rnd(s.co,  1.5);
-        const o2  = Math.min(21, Math.max(15, +(s.o2 + (Math.random() - 0.5) * 0.05).toFixed(2)));
-        const h2s = rnd(s.h2s, 0.1);
-        const isCrit = ch4 >= GAS_LIMITS.ch4.critical || co >= GAS_LIMITS.co.critical || o2 <= GAS_LIMITS.o2.critical || h2s >= GAS_LIMITS.h2s.critical;
-        const isWarn = ch4 >= GAS_LIMITS.ch4.warning  || co >= GAS_LIMITS.co.warning  || o2 <= GAS_LIMITS.o2.warning  || h2s >= GAS_LIMITS.h2s.warning;
-        const now = new Date();
-        const pad = (n: number) => String(n).padStart(2, "0");
-        const updated = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
-        return { ...s, ch4, co, o2, h2s, status: isCrit ? "critical" : isWarn ? "warning" : "normal", updated };
-      }));
-    }, 3000);
-    return () => clearInterval(t);
-  }, []);
-
-  const critCount = sensors.filter(s => s.status === "critical").length;
-  const warnCount = sensors.filter(s => s.status === "warning").length;
-
-  return (
-    <div className="fade-in space-y-4">
-      {/* Summary */}
-      <div className="grid grid-cols-4 gap-3">
-        {[
-          { label: "Датчиков онлайн", value: sensors.length, color: "var(--status-active)", icon: "Wifi" },
-          { label: "Критично", value: critCount, color: "var(--status-critical)", icon: "AlertCircle" },
-          { label: "Предупреждение", value: warnCount, color: "var(--status-warning)", icon: "AlertTriangle" },
-          { label: "Норма", value: sensors.length - critCount - warnCount, color: "var(--status-idle)", icon: "CheckCircle" },
-        ].map(item => (
-          <div key={item.label} className="panel-card p-4 flex flex-col gap-1">
-            <div className="flex items-center justify-between">
-              <span className="text-xs" style={{ color: "hsl(var(--muted-foreground))" }}>{item.label}</span>
-              <Icon name={item.icon} fallback="Circle" size={14} style={{ color: `hsl(${item.color})` }} />
-            </div>
-            <span className="text-3xl font-bold" style={{ fontFamily: "Oswald", color: `hsl(${item.color})` }}>
-              {item.value}
-            </span>
-          </div>
-        ))}
-      </div>
-
-      {/* Limits reference */}
-      <div className="panel-card px-4 py-3 flex items-center gap-6 flex-wrap">
-        <span className="text-xs uppercase tracking-widest font-semibold" style={{ fontFamily: "Oswald", color: "hsl(var(--muted-foreground))" }}>ПДК / Нормы:</span>
-        {[
-          { label: "CH₄", warn: "≥ 0.5%", crit: "≥ 1.0%" },
-          { label: "CO",  warn: "≥ 17 ppm", crit: "≥ 34 ppm" },
-          { label: "O₂",  warn: "≤ 19%", crit: "≤ 17%" },
-          { label: "H₂S", warn: "≥ 3 ppm", crit: "≥ 10 ppm" },
-        ].map(l => (
-          <div key={l.label} className="flex items-center gap-2 text-xs">
-            <span className="font-mono font-semibold">{l.label}</span>
-            <span style={{ color: "hsl(var(--status-warning))" }}>{l.warn}</span>
-            <span style={{ color: "hsl(var(--status-critical))" }}>{l.crit}</span>
-          </div>
-        ))}
-        <span className="ml-auto mono text-xs" style={{ color: "hsl(var(--muted-foreground))" }}>
-          Обновление каждые 3 с · тик #{tick}
-        </span>
-      </div>
-
-      {/* Sensors grid */}
-      <div className="grid grid-cols-2 gap-3">
-        {sensors.map(s => {
-          const borderColor = s.status === "critical"
-            ? "hsl(var(--status-critical))"
-            : s.status === "warning"
-            ? "hsl(var(--status-warning))"
-            : "hsl(var(--border))";
-
-          return (
-            <div key={s.id} className="panel-card p-4 space-y-3" style={{ borderLeftWidth: 3, borderLeftColor: borderColor }}>
-              {/* Header */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className={`status-dot ${s.status === "critical" ? "status-critical pulse-ring" : s.status === "warning" ? "status-warning" : "status-active"}`} />
-                  <span className="font-semibold text-sm" style={{ fontFamily: "Oswald" }}>{s.id}</span>
-                  <span className="text-xs" style={{ color: "hsl(var(--muted-foreground))" }}>{s.location}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="tag text-xs" style={{
-                    background: s.status === "critical" ? "hsl(var(--status-critical) / 0.15)" : s.status === "warning" ? "hsl(var(--status-warning) / 0.15)" : "hsl(var(--status-active) / 0.15)",
-                    color: s.status === "critical" ? "hsl(var(--status-critical))" : s.status === "warning" ? "hsl(var(--status-warning))" : "hsl(var(--status-active))",
-                  }}>
-                    {s.status === "critical" ? "КРИТИЧНО" : s.status === "warning" ? "ВНИМАНИЕ" : "НОРМА"}
-                  </span>
-                  <span className="mono text-xs" style={{ color: "hsl(var(--muted-foreground))" }}>{s.updated}</span>
-                </div>
-              </div>
-
-              {/* Gas values */}
-              <div className="grid grid-cols-2 gap-x-4 gap-y-3">
-                <GasValue label="CH₄ (метан)"   value={s.ch4} unit="%" warnAt={GAS_LIMITS.ch4.warning} critAt={GAS_LIMITS.ch4.critical} />
-                <GasValue label="CO (угарный)"   value={s.co}  unit="ppm" warnAt={GAS_LIMITS.co.warning}  critAt={GAS_LIMITS.co.critical} />
-                <GasValue label="O₂ (кислород)"  value={s.o2}  unit="%" warnAt={GAS_LIMITS.o2.warning}  critAt={GAS_LIMITS.o2.critical}  lower />
-                <GasValue label="H₂S (сероводор.)" value={s.h2s} unit="ppm" warnAt={GAS_LIMITS.h2s.warning} critAt={GAS_LIMITS.h2s.critical} />
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Horizon summary */}
-      <div className="panel-card p-4">
-        <h3 className="text-sm font-semibold uppercase tracking-widest mb-3" style={{ fontFamily: "Oswald" }}>
-          Сводка по горизонтам
-        </h3>
-        <div className="space-y-2">
-          {["-320", "-480", "-620"].map(h => {
-            const group = sensors.filter(s => s.horizon === h);
-            const avgCh4 = (group.reduce((a, s) => a + s.ch4, 0) / group.length).toFixed(2);
-            const avgCo  = (group.reduce((a, s) => a + s.co,  0) / group.length).toFixed(1);
-            const avgO2  = (group.reduce((a, s) => a + s.o2,  0) / group.length).toFixed(2);
-            const worst  = group.some(s => s.status === "critical") ? "critical" : group.some(s => s.status === "warning") ? "warning" : "normal";
-            const wColor = worst === "critical" ? "hsl(var(--status-critical))" : worst === "warning" ? "hsl(var(--status-warning))" : "hsl(var(--status-active))";
-            return (
-              <div key={h} className="flex items-center gap-4 py-2 border-b border-border last:border-0 text-sm">
-                <span className="mono font-semibold w-16" style={{ color: wColor }}>Гор. {h} м</span>
-                <span style={{ color: "hsl(var(--muted-foreground))" }}>{group.length} датчика</span>
-                <div className="flex gap-4 ml-auto text-xs mono" style={{ color: "hsl(var(--muted-foreground))" }}>
-                  <span>CH₄ <b style={{ color: parseFloat(avgCh4) >= GAS_LIMITS.ch4.critical ? "hsl(var(--status-critical))" : parseFloat(avgCh4) >= GAS_LIMITS.ch4.warning ? "hsl(var(--status-warning))" : "hsl(var(--foreground))" }}>{avgCh4}%</b></span>
-                  <span>CO <b style={{ color: parseFloat(avgCo) >= GAS_LIMITS.co.critical ? "hsl(var(--status-critical))" : parseFloat(avgCo) >= GAS_LIMITS.co.warning ? "hsl(var(--status-warning))" : "hsl(var(--foreground))" }}>{avgCo} ppm</b></span>
-                  <span>O₂ <b style={{ color: parseFloat(avgO2) <= GAS_LIMITS.o2.critical ? "hsl(var(--status-critical))" : parseFloat(avgO2) <= GAS_LIMITS.o2.warning ? "hsl(var(--status-warning))" : "hsl(var(--foreground))" }}>{avgO2}%</b></span>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    </div>
-  );
-}
-
 // ─── Nav config ───────────────────────────────────────────────────────────────
 
 const NAV: { id: SectionId; label: string; icon: string; badge?: number }[] = [
   { id: "dashboard", label: "Главная панель", icon: "LayoutDashboard" },
   { id: "tablo", label: "Табло", icon: "Monitor" },
   { id: "statuses", label: "Статусы", icon: "Activity" },
-  { id: "gas", label: "Газовый контроль", icon: "Wind", badge: 1 },
   { id: "journal", label: "Журнал событий", icon: "ScrollText" },
   { id: "alerts", label: "Уведомления", icon: "Bell", badge: 2 },
   { id: "analytics", label: "Аналитика", icon: "BarChart3" },
@@ -1141,7 +938,6 @@ export default function Index() {
       case "analytics": return <Analytics />;
       case "archive": return <Archive />;
       case "systems": return <Systems />;
-      case "gas": return <GasMonitor />;
     }
   };
 

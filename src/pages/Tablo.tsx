@@ -28,26 +28,6 @@ interface Weather {
   updated: string;
 }
 
-interface GasSensor {
-  id: string;
-  location: string;
-  horizon: string;
-  ch4: number;
-  co: number;
-  o2: number;
-  status: "normal" | "warning" | "critical";
-  updated: string;
-}
-
-const INITIAL_SENSORS: GasSensor[] = [
-  { id: "ДГ-01", location: "Уч. №1, гор. -320 м", horizon: "-320", ch4: 0.12, co: 4,  o2: 20.4, status: "normal",   updated: "08:47:05" },
-  { id: "ДГ-02", location: "Уч. №3, гор. -480 м", horizon: "-480", ch4: 0.48, co: 14, o2: 20.1, status: "warning",  updated: "08:47:08" },
-  { id: "ДГ-03", location: "Уч. №7, гор. -620 м", horizon: "-620", ch4: 1.14, co: 38, o2: 19.2, status: "critical", updated: "08:47:11" },
-  { id: "ДГ-04", location: "Уч. №2, гор. -320 м", horizon: "-320", ch4: 0.08, co: 2,  o2: 20.6, status: "normal",   updated: "08:47:03" },
-  { id: "ДГ-05", location: "Уч. №5, гор. -480 м", horizon: "-480", ch4: 0.31, co: 8,  o2: 20.3, status: "normal",   updated: "08:47:07" },
-  { id: "ДГ-06", location: "Уч. №9, гор. -620 м", horizon: "-620", ch4: 0.62, co: 21, o2: 19.7, status: "warning",  updated: "08:47:10" },
-];
-
 // ─── Hooks ────────────────────────────────────────────────────────────────────
 
 function useClock() {
@@ -116,28 +96,6 @@ function useWeather() {
   return { weather, loading };
 }
 
-function useLiveSensors() {
-  const [sensors, setSensors] = useState<GasSensor[]>(INITIAL_SENSORS);
-  useEffect(() => {
-    const t = setInterval(() => {
-      setSensors(prev => prev.map(s => {
-        const rnd = (v: number, d: number) => Math.max(0, +(v + (Math.random() - 0.5) * d).toFixed(2));
-        const ch4 = rnd(s.ch4, 0.04);
-        const co  = rnd(s.co, 1.5);
-        const o2  = Math.min(21, Math.max(15, +(s.o2 + (Math.random() - 0.5) * 0.05).toFixed(2)));
-        const pad = (n: number) => String(n).padStart(2, "0");
-        const now = new Date();
-        const updated = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
-        const isCrit = ch4 >= 1.0 || co >= 34 || o2 <= 17;
-        const isWarn = ch4 >= 0.5 || co >= 17 || o2 <= 19;
-        return { ...s, ch4, co, o2, updated, status: isCrit ? "critical" : isWarn ? "warning" : "normal" };
-      }));
-    }, 3000);
-    return () => clearInterval(t);
-  }, []);
-  return sensors;
-}
-
 // ─── Печать ───────────────────────────────────────────────────────────────────
 
 function printAccident(acc: AccidentState, weather: Weather | null) {
@@ -200,7 +158,6 @@ export default function TabloPage() {
   const time    = useClock();
   const mskTime = useMoscowTime();
   const { weather, loading: weatherLoading } = useWeather();
-  const sensors = useLiveSensors();
 
   // ← читаем из localStorage и подписываемся на изменения из АРМ
   const [acc, setAcc] = useState<AccidentState>(loadAccident);
@@ -224,9 +181,7 @@ export default function TabloPage() {
     saveAccident(cleared);
   };
 
-  const atype   = ACCIDENT_TYPES.find(t => t.id === acc.type)!;
-  const gasCrit = sensors.filter(s => s.status === "critical").length;
-  const gasWarn = sensors.filter(s => s.status === "warning").length;
+  const atype = ACCIDENT_TYPES.find(t => t.id === acc.type)!;
   const bgMain  = acc.active ? (flashRed ? "hsl(0 70% 8%)" : "hsl(0 60% 5%)") : "hsl(220 20% 4%)";
 
   return (
@@ -300,21 +255,6 @@ export default function TabloPage() {
             ) : <div style={{ fontSize: 12, color: "hsl(210 10% 45%)" }}>Загрузка…</div>}
           </div>
 
-          {/* Газ */}
-          <div style={{ width: 1, height: 40, background: "hsl(220 12% 18%)" }} />
-          <div>
-            <div style={{ fontSize: 9, color: "hsl(210 10% 45%)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 3 }}>АГК / Газ</div>
-            <div className="flex gap-3">
-              <div className="text-center">
-                <div style={{ fontFamily: "Oswald, sans-serif", fontSize: 20, fontWeight: 700, color: gasCrit > 0 ? "#ff4422" : "hsl(210 20% 70%)" }}>{gasCrit}</div>
-                <div style={{ fontSize: 9, color: "hsl(210 10% 45%)" }}>крит.</div>
-              </div>
-              <div className="text-center">
-                <div style={{ fontFamily: "Oswald, sans-serif", fontSize: 20, fontWeight: 700, color: gasWarn > 0 ? "#ffbb00" : "hsl(210 20% 70%)" }}>{gasWarn}</div>
-                <div style={{ fontSize: 9, color: "hsl(210 10% 45%)" }}>внимание</div>
-              </div>
-            </div>
-          </div>
         </div>
       </header>
 
@@ -396,46 +336,6 @@ export default function TabloPage() {
         </div>
       )}
 
-      {/* ══ ГАЗОВЫЙ КОНТРОЛЬ ═══════════════════════════════════════════════════ */}
-      <div className="flex-1 p-6">
-        <div style={{ fontSize: 10, color: "hsl(210 10% 45%)", textTransform: "uppercase", letterSpacing: "0.1em", fontWeight: 600, marginBottom: 10 }}>
-          Газовый контроль АГК
-        </div>
-        <div className="grid grid-cols-3 gap-3">
-          {sensors.map(s => {
-            const isCrit = s.status === "critical";
-            const isWarn = s.status === "warning";
-            const accent = isCrit ? "#ff4422" : isWarn ? "#ffbb00" : "#44cc77";
-            const bg     = isCrit ? "hsl(0 60% 8%)" : isWarn ? "hsl(40 60% 8%)" : "hsl(220 14% 9%)";
-            const border = isCrit ? "hsl(0 60% 28%)" : isWarn ? "hsl(40 60% 26%)" : "hsl(220 12% 16%)";
-            return (
-              <div key={s.id} className="rounded p-3" style={{ background: bg, border: `1px solid ${border}` }}>
-                <div className="flex justify-between items-center mb-2">
-                  <span style={{ fontFamily: "Oswald, sans-serif", fontWeight: 700, color: accent, fontSize: 14 }}>{s.id}</span>
-                  <span style={{ fontSize: 10, color: "hsl(210 10% 40%)", fontFamily: "IBM Plex Mono, monospace" }}>{s.updated}</span>
-                </div>
-                <div style={{ fontSize: 10, color: "hsl(210 10% 50%)", marginBottom: 6 }}>{s.location}</div>
-                <div className="grid grid-cols-3 gap-1">
-                  {[
-                    { l: "CH₄", v: s.ch4.toFixed(2), u: "%",   warn: s.ch4 >= 0.5, crit: s.ch4 >= 1.0 },
-                    { l: "CO",  v: s.co.toFixed(1),  u: "ppm", warn: s.co  >= 17,  crit: s.co  >= 34 },
-                    { l: "O₂",  v: s.o2.toFixed(2),  u: "%",   warn: s.o2  <= 19,  crit: s.o2  <= 17 },
-                  ].map(g => {
-                    const gc = g.crit ? "#ff4422" : g.warn ? "#ffbb00" : "#44cc77";
-                    return (
-                      <div key={g.l} style={{ textAlign: "center", background: "hsl(220 14% 12%)", borderRadius: 3, padding: "4px 2px" }}>
-                        <div style={{ fontSize: 8, color: "hsl(210 10% 45%)" }}>{g.l}</div>
-                        <div style={{ fontFamily: "IBM Plex Mono, monospace", fontSize: 13, fontWeight: 700, color: gc, lineHeight: 1.1 }}>{g.v}</div>
-                        <div style={{ fontSize: 8, color: "hsl(210 10% 40%)" }}>{g.u}</div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
     </div>
   );
 }
