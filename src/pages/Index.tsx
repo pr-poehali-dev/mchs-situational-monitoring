@@ -22,7 +22,7 @@ import {
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-type SectionId = "dashboard" | "tablo" | "statuses" | "journal" | "alerts" | "analytics" | "archive" | "systems" | "directory";
+type SectionId = "dashboard" | "journal" | "alerts" | "analytics" | "archive" | "systems" | "directory";
 
 interface Unit {
   id: string;
@@ -1110,8 +1110,6 @@ function DirectorySection() {
 
 const NAV: { id: SectionId; label: string; icon: string; badge?: number }[] = [
   { id: "dashboard",  label: "Главная панель",   icon: "LayoutDashboard" },
-  { id: "tablo",      label: "Табло",             icon: "Monitor" },
-  { id: "statuses",   label: "Статусы",           icon: "Activity" },
   { id: "journal",    label: "Журнал событий",    icon: "ScrollText" },
   { id: "alerts",     label: "Уведомления",       icon: "Bell", badge: 2 },
   { id: "analytics",  label: "Аналитика",         icon: "BarChart3" },
@@ -1129,8 +1127,6 @@ export default function Index() {
   const renderSection = () => {
     switch (section) {
       case "dashboard": return <Dashboard />;
-      case "tablo": return <Tablo />;
-      case "statuses": return <Statuses />;
       case "journal": return <Journal />;
       case "alerts": return <Alerts />;
       case "analytics": return <Analytics />;
