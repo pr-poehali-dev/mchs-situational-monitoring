@@ -31,10 +31,6 @@ const CITIES_GEO: { name: string; lat: number; lon: number; tz: string }[] = [
   { name: "Копейск",             lat: 55.1167, lon: 61.6167, tz: "Asia/Yekaterinburg" },
 ];
 
-function getSelectedCity() {
-  const name = localStorage.getItem(CITY_STORAGE_KEY) ?? "Москва";
-  return CITIES_GEO.find(c => c.name === name) ?? CITIES_GEO[0];
-}
 
 interface Weather {
   temp: number;
@@ -189,7 +185,7 @@ export default function TabloPage() {
   const pad = (n: number) => String(n).padStart(2, "0");
   const localTimeStr = `${pad(time.getHours())}:${pad(time.getMinutes())}:${pad(time.getSeconds())}`;
   const localDateStr = time.toLocaleDateString("ru-RU", { day: "2-digit", month: "long", year: "numeric", weekday: "long" });
-  const isSameTz = Intl.DateTimeFormat().resolvedOptions().timeZone === OBJ_TZ;
+  const isSameTz = Intl.DateTimeFormat().resolvedOptions().timeZone === "Europe/Moscow";
 
   const cancel = () => { setAcc({ ...DEFAULT_STATE }); saveAccident({ ...DEFAULT_STATE }); };
   const atype  = ACCIDENT_TYPES.find(t => t.id === acc.type)!;
