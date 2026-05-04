@@ -8,14 +8,10 @@ import {
   subscribeAccident,
 } from "@/lib/accidentStore";
 
-// ─── Координаты объекта ───────────────────────────────────────────────────────
 const OBJ_LAT = 55.7558;
 const OBJ_LON = 37.6173;
 const OBJ_TZ  = "Europe/Moscow";
-
 const WIND_DIRS = ["С","СВ","В","ЮВ","Ю","ЮЗ","З","СЗ"];
-
-// ─── Types ────────────────────────────────────────────────────────────────────
 
 interface Weather {
   temp: number;
@@ -28,23 +24,16 @@ interface Weather {
   updated: string;
 }
 
-// ─── Hooks ────────────────────────────────────────────────────────────────────
-
 function useClock() {
   const [time, setTime] = useState(new Date());
-  useEffect(() => {
-    const t = setInterval(() => setTime(new Date()), 1000);
-    return () => clearInterval(t);
-  }, []);
+  useEffect(() => { const t = setInterval(() => setTime(new Date()), 1000); return () => clearInterval(t); }, []);
   return time;
 }
 
 function useMoscowTime() {
   const [msk, setMsk] = useState("");
   useEffect(() => {
-    const update = () => {
-      setMsk(new Date().toLocaleTimeString("ru-RU", { timeZone: OBJ_TZ, hour: "2-digit", minute: "2-digit", second: "2-digit" }));
-    };
+    const update = () => setMsk(new Date().toLocaleTimeString("ru-RU", { timeZone: OBJ_TZ, hour: "2-digit", minute: "2-digit", second: "2-digit" }));
     update();
     const t = setInterval(update, 1000);
     return () => clearInterval(t);
@@ -54,17 +43,12 @@ function useMoscowTime() {
 
 function useWeather() {
   const [weather, setWeather] = useState<Weather | null>(null);
-  const [loading, setLoading] = useState(true);
-
   const WMO: Record<number, [string, string]> = {
-    0: ["Ясно","☀️"], 1: ["Малооблачно","🌤️"], 2: ["Переменная облачность","⛅"],
-    3: ["Пасмурно","☁️"], 45: ["Туман","🌫️"], 48: ["Изморозь","🌫️"],
-    51: ["Морось","🌦️"], 53: ["Морось","🌦️"], 55: ["Сильная морось","🌧️"],
-    61: ["Дождь","🌧️"], 63: ["Умеренный дождь","🌧️"], 65: ["Ливень","🌧️"],
-    71: ["Снег","🌨️"], 73: ["Умеренный снег","❄️"], 75: ["Метель","🌨️"],
-    80: ["Ливень","🌦️"], 81: ["Сильный ливень","🌧️"], 95: ["Гроза","⛈️"], 96: ["Гроза с градом","⛈️"],
+    0:["Ясно","☀️"],1:["Малооблачно","🌤️"],2:["Переменная облачность","⛅"],3:["Пасмурно","☁️"],
+    45:["Туман","🌫️"],48:["Изморозь","🌫️"],51:["Морось","🌦️"],53:["Морось","🌦️"],55:["Сильная морось","🌧️"],
+    61:["Дождь","🌧️"],63:["Умеренный дождь","🌧️"],65:["Ливень","🌧️"],71:["Снег","🌨️"],73:["Умеренный снег","❄️"],
+    75:["Метель","🌨️"],80:["Ливень","🌦️"],81:["Сильный ливень","🌧️"],95:["Гроза","⛈️"],96:["Гроза с градом","⛈️"],
   };
-
   useEffect(() => {
     const fetch_w = async () => {
       try {
@@ -74,29 +58,23 @@ function useWeather() {
         const c = data.current;
         const [desc, icon] = WMO[c.weather_code as number] ?? ["Нет данных","🌡️"];
         setWeather({
-          temp: Math.round(c.temperature_2m),
-          windSpeed: Math.round(c.wind_speed_10m),
-          windDir: c.wind_direction_10m,
-          humidity: c.relative_humidity_2m,
-          pressure: Math.round(c.surface_pressure * 0.750062),
-          desc, icon,
+          temp: Math.round(c.temperature_2m), windSpeed: Math.round(c.wind_speed_10m),
+          windDir: c.wind_direction_10m, humidity: c.relative_humidity_2m,
+          pressure: Math.round(c.surface_pressure * 0.750062), desc, icon,
           updated: new Date().toLocaleTimeString("ru-RU", { timeZone: OBJ_TZ, hour: "2-digit", minute: "2-digit" }),
         });
       } catch {
         setWeather({ temp: 0, windSpeed: 0, windDir: 0, humidity: 0, pressure: 0, desc: "Нет связи", icon: "❌", updated: "--:--" });
-      } finally {
-        setLoading(false);
       }
     };
     fetch_w();
     const t = setInterval(fetch_w, 5 * 60 * 1000);
     return () => clearInterval(t);
   }, []);
-
-  return { weather, loading };
+  return weather;
 }
 
-// ─── Печать ───────────────────────────────────────────────────────────────────
+// ─── Печать ──────────────────────────────────────────────────────────────────
 
 function printAccident(acc: AccidentState, weather: Weather | null) {
   const atype = ACCIDENT_TYPES.find(t => t.id === acc.type)!;
@@ -135,8 +113,8 @@ function printAccident(acc: AccidentState, weather: Weather | null) {
   <tr><td>Дежурный у средств связи</td><td>${acc.commDuty}</td></tr>
 </table>
 ${weather ? `<div class="sec">Погодные условия</div><table>
-  <tr><td>Температура воздуха</td><td>${weather.temp > 0 ? "+" : ""}${weather.temp} °C</td></tr>
-  <tr><td>Ветер</td><td>${weather.windSpeed} м/с, направление: ${WIND_DIRS[Math.round(weather.windDir / 45) % 8]}</td></tr>
+  <tr><td>Температура</td><td>${weather.temp > 0 ? "+" : ""}${weather.temp} °C</td></tr>
+  <tr><td>Ветер</td><td>${weather.windSpeed} м/с, ${WIND_DIRS[Math.round(weather.windDir / 45) % 8]}</td></tr>
   <tr><td>Влажность</td><td>${weather.humidity}%</td></tr>
   <tr><td>Давление</td><td>${weather.pressure} мм рт. ст.</td></tr>
   <tr><td>Описание</td><td>${weather.desc}</td></tr>
@@ -152,21 +130,20 @@ ${weather ? `<div class="sec">Погодные условия</div><table>
   setTimeout(() => win.print(), 400);
 }
 
-// ─── Main ────────────────────────────────────────────────────────────────────
+// ─── Main ─────────────────────────────────────────────────────────────────────
 
 export default function TabloPage() {
   const time    = useClock();
   const mskTime = useMoscowTime();
-  const { weather, loading: weatherLoading } = useWeather();
+  const weather = useWeather();
 
-  // ← читаем из localStorage и подписываемся на изменения из АРМ
   const [acc, setAcc] = useState<AccidentState>(loadAccident);
   useEffect(() => subscribeAccident(setAcc), []);
 
   const [flashRed, setFlashRed] = useState(false);
   useEffect(() => {
     if (!acc.active) { setFlashRed(false); return; }
-    const t = setInterval(() => setFlashRed(f => !f), 600);
+    const t = setInterval(() => setFlashRed(f => !f), 700);
     return () => clearInterval(t);
   }, [acc.active]);
 
@@ -175,167 +152,269 @@ export default function TabloPage() {
   const localDateStr = time.toLocaleDateString("ru-RU", { day: "2-digit", month: "long", year: "numeric", weekday: "long" });
   const isSameTz = Intl.DateTimeFormat().resolvedOptions().timeZone === OBJ_TZ;
 
-  const cancel = () => {
-    const cleared = { ...DEFAULT_STATE };
-    setAcc(cleared);
-    saveAccident(cleared);
+  const cancel = () => { setAcc({ ...DEFAULT_STATE }); saveAccident({ ...DEFAULT_STATE }); };
+  const atype  = ACCIDENT_TYPES.find(t => t.id === acc.type)!;
+
+  const C = {
+    bg:      acc.active ? (flashRed ? "hsl(0 70% 8%)" : "hsl(0 60% 5%)") : "hsl(220 20% 4%)",
+    border:  acc.active ? (flashRed ? "#ff3300" : "#881100") : "hsl(220 12% 14%)",
+    accent:  acc.active ? "#ff4422" : "hsl(14 90% 52%)",
   };
 
-  const atype = ACCIDENT_TYPES.find(t => t.id === acc.type)!;
-  const bgMain  = acc.active ? (flashRed ? "hsl(0 70% 8%)" : "hsl(0 60% 5%)") : "hsl(220 20% 4%)";
+  // Стиль метки-заголовка
+  const lbl = (color = "hsl(210 10% 45%)"): React.CSSProperties => ({
+    fontSize: 11, color, textTransform: "uppercase", letterSpacing: "0.1em", fontWeight: 600,
+    marginBottom: 4, fontFamily: "IBM Plex Sans, sans-serif",
+  });
 
   return (
     <div
-      className="min-h-screen flex flex-col select-none"
+      className="min-h-screen flex flex-col select-none overflow-hidden"
       style={{
-        background: bgMain,
-        backgroundImage: "linear-gradient(hsl(220 18% 9% / 0.5) 1px, transparent 1px), linear-gradient(90deg, hsl(220 18% 9% / 0.5) 1px, transparent 1px)",
+        background: C.bg,
+        backgroundImage: "linear-gradient(hsl(220 18% 9% / 0.4) 1px, transparent 1px), linear-gradient(90deg, hsl(220 18% 9% / 0.4) 1px, transparent 1px)",
         backgroundSize: "40px 40px",
         fontFamily: "IBM Plex Sans, sans-serif",
         color: "hsl(210 20% 92%)",
-        transition: "background 0.3s",
+        transition: "background 0.4s",
       }}
     >
 
-      {/* ══ ШАПКА ══════════════════════════════════════════════════════════════ */}
-      <header
-        className="flex items-center justify-between px-6 py-3 border-b flex-shrink-0"
-        style={{ borderColor: acc.active ? "hsl(0 80% 30%)" : "hsl(220 12% 14%)", background: "hsl(220 20% 4% / 0.95)" }}
-      >
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded flex items-center justify-center font-bold text-white text-lg flex-shrink-0"
-            style={{ background: acc.active ? "#cc0000" : "hsl(14 90% 52%)", fontFamily: "Oswald, sans-serif", transition: "background 0.3s" }}>
+      {/* ══ ШАПКА: лого + время + погода ════════════════════════════════════════ */}
+      <header className="flex items-center justify-between px-8 py-4 flex-shrink-0 border-b"
+        style={{ borderColor: C.border, background: "hsl(220 20% 3% / 0.95)", transition: "border-color 0.4s" }}>
+
+        {/* Лого */}
+        <div className="flex items-center gap-4">
+          <div className="w-10 h-10 rounded flex items-center justify-center font-bold text-white flex-shrink-0"
+            style={{ background: C.accent, fontFamily: "Oswald, sans-serif", fontSize: 20, transition: "background 0.4s" }}>
             В
           </div>
           <div>
-            <div style={{ fontSize: 9, color: "hsl(210 10% 50%)", textTransform: "uppercase", letterSpacing: "0.1em" }}>ФГУП ВГСЧ МЧС России</div>
-            <div style={{ fontFamily: "Oswald, sans-serif", fontSize: 18, fontWeight: 700, color: acc.active ? "#ff4444" : "hsl(14 90% 52%)", textTransform: "uppercase", letterSpacing: "0.05em", lineHeight: 1.1 }}>
+            <div style={{ fontSize: 10, color: "hsl(210 10% 45%)", textTransform: "uppercase", letterSpacing: "0.12em" }}>ФГУП ВГСЧ МЧС России</div>
+            <div style={{ fontFamily: "Oswald, sans-serif", fontSize: 20, fontWeight: 700, color: C.accent, textTransform: "uppercase", letterSpacing: "0.06em", lineHeight: 1.1, transition: "color 0.4s" }}>
               Оперативное табло
             </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-6">
-          {/* Местное время */}
+        {/* Время местное */}
+        <div className="flex items-center gap-8">
           <div className="text-center">
-            <div style={{ fontSize: 9, color: "hsl(210 10% 45%)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 1 }}>Местное</div>
-            <div style={{ fontFamily: "IBM Plex Mono, monospace", fontSize: 26, fontWeight: 700, lineHeight: 1 }}>{localTimeStr}</div>
-            <div style={{ fontSize: 10, color: "hsl(210 10% 50%)", marginTop: 1 }}>{localDateStr}</div>
+            <div style={lbl()}>Местное время</div>
+            <div style={{ fontFamily: "IBM Plex Mono, monospace", fontSize: 38, fontWeight: 700, lineHeight: 1, color: "hsl(210 20% 95%)" }}>
+              {localTimeStr}
+            </div>
+            <div style={{ fontSize: 11, color: "hsl(210 10% 50%)", marginTop: 2, textTransform: "capitalize" }}>{localDateStr}</div>
           </div>
 
           {!isSameTz && (
             <>
-              <div style={{ width: 1, height: 40, background: "hsl(220 12% 18%)" }} />
+              <div style={{ width: 1, height: 50, background: "hsl(220 12% 18%)" }} />
               <div className="text-center">
-                <div style={{ fontSize: 9, color: "hsl(210 10% 45%)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 1 }}>Москва (МСК)</div>
-                <div style={{ fontFamily: "IBM Plex Mono, monospace", fontSize: 26, fontWeight: 700, color: "hsl(14 90% 52%)", lineHeight: 1 }}>{mskTime}</div>
-                <div style={{ fontSize: 10, color: "hsl(210 10% 50%)", marginTop: 1 }}>UTC+3</div>
+                <div style={lbl()}>Москва (МСК)</div>
+                <div style={{ fontFamily: "IBM Plex Mono, monospace", fontSize: 38, fontWeight: 700, lineHeight: 1, color: C.accent }}>
+                  {mskTime}
+                </div>
+                <div style={{ fontSize: 11, color: "hsl(210 10% 50%)", marginTop: 2 }}>UTC+3</div>
               </div>
             </>
           )}
 
           {/* Погода */}
-          <div style={{ width: 1, height: 40, background: "hsl(220 12% 18%)" }} />
-          <div>
-            <div style={{ fontSize: 9, color: "hsl(210 10% 45%)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 3 }}>
-              Погода {weatherLoading ? "…" : `(обн. ${weather?.updated})`}
-            </div>
-            {weather ? (
-              <div className="flex items-center gap-2">
-                <span style={{ fontSize: 20 }}>{weather.icon}</span>
-                <div>
-                  <div style={{ fontFamily: "Oswald, sans-serif", fontSize: 20, fontWeight: 700, lineHeight: 1 }}>
-                    {weather.temp > 0 ? "+" : ""}{weather.temp}°C
-                  </div>
-                  <div style={{ fontSize: 10, color: "hsl(210 10% 55%)" }}>
-                    💨{weather.windSpeed}м/с {WIND_DIRS[Math.round(weather.windDir / 45) % 8]} · 💧{weather.humidity}% · {weather.pressure}мм
+          {weather && (
+            <>
+              <div style={{ width: 1, height: 50, background: "hsl(220 12% 18%)" }} />
+              <div>
+                <div style={lbl()}>Погода (обн. {weather.updated})</div>
+                <div className="flex items-center gap-3">
+                  <span style={{ fontSize: 32 }}>{weather.icon}</span>
+                  <div>
+                    <div style={{ fontFamily: "Oswald, sans-serif", fontSize: 28, fontWeight: 700, lineHeight: 1 }}>
+                      {weather.temp > 0 ? "+" : ""}{weather.temp}°C
+                    </div>
+                    <div style={{ fontSize: 12, color: "hsl(210 10% 55%)", marginTop: 2 }}>
+                      💨 {weather.windSpeed} м/с {WIND_DIRS[Math.round(weather.windDir / 45) % 8]}
+                      &nbsp;·&nbsp; 💧 {weather.humidity}%
+                      &nbsp;·&nbsp; {weather.pressure} мм
+                    </div>
                   </div>
                 </div>
               </div>
-            ) : <div style={{ fontSize: 12, color: "hsl(210 10% 45%)" }}>Загрузка…</div>}
-          </div>
-
+            </>
+          )}
         </div>
       </header>
 
-      {/* ══ КРАСНОЕ ТАБЛО АВАРИИ ═══════════════════════════════════════════════ */}
-      {acc.active && (
-        <div
-          className="mx-6 mt-4 rounded-lg px-8 py-5 flex items-start justify-between gap-6"
-          style={{
-            background: flashRed ? "hsl(0 80% 20%)" : "hsl(0 80% 15%)",
-            border: `2px solid ${flashRed ? "#ff3300" : "#aa2200"}`,
-            boxShadow: flashRed ? "0 0 40px hsl(0 80% 30%)" : "0 0 20px hsl(0 80% 20%)",
-            transition: "all 0.3s",
-          }}
-        >
-          {/* Вид + место */}
-          <div className="flex items-start gap-6">
-            <div style={{ fontFamily: "Oswald, sans-serif", fontSize: 48, fontWeight: 900, color: flashRed ? "#ff6644" : "#ff4422", letterSpacing: "0.06em", lineHeight: 1 }}>
+      {/* ══ БЛОК АВАРИИ ══════════════════════════════════════════════════════════ */}
+      {acc.active ? (
+        <div className="flex-1 flex flex-col px-8 py-6 gap-6">
+
+          {/* Строка 1: ВИД + МЕСТО — крупно, во всю ширину */}
+          <div className="rounded-xl px-10 py-8 flex items-center gap-10"
+            style={{
+              background: flashRed ? "hsl(0 80% 18%)" : "hsl(0 75% 12%)",
+              border: `3px solid ${flashRed ? "#ff3300" : "#881100"}`,
+              boxShadow: flashRed ? "0 0 60px hsl(0 80% 25%)" : "0 0 30px hsl(0 70% 15%)",
+              transition: "all 0.4s",
+            }}>
+
+            {/* ⚠ АВАРИЯ */}
+            <div style={{ fontFamily: "Oswald, sans-serif", fontSize: 64, fontWeight: 900,
+              color: flashRed ? "#ff6644" : "#ff4422", letterSpacing: "0.06em", lineHeight: 1, flexShrink: 0 }}>
               ⚠ АВАРИЯ
             </div>
-            <div style={{ width: 2, height: 55, background: "hsl(0 60% 30%)", marginTop: 4 }} />
-            <div>
-              <div style={{ fontFamily: "Oswald, sans-serif", fontSize: 32, fontWeight: 700, color: atype.color, textTransform: "uppercase", lineHeight: 1 }}>
+
+            <div style={{ width: 3, height: 80, background: "hsl(0 50% 35%)", flexShrink: 0 }} />
+
+            {/* Вид аварии */}
+            <div style={{ flexShrink: 0 }}>
+              <div style={lbl("hsl(0 30% 55%)")}>Вид аварии</div>
+              <div style={{ fontFamily: "Oswald, sans-serif", fontSize: 56, fontWeight: 900,
+                color: atype.color, textTransform: "uppercase", lineHeight: 1, letterSpacing: "0.04em" }}>
                 {atype.label}
               </div>
-              <div style={{ fontSize: 13, color: "hsl(0 20% 75%)", marginTop: 4 }}>{acc.opo}</div>
-              {acc.location && <div style={{ fontSize: 12, color: "hsl(0 20% 60%)", marginTop: 2 }}>📍 {acc.location}</div>}
             </div>
-          </div>
 
-          {/* Ответственные */}
-          <div className="grid grid-cols-2 gap-x-8 gap-y-1 flex-1 min-w-0">
-            {[
-              { label: "По отряду",             value: acc.commanderSquad },
-              { label: "По взводу / пункту",    value: acc.commanderPlatoon },
-              { label: "Командир отделения",    value: acc.commanderUnit },
-              { label: "Деж. у средств связи",  value: acc.commDuty },
-            ].map(r => (
-              <div key={r.label}>
-                <div style={{ fontSize: 9, color: "hsl(0 20% 50%)", textTransform: "uppercase", letterSpacing: "0.08em" }}>{r.label}</div>
-                <div style={{ fontFamily: "Oswald, sans-serif", fontSize: 15, fontWeight: 600, color: "#ffccaa" }}>{r.value}</div>
+            <div style={{ width: 3, height: 80, background: "hsl(0 50% 35%)", flexShrink: 0 }} />
+
+            {/* Место аварии */}
+            <div className="flex-1 min-w-0">
+              <div style={lbl("hsl(0 30% 55%)")}>ОПО / Место аварии</div>
+              <div style={{ fontFamily: "Oswald, sans-serif", fontSize: 34, fontWeight: 700,
+                color: "hsl(0 10% 92%)", lineHeight: 1.2 }}>
+                {acc.opo}
               </div>
-            ))}
-          </div>
-
-          {/* Время + кнопки */}
-          <div className="flex flex-col items-end gap-2 flex-shrink-0">
-            <div className="text-right">
-              <div style={{ fontSize: 9, color: "hsl(0 20% 50%)", textTransform: "uppercase" }}>Объявлено</div>
-              <div style={{ fontFamily: "IBM Plex Mono, monospace", fontSize: 22, fontWeight: 700, color: "#ff8866" }}>{acc.startedAt}</div>
-              <div style={{ fontSize: 10, color: "hsl(0 20% 45%)" }}>МСК: {acc.startedAtMsk}</div>
+              {acc.location && (
+                <div style={{ fontSize: 22, color: "hsl(0 20% 70%)", marginTop: 6 }}>
+                  📍 {acc.location}
+                </div>
+              )}
             </div>
-            <button
-              onClick={() => printAccident(acc, weather)}
-              style={{ background: "hsl(0 50% 25%)", border: "1px solid hsl(0 50% 38%)", color: "#ffcccc", padding: "7px 14px", borderRadius: 6, fontSize: 12, cursor: "pointer", fontFamily: "Oswald, sans-serif", letterSpacing: "0.05em", textTransform: "uppercase" }}
-            >
-              🖨 Печать
-            </button>
-            <button
-              onClick={cancel}
-              style={{ background: "hsl(220 14% 12%)", border: "1px solid hsl(220 12% 22%)", color: "hsl(210 10% 55%)", padding: "5px 12px", borderRadius: 6, fontSize: 11, cursor: "pointer" }}
-            >
-              Отбой
-            </button>
+
+            {/* Время объявления */}
+            <div style={{ flexShrink: 0, textAlign: "right" }}>
+              <div style={lbl("hsl(0 30% 55%)")}>Объявлено</div>
+              <div style={{ fontFamily: "IBM Plex Mono, monospace", fontSize: 40, fontWeight: 700,
+                color: "#ff9977", lineHeight: 1 }}>
+                {acc.startedAt}
+              </div>
+              <div style={{ fontSize: 14, color: "hsl(0 20% 50%)", marginTop: 4 }}>МСК: {acc.startedAtMsk}</div>
+            </div>
+          </div>
+
+          {/* Строка 2: Ответственные + Погода */}
+          <div className="grid grid-cols-2 gap-6 flex-1">
+
+            {/* Ответственные лица */}
+            <div className="rounded-xl p-8"
+              style={{ background: "hsl(220 16% 9%)", border: "1px solid hsl(220 12% 18%)" }}>
+              <div style={lbl()}>Ответственные лица</div>
+              <div className="grid grid-cols-2 gap-6 mt-4">
+                {[
+                  { label: "По отряду",            value: acc.commanderSquad },
+                  { label: "По взводу / пункту",   value: acc.commanderPlatoon },
+                  { label: "Командир отделения",   value: acc.commanderUnit },
+                  { label: "Деж. у средств связи", value: acc.commDuty },
+                ].map(r => (
+                  <div key={r.label}>
+                    <div style={{ fontSize: 12, color: "hsl(210 10% 45%)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 4 }}>
+                      {r.label}
+                    </div>
+                    <div style={{ fontFamily: "Oswald, sans-serif", fontSize: 28, fontWeight: 700, color: "#ffddbb", lineHeight: 1.1 }}>
+                      {r.value || "—"}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Погода + кнопки */}
+            <div className="flex flex-col gap-4">
+              {weather && (
+                <div className="rounded-xl p-8 flex-1"
+                  style={{ background: "hsl(220 16% 9%)", border: "1px solid hsl(220 12% 18%)" }}>
+                  <div style={lbl()}>Погодные условия</div>
+                  <div className="flex items-center gap-4 mt-4">
+                    <span style={{ fontSize: 48 }}>{weather.icon}</span>
+                    <div>
+                      <div style={{ fontFamily: "Oswald, sans-serif", fontSize: 48, fontWeight: 700, lineHeight: 1 }}>
+                        {weather.temp > 0 ? "+" : ""}{weather.temp}°C
+                      </div>
+                      <div style={{ fontSize: 16, color: "hsl(210 10% 55%)", marginTop: 6 }}>{weather.desc}</div>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-3 gap-4 mt-6">
+                    {[
+                      { l: "Ветер", v: `${weather.windSpeed} м/с ${WIND_DIRS[Math.round(weather.windDir / 45) % 8]}` },
+                      { l: "Влажность", v: `${weather.humidity}%` },
+                      { l: "Давление", v: `${weather.pressure} мм` },
+                    ].map(r => (
+                      <div key={r.l} className="rounded-lg p-3 text-center"
+                        style={{ background: "hsl(220 14% 13%)" }}>
+                        <div style={{ fontSize: 11, color: "hsl(210 10% 45%)", textTransform: "uppercase", letterSpacing: "0.06em" }}>{r.l}</div>
+                        <div style={{ fontFamily: "Oswald, sans-serif", fontSize: 22, fontWeight: 700, marginTop: 2 }}>{r.v}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Кнопки управления */}
+              <div className="flex gap-3">
+                <button onClick={() => printAccident(acc, weather)}
+                  className="flex-1 py-4 rounded-xl font-bold uppercase tracking-widest transition-all hover:opacity-90"
+                  style={{ background: "hsl(0 50% 22%)", border: "1px solid hsl(0 50% 35%)",
+                    color: "#ffcccc", fontFamily: "Oswald, sans-serif", fontSize: 16, letterSpacing: "0.1em" }}>
+                  🖨 Распечатать
+                </button>
+                <button onClick={cancel}
+                  className="flex-1 py-4 rounded-xl transition-all hover:opacity-90"
+                  style={{ background: "hsl(220 14% 13%)", border: "1px solid hsl(220 12% 22%)",
+                    color: "hsl(210 10% 55%)", fontSize: 15 }}>
+                  Отбой аварии
+                </button>
+              </div>
+            </div>
           </div>
         </div>
-      )}
 
-      {/* ══ ШТАТНЫЙ РЕЖИМ ══════════════════════════════════════════════════════ */}
-      {!acc.active && (
-        <div className="mx-6 mt-4 rounded px-6 py-3 flex items-center gap-3"
-          style={{ background: "hsl(220 14% 9%)", border: "1px solid hsl(220 12% 16%)" }}>
-          <div className="w-2 h-2 rounded-full" style={{ background: "hsl(142 70% 45%)" }} />
-          <span style={{ fontFamily: "Oswald, sans-serif", fontSize: 14, color: "hsl(142 70% 45%)", textTransform: "uppercase", letterSpacing: "0.08em" }}>
-            Штатный режим — аварий нет
-          </span>
-          <span style={{ fontSize: 11, color: "hsl(210 10% 40%)", marginLeft: 6 }}>
-            Управление аварией — в АРМ дежурного
-          </span>
+      ) : (
+        /* ══ ШТАТНЫЙ РЕЖИМ ════════════════════════════════════════════════════ */
+        <div className="flex-1 flex flex-col items-center justify-center gap-6 p-12">
+          <div className="rounded-2xl px-12 py-8 text-center"
+            style={{ background: "hsl(220 14% 9%)", border: "1px solid hsl(220 12% 16%)" }}>
+            <div className="flex items-center justify-center gap-3 mb-3">
+              <div className="w-3 h-3 rounded-full" style={{ background: "hsl(142 70% 45%)" }} />
+              <span style={{ fontFamily: "Oswald, sans-serif", fontSize: 28, color: "hsl(142 70% 45%)",
+                textTransform: "uppercase", letterSpacing: "0.1em" }}>
+                Штатный режим — аварий нет
+              </span>
+            </div>
+            <div style={{ fontSize: 14, color: "hsl(210 10% 40%)" }}>
+              Управление аварией — в АРМ дежурного
+            </div>
+          </div>
+
+          {/* Погода в штатном режиме */}
+          {weather && (
+            <div className="flex items-center gap-8 rounded-2xl px-10 py-6"
+              style={{ background: "hsl(220 14% 9%)", border: "1px solid hsl(220 12% 16%)" }}>
+              <span style={{ fontSize: 48 }}>{weather.icon}</span>
+              <div>
+                <div style={{ fontFamily: "Oswald, sans-serif", fontSize: 48, fontWeight: 700, lineHeight: 1 }}>
+                  {weather.temp > 0 ? "+" : ""}{weather.temp}°C &nbsp; {weather.desc}
+                </div>
+                <div style={{ fontSize: 16, color: "hsl(210 10% 50%)", marginTop: 6 }}>
+                  💨 {weather.windSpeed} м/с {WIND_DIRS[Math.round(weather.windDir / 45) % 8]}
+                  &nbsp;·&nbsp; 💧 {weather.humidity}%
+                  &nbsp;·&nbsp; {weather.pressure} мм рт.ст.
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
-
     </div>
   );
 }
