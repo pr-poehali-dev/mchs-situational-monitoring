@@ -320,6 +320,160 @@ function AccidentPanel() {
   );
 }
 
+// ─── Weather Widget ───────────────────────────────────────────────────────────
+
+const WMO_LABELS: Record<number, [string, string]> = {
+  0:["Ясно","☀️"],1:["Малооблачно","🌤️"],2:["Переменная облачность","⛅"],3:["Пасмурно","☁️"],
+  45:["Туман","🌫️"],48:["Изморозь","🌫️"],51:["Морось","🌦️"],53:["Морось","🌦️"],55:["Сильная морось","🌧️"],
+  61:["Дождь","🌧️"],63:["Умеренный дождь","🌧️"],65:["Ливень","🌧️"],71:["Снег","🌨️"],73:["Умеренный снег","❄️"],
+  75:["Метель","🌨️"],80:["Ливень","🌦️"],81:["Сильный ливень","🌧️"],95:["Гроза","⛈️"],96:["Гроза с градом","⛈️"],
+};
+
+const WIND_DIRS_W = ["С","СВ","В","ЮВ","Ю","ЮЗ","З","СЗ"];
+
+const CITIES: { name: string; lat: number; lon: number; tz: string }[] = [
+  { name: "Москва",        lat: 55.7558, lon: 37.6173, tz: "Europe/Moscow" },
+  { name: "Санкт-Петербург", lat: 59.9343, lon: 30.3351, tz: "Europe/Moscow" },
+  { name: "Новосибирск",   lat: 54.9833, lon: 82.8964, tz: "Asia/Novosibirsk" },
+  { name: "Екатеринбург",  lat: 56.8431, lon: 60.6454, tz: "Asia/Yekaterinburg" },
+  { name: "Кемерово",      lat: 55.3908, lon: 86.0847, tz: "Asia/Krasnoyarsk" },
+  { name: "Ростов-на-Дону",lat: 47.2224, lon: 39.7187, tz: "Europe/Moscow" },
+  { name: "Воркута",       lat: 67.4992, lon: 64.0552, tz: "Europe/Moscow" },
+  { name: "Инта",          lat: 66.0339, lon: 60.1203, tz: "Europe/Moscow" },
+  { name: "Шахты",         lat: 47.7083, lon: 40.2167, tz: "Europe/Moscow" },
+  { name: "Прокопьевск",   lat: 53.8872, lon: 86.7355, tz: "Asia/Krasnoyarsk" },
+];
+
+const CITY_STORAGE_KEY = "vgsch_weather_city";
+
+interface WeatherData {
+  temp: number;
+  windSpeed: number;
+  windDir: number;
+  humidity: number;
+  pressure: number;
+  desc: string;
+  icon: string;
+  updated: string;
+}
+
+function WeatherWidget() {
+  const savedCity = localStorage.getItem(CITY_STORAGE_KEY) ?? CITIES[0].name;
+  const [cityName, setCityName] = useState(savedCity);
+  const [weather, setWeather] = useState<WeatherData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
+  const city = CITIES.find(c => c.name === cityName) ?? CITIES[0];
+
+  const fetchWeather = async (c: typeof CITIES[0]) => {
+    setLoading(true);
+    setError(false);
+    try {
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${c.lat}&longitude=${c.lon}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,wind_direction_10m,surface_pressure,weather_code&wind_speed_unit=ms&timezone=${c.tz}`;
+      const res = await fetch(url);
+      const data = await res.json();
+      const cur = data.current;
+      const [desc, icon] = WMO_LABELS[cur.weather_code as number] ?? ["Нет данных", "🌡️"];
+      setWeather({
+        temp: Math.round(cur.temperature_2m),
+        windSpeed: Math.round(cur.wind_speed_10m),
+        windDir: cur.wind_direction_10m,
+        humidity: cur.relative_humidity_2m,
+        pressure: Math.round(cur.surface_pressure * 0.750062),
+        desc, icon,
+        updated: new Date().toLocaleTimeString("ru-RU", { timeZone: c.tz, hour: "2-digit", minute: "2-digit" }),
+      });
+    } catch {
+      setError(true);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchWeather(city); }, [cityName]);
+  useEffect(() => {
+    const t = setInterval(() => fetchWeather(city), 5 * 60 * 1000);
+    return () => clearInterval(t);
+  }, [cityName]);
+
+  const handleCity = (name: string) => {
+    setCityName(name);
+    localStorage.setItem(CITY_STORAGE_KEY, name);
+  };
+
+  const sel: React.CSSProperties = {
+    background: "hsl(var(--secondary))", border: "1px solid hsl(var(--border))",
+    color: "hsl(var(--foreground))", padding: "3px 6px", borderRadius: 4,
+    fontSize: 11, fontFamily: "IBM Plex Sans, sans-serif", outline: "none", width: "100%",
+  };
+
+  return (
+    <div className="panel-card flex flex-col">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+        <h2 className="text-sm font-semibold uppercase tracking-widest" style={{ fontFamily: "Oswald" }}>Погода</h2>
+        {weather && (
+          <span className="text-xs mono" style={{ color: "hsl(var(--muted-foreground))" }}>обн. {weather.updated}</span>
+        )}
+      </div>
+
+      {/* Выбор города */}
+      <div className="px-4 pt-3">
+        <label className="text-xs block mb-1 uppercase tracking-widest" style={{ color: "hsl(var(--muted-foreground))" }}>Город</label>
+        <select style={sel} value={cityName} onChange={e => handleCity(e.target.value)}>
+          {CITIES.map(c => <option key={c.name} value={c.name}>{c.name}</option>)}
+        </select>
+      </div>
+
+      {/* Данные */}
+      <div className="flex-1 px-4 py-4">
+        {loading && (
+          <div className="text-xs text-center py-4" style={{ color: "hsl(var(--muted-foreground))" }}>Загрузка…</div>
+        )}
+        {error && !loading && (
+          <div className="text-xs text-center py-4" style={{ color: "hsl(var(--status-critical))" }}>Нет соединения с сервером погоды</div>
+        )}
+        {weather && !loading && (
+          <div className="space-y-3">
+            {/* Главное */}
+            <div className="flex items-center gap-3">
+              <span style={{ fontSize: 36 }}>{weather.icon}</span>
+              <div>
+                <div style={{ fontFamily: "Oswald, sans-serif", fontSize: 32, fontWeight: 700, lineHeight: 1 }}>
+                  {weather.temp > 0 ? "+" : ""}{weather.temp}°C
+                </div>
+                <div className="text-xs mt-0.5" style={{ color: "hsl(var(--muted-foreground))" }}>{weather.desc}</div>
+              </div>
+            </div>
+
+            {/* Детали */}
+            <div className="space-y-1.5 text-xs">
+              {[
+                { label: "Ветер",     value: `${weather.windSpeed} м/с, ${WIND_DIRS_W[Math.round(weather.windDir / 45) % 8]}` },
+                { label: "Влажность", value: `${weather.humidity}%` },
+                { label: "Давление",  value: `${weather.pressure} мм рт.ст.` },
+              ].map(r => (
+                <div key={r.label} className="flex justify-between py-1 border-b border-border last:border-0">
+                  <span style={{ color: "hsl(var(--muted-foreground))" }}>{r.label}</span>
+                  <span className="mono font-medium">{r.value}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* Кнопка обновить */}
+            <button
+              onClick={() => fetchWeather(city)}
+              className="w-full text-xs py-1.5 rounded border border-border hover:bg-secondary transition-colors mt-1"
+              style={{ color: "hsl(var(--muted-foreground))" }}>
+              Обновить
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function Dashboard() {
   const [dir, setDir] = useState<Directory>(loadDirectory);
   useEffect(() => subscribeDirectory(setDir), []);
@@ -364,28 +518,7 @@ function Dashboard() {
           </div>
         </div>
 
-        <div className="panel-card">
-          <div className="flex items-center justify-between px-4 py-3 border-b border-border">
-            <h2 className="text-sm font-semibold uppercase tracking-widest" style={{ fontFamily: "Oswald" }}>Уведомления</h2>
-            <span className="tag blink" style={{ background: "hsl(var(--status-critical) / 0.15)", color: "hsl(var(--status-critical))" }}>
-              {ALERTS.filter(a => !a.read).length} новых
-            </span>
-          </div>
-          <div className="divide-y divide-border">
-            {ALERTS.map(a => (
-              <div key={a.id} className={`px-4 py-3 ${a.read ? "opacity-50" : ""}`}>
-                <div className="flex items-start gap-2">
-                  <span className={`status-dot mt-1.5 ${a.level === "critical" ? "status-critical" : "status-warning"} ${a.level === "critical" && !a.read ? "pulse-ring" : ""}`} />
-                  <div className="flex-1 min-w-0">
-                    <div className="text-xs font-semibold leading-tight">{a.title}</div>
-                    <div className="text-xs mt-0.5 leading-tight" style={{ color: "hsl(var(--muted-foreground))" }}>{a.description}</div>
-                    <div className="mono text-xs mt-1" style={{ color: "hsl(var(--muted-foreground))" }}>{a.time}</div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+        <WeatherWidget />
       </div>
 
       <AccidentPanel />
