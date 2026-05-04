@@ -1,5 +1,16 @@
 import { useState, useEffect } from "react";
 import Icon from "@/components/ui/icon";
+import {
+  type AccidentState,
+  ACCIDENT_TYPES,
+  OPO_LIST,
+  PERSONNEL,
+  DEFAULT_STATE,
+  loadAccident,
+  saveAccident,
+  clearAccident,
+  subscribeAccident,
+} from "@/lib/accidentStore";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -117,6 +128,170 @@ function StatusDot({ status }: { status: Unit["status"] }) {
 
 // ─── Sections ────────────────────────────────────────────────────────────────
 
+function AccidentPanel() {
+  const [acc, setAcc] = useState<AccidentState>(loadAccident);
+
+  // Подписка на изменения из Табло (если там нажали «Отбой»)
+  useEffect(() => subscribeAccident(setAcc), []);
+
+  const update = (patch: Partial<AccidentState>) => {
+    const next = { ...acc, ...patch };
+    setAcc(next);
+    saveAccident(next);
+  };
+
+  const declare = () => {
+    const MSK_TZ = "Europe/Moscow";
+    const localNow = new Date().toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+    const mskNow   = new Date().toLocaleTimeString("ru-RU", { timeZone: MSK_TZ, hour: "2-digit", minute: "2-digit", second: "2-digit" });
+    const next = { ...acc, active: true, startedAt: localNow, startedAtMsk: mskNow };
+    setAcc(next);
+    saveAccident(next);
+  };
+
+  const cancel = () => {
+    clearAccident();
+    setAcc({ ...DEFAULT_STATE });
+  };
+
+  const atype = ACCIDENT_TYPES.find(t => t.id === acc.type)!;
+
+  const sel: React.CSSProperties = {
+    background: "hsl(var(--secondary))",
+    border: "1px solid hsl(var(--border))",
+    color: "hsl(var(--foreground))",
+    padding: "5px 8px",
+    borderRadius: 4,
+    fontSize: 12,
+    fontFamily: "IBM Plex Sans, sans-serif",
+    width: "100%",
+    outline: "none",
+  };
+
+  const inp: React.CSSProperties = { ...sel };
+
+  return (
+    <div className="panel-card">
+      {/* Шапка */}
+      <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+        <div className="flex items-center gap-2">
+          <h2 className="text-sm font-semibold uppercase tracking-widest" style={{ fontFamily: "Oswald" }}>
+            Управление аварией
+          </h2>
+          {acc.active && (
+            <span className="tag blink text-xs" style={{ background: "hsl(var(--status-critical) / 0.15)", color: "hsl(var(--status-critical))" }}>
+              АВАРИЯ ОБЪЯВЛЕНА
+            </span>
+          )}
+        </div>
+        <button
+          onClick={() => window.open("/tablo", "_blank", "noopener,noreferrer")}
+          className="flex items-center gap-1.5 text-xs px-2 py-1 rounded border border-border hover:bg-secondary transition-colors"
+          style={{ color: "hsl(var(--muted-foreground))" }}
+        >
+          <Icon name="Monitor" size={12} />
+          Открыть табло
+        </button>
+      </div>
+
+      <div className="p-4 grid grid-cols-3 gap-4">
+        {/* Колонка 1: тип + ОПО */}
+        <div className="space-y-3">
+          <div>
+            <div className="text-xs uppercase tracking-widest mb-2" style={{ color: "hsl(var(--muted-foreground))" }}>Вид аварии</div>
+            <div className="space-y-1">
+              {ACCIDENT_TYPES.map(t => (
+                <button
+                  key={t.id}
+                  onClick={() => update({ type: t.id })}
+                  className="w-full text-left px-3 py-1.5 rounded text-xs transition-all"
+                  style={{
+                    background: acc.type === t.id ? t.bg : "hsl(var(--secondary))",
+                    border: `1px solid ${acc.type === t.id ? t.color + "55" : "hsl(var(--border))"}`,
+                    color: acc.type === t.id ? t.color : "hsl(var(--muted-foreground))",
+                    fontFamily: "Oswald, sans-serif",
+                    fontWeight: acc.type === t.id ? 700 : 400,
+                    letterSpacing: "0.04em",
+                  }}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Колонка 2: ОПО + место + кнопка */}
+        <div className="space-y-3">
+          <div>
+            <label className="text-xs uppercase tracking-widest block mb-1" style={{ color: "hsl(var(--muted-foreground))" }}>ОПО</label>
+            <select style={sel} value={acc.opo} onChange={e => update({ opo: e.target.value })}>
+              {OPO_LIST.map(o => <option key={o} value={o}>{o}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="text-xs uppercase tracking-widest block mb-1" style={{ color: "hsl(var(--muted-foreground))" }}>Место аварии (уточнение)</label>
+            <input style={inp} value={acc.location} onChange={e => update({ location: e.target.value })} placeholder="напр. гор. -620 м, камера №7" />
+          </div>
+
+          {/* Статус активной аварии */}
+          {acc.active && (
+            <div className="rounded p-3" style={{ background: "hsl(var(--status-critical) / 0.08)", border: "1px solid hsl(var(--status-critical) / 0.3)" }}>
+              <div className="text-xs mb-1" style={{ color: "hsl(var(--muted-foreground))" }}>Объявлено</div>
+              <div className="font-semibold" style={{ fontFamily: "Oswald", color: "hsl(var(--status-critical))", fontSize: 18 }}>
+                {atype.label}
+              </div>
+              <div className="mono text-xs mt-1" style={{ color: "hsl(var(--muted-foreground))" }}>
+                {acc.startedAt} (МСК: {acc.startedAtMsk})
+              </div>
+              <div className="text-xs mt-1 truncate" style={{ color: "hsl(var(--muted-foreground))" }}>{acc.opo}</div>
+            </div>
+          )}
+
+          {/* Кнопка */}
+          <div className="pt-1">
+            {!acc.active ? (
+              <button
+                onClick={declare}
+                className="w-full py-3 rounded font-bold uppercase tracking-widest transition-all hover:opacity-90"
+                style={{ background: "hsl(var(--status-critical))", color: "white", fontFamily: "Oswald", fontSize: 15, letterSpacing: "0.1em" }}
+              >
+                🚨 ОБЪЯВИТЬ АВАРИЮ
+              </button>
+            ) : (
+              <button
+                onClick={cancel}
+                className="w-full py-2 rounded border border-border hover:bg-secondary transition-colors text-sm"
+                style={{ color: "hsl(var(--muted-foreground))" }}
+              >
+                Отбой аварии
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Колонка 3: ответственные */}
+        <div className="space-y-3">
+          <div className="text-xs uppercase tracking-widest mb-1" style={{ color: "hsl(var(--muted-foreground))" }}>Ответственные лица</div>
+          {[
+            { label: "Командир отряда",       field: "commanderSquad"   as const },
+            { label: "Командир взвода / пункта", field: "commanderPlatoon" as const },
+            { label: "Командир отделения",     field: "commanderUnit"    as const },
+            { label: "Деж. у средств связи",   field: "commDuty"         as const },
+          ].map(({ label, field }) => (
+            <div key={field}>
+              <label className="text-xs block mb-1" style={{ color: "hsl(var(--muted-foreground))" }}>{label}</label>
+              <select style={sel} value={acc[field]} onChange={e => update({ [field]: e.target.value })}>
+                {PERSONNEL.map(p => <option key={p} value={p}>{p}</option>)}
+              </select>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function Dashboard() {
   const counts = {
     active: UNITS.filter(u => u.status === "active").length,
@@ -211,6 +386,8 @@ function Dashboard() {
           </div>
         </div>
       </div>
+
+      <AccidentPanel />
 
       <div className="panel-card">
         <div className="flex items-center justify-between px-4 py-3 border-b border-border">
