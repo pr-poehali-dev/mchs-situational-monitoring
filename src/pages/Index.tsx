@@ -332,16 +332,22 @@ const WMO_LABELS: Record<number, [string, string]> = {
 const WIND_DIRS_W = ["С","СВ","В","ЮВ","Ю","ЮЗ","З","СЗ"];
 
 const CITIES: { name: string; lat: number; lon: number; tz: string }[] = [
-  { name: "Москва",        lat: 55.7558, lon: 37.6173, tz: "Europe/Moscow" },
-  { name: "Санкт-Петербург", lat: 59.9343, lon: 30.3351, tz: "Europe/Moscow" },
-  { name: "Новосибирск",   lat: 54.9833, lon: 82.8964, tz: "Asia/Novosibirsk" },
-  { name: "Екатеринбург",  lat: 56.8431, lon: 60.6454, tz: "Asia/Yekaterinburg" },
-  { name: "Кемерово",      lat: 55.3908, lon: 86.0847, tz: "Asia/Krasnoyarsk" },
-  { name: "Ростов-на-Дону",lat: 47.2224, lon: 39.7187, tz: "Europe/Moscow" },
-  { name: "Воркута",       lat: 67.4992, lon: 64.0552, tz: "Europe/Moscow" },
-  { name: "Инта",          lat: 66.0339, lon: 60.1203, tz: "Europe/Moscow" },
-  { name: "Шахты",         lat: 47.7083, lon: 40.2167, tz: "Europe/Moscow" },
-  { name: "Прокопьевск",   lat: 53.8872, lon: 86.7355, tz: "Asia/Krasnoyarsk" },
+  { name: "Москва",              lat: 55.7558, lon: 37.6173, tz: "Europe/Moscow" },
+  { name: "Санкт-Петербург",    lat: 59.9343, lon: 30.3351, tz: "Europe/Moscow" },
+  { name: "Новосибирск",         lat: 54.9833, lon: 82.8964, tz: "Asia/Novosibirsk" },
+  { name: "Екатеринбург",        lat: 56.8431, lon: 60.6454, tz: "Asia/Yekaterinburg" },
+  { name: "Кемерово",            lat: 55.3908, lon: 86.0847, tz: "Asia/Krasnoyarsk" },
+  { name: "Ростов-на-Дону",     lat: 47.2224, lon: 39.7187, tz: "Europe/Moscow" },
+  { name: "Воркута",             lat: 67.4992, lon: 64.0552, tz: "Europe/Moscow" },
+  { name: "Инта",                lat: 66.0339, lon: 60.1203, tz: "Europe/Moscow" },
+  { name: "Шахты",               lat: 47.7083, lon: 40.2167, tz: "Europe/Moscow" },
+  { name: "Прокопьевск",         lat: 53.8872, lon: 86.7355, tz: "Asia/Krasnoyarsk" },
+  { name: "Сибай",               lat: 52.7167, lon: 58.6667, tz: "Asia/Yekaterinburg" },
+  { name: "Соль-Илецк",          lat: 51.1614, lon: 54.9986, tz: "Asia/Yekaterinburg" },
+  { name: "Гай",                 lat: 51.4667, lon: 58.4500, tz: "Asia/Yekaterinburg" },
+  { name: "Пласт",               lat: 54.3667, lon: 60.8167, tz: "Asia/Yekaterinburg" },
+  { name: "пос. Межозерный",     lat: 54.0600, lon: 59.8700, tz: "Asia/Yekaterinburg" },
+  { name: "Копейск",             lat: 55.1167, lon: 61.6167, tz: "Asia/Yekaterinburg" },
 ];
 
 const CITY_STORAGE_KEY = "vgsch_weather_city";
@@ -543,6 +549,72 @@ function Dashboard() {
   );
 }
 
+function TabloWeather() {
+  const savedCity = localStorage.getItem(CITY_STORAGE_KEY) ?? CITIES[0].name;
+  const [cityName, setCityName] = useState(savedCity);
+  const [weather, setWeather] = useState<WeatherData | null>(null);
+
+  const city = CITIES.find(c => c.name === cityName) ?? CITIES[0];
+
+  const fetchW = async (c: typeof CITIES[0]) => {
+    try {
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${c.lat}&longitude=${c.lon}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,wind_direction_10m,surface_pressure,weather_code&wind_speed_unit=ms&timezone=${c.tz}`;
+      const res = await fetch(url);
+      const data = await res.json();
+      const cur = data.current;
+      const [desc, icon] = WMO_LABELS[cur.weather_code as number] ?? ["Нет данных", "🌡️"];
+      setWeather({
+        temp: Math.round(cur.temperature_2m),
+        windSpeed: Math.round(cur.wind_speed_10m),
+        windDir: cur.wind_direction_10m,
+        humidity: cur.relative_humidity_2m,
+        pressure: Math.round(cur.surface_pressure * 0.750062),
+        desc, icon,
+        updated: new Date().toLocaleTimeString("ru-RU", { timeZone: c.tz, hour: "2-digit", minute: "2-digit" }),
+      });
+    } catch { /* silent */ }
+  };
+
+  useEffect(() => { fetchW(city); }, [cityName]);
+  useEffect(() => {
+    const t = setInterval(() => fetchW(city), 5 * 60 * 1000);
+    return () => clearInterval(t);
+  }, [cityName]);
+
+  const handleCity = (name: string) => {
+    setCityName(name);
+    localStorage.setItem(CITY_STORAGE_KEY, name);
+  };
+
+  const sel: React.CSSProperties = {
+    background: "hsl(var(--secondary))", border: "1px solid hsl(var(--border))",
+    color: "hsl(var(--foreground))", padding: "2px 6px", borderRadius: 4,
+    fontSize: 11, fontFamily: "IBM Plex Sans, sans-serif", outline: "none",
+  };
+
+  return (
+    <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2">
+        {weather && <span style={{ fontSize: 22 }}>{weather.icon}</span>}
+        {weather && (
+          <span style={{ fontFamily: "Oswald", fontSize: 22, fontWeight: 700 }}>
+            {weather.temp > 0 ? "+" : ""}{weather.temp}°C
+          </span>
+        )}
+        {weather && (
+          <div className="text-xs" style={{ color: "hsl(var(--muted-foreground))", lineHeight: 1.3 }}>
+            <div>{weather.desc}</div>
+            <div>Ветер {weather.windSpeed} м/с · {weather.pressure} мм</div>
+          </div>
+        )}
+      </div>
+      <select style={sel} value={cityName} onChange={e => handleCity(e.target.value)}>
+        {CITIES.map(c => <option key={c.name} value={c.name}>{c.name}</option>)}
+      </select>
+    </div>
+  );
+}
+
 function Tablo() {
   const critical = UNITS.filter(u => u.status === "critical");
   const active = UNITS.filter(u => u.status === "active");
@@ -557,9 +629,12 @@ function Tablo() {
             ОПЕРАТИВНОЕ ТАБЛО
           </h1>
         </div>
-        <div className="text-right">
-          <div className="text-xs uppercase tracking-widest mb-1" style={{ color: "hsl(var(--muted-foreground))" }}>Время</div>
-          <Clock />
+        <div className="flex items-center gap-6">
+          <TabloWeather />
+          <div className="text-right">
+            <div className="text-xs uppercase tracking-widest mb-1" style={{ color: "hsl(var(--muted-foreground))" }}>Время</div>
+            <Clock />
+          </div>
         </div>
       </div>
 
