@@ -36,33 +36,33 @@ interface Alert {
 // ─── Mock Data ────────────────────────────────────────────────────────────────
 
 const UNITS: Unit[] = [
-  { id: "U-01", name: "ПЧ-1 Центральная", type: "Пожарная часть", status: "active", location: "Ленина, 12", crew: 8, lastContact: "00:42" },
-  { id: "U-02", name: "ПЧ-3 Заречная", type: "Пожарная часть", status: "active", location: "Советская, 45", crew: 6, lastContact: "01:15" },
-  { id: "U-03", name: "СПАСО-1", type: "Спасательный отряд", status: "warning", location: "Выезд", crew: 12, lastContact: "02:03" },
-  { id: "U-04", name: "АХ-7", type: "Аварийно-химич.", status: "idle", location: "База", crew: 4, lastContact: "00:10" },
-  { id: "U-05", name: "МО-2", type: "Медотряд", status: "active", location: "ЦРБ", crew: 3, lastContact: "00:58" },
-  { id: "U-06", name: "ПЧ-8 Северная", type: "Пожарная часть", status: "critical", location: "Выезд — ДТП", crew: 7, lastContact: "03:21" },
-  { id: "U-07", name: "ВО-3", type: "Водолазный отряд", status: "idle", location: "База", crew: 5, lastContact: "00:05" },
-  { id: "U-08", name: "СПАСО-4", type: "Спасательный отряд", status: "active", location: "ПСП Горы", crew: 9, lastContact: "01:47" },
+  { id: "ВГСО-1", name: "ВГСО-1 Центральный", type: "Горноспасательный отряд", status: "active", location: "Шахта «Северная»", crew: 10, lastContact: "00:42" },
+  { id: "ВГСО-2", name: "ВГСО-2 Восточный", type: "Горноспасательный отряд", status: "active", location: "База ВГСЧ", crew: 8, lastContact: "01:15" },
+  { id: "ДКС-1", name: "ДКС-1", type: "Дежурная кам. смена", status: "warning", location: "Гор. -480 м, уч. №3", crew: 6, lastContact: "02:03" },
+  { id: "ПГСО-3", name: "ПГСО-3", type: "Профил. горноспас. отряд", status: "idle", location: "База", crew: 5, lastContact: "00:10" },
+  { id: "МС-1", name: "МС-1", type: "Медицинская служба", status: "active", location: "Медпункт шахты", crew: 3, lastContact: "00:58" },
+  { id: "ВГСО-5", name: "ВГСО-5 Аварийный", type: "Горноспасательный отряд", status: "critical", location: "Гор. -620 м — задымление", crew: 9, lastContact: "03:21" },
+  { id: "ГТС-2", name: "ГТС-2", type: "Газотехн. служба", status: "idle", location: "База", crew: 4, lastContact: "00:05" },
+  { id: "ВГСО-4", name: "ВГСО-4 Южный", type: "Горноспасательный отряд", status: "active", location: "Шахта «Заречная»", crew: 11, lastContact: "01:47" },
 ];
 
 const LOGS: LogEntry[] = [
-  { id: "L-001", time: "08:47:12", type: "critical", operator: "Иванов А.С.", message: "Зафиксировано ДТП с пострадавшими на км 34 трассы М-4", unit: "U-06" },
-  { id: "L-002", time: "08:45:03", type: "action", operator: "Иванов А.С.", message: "ПЧ-8 Северная направлена на место ДТП", unit: "U-06" },
-  { id: "L-003", time: "08:42:18", type: "warning", operator: "Петрова М.И.", message: "СПАСО-1 запрашивает дополнительные ресурсы на объекте Заречная", unit: "U-03" },
-  { id: "L-004", time: "08:39:55", type: "info", operator: "Сидоров К.В.", message: "Плановая проверка связи — все подразделения на связи" },
-  { id: "L-005", time: "08:35:40", type: "action", operator: "Иванов А.С.", message: "Смена принята, журнал открыт" },
-  { id: "L-006", time: "08:20:11", type: "info", operator: "Петрова М.И.", message: "МО-2 прибыл в ЦРБ, пациент передан врачам", unit: "U-05" },
-  { id: "L-007", time: "08:15:07", type: "warning", operator: "Сидоров К.В.", message: "Нарушение связи с АХ-7, восстановлено через 4 мин." },
-  { id: "L-008", time: "07:58:33", type: "action", operator: "Сидоров К.В.", message: "Запрос в ЦУКС по инциденту № 2024-0312" },
-  { id: "L-009", time: "07:44:19", type: "info", operator: "Ночная смена", message: "Смена сдана без происшествий" },
-  { id: "L-010", time: "07:30:00", type: "info", operator: "Система", message: "Автоматическая синхронизация с БД МЧС выполнена успешно" },
+  { id: "L-001", time: "08:47:12", type: "critical", operator: "Иванов А.С.", message: "Задымление на горизонте -620 м, участок №7. ВГСО-5 направлен.", unit: "ВГСО-5" },
+  { id: "L-002", time: "08:45:03", type: "action", operator: "Иванов А.С.", message: "ВГСО-5 введён в горные выработки. Связь установлена.", unit: "ВГСО-5" },
+  { id: "L-003", time: "08:42:18", type: "warning", operator: "Петрова М.И.", message: "ДКС-1 запрашивает дополнительные дыхательные аппараты КИП-8", unit: "ДКС-1" },
+  { id: "L-004", time: "08:39:55", type: "info", operator: "Сидоров К.В.", message: "Плановая проверка связи — все подразделения ВГСЧ на связи" },
+  { id: "L-005", time: "08:35:40", type: "action", operator: "Иванов А.С.", message: "Оперативная смена принята, журнал открыт" },
+  { id: "L-006", time: "08:20:11", type: "info", operator: "Петрова М.И.", message: "МС-1: горноспасатель Рогов Д.К. прошёл медконтроль, допущен к работе", unit: "МС-1" },
+  { id: "L-007", time: "08:15:07", type: "warning", operator: "Сидоров К.В.", message: "Кратковременное нарушение связи с ГТС-2, восстановлено через 4 мин." },
+  { id: "L-008", time: "07:58:33", type: "action", operator: "Сидоров К.В.", message: "Направлен запрос в штаб ВГСЧ по инциденту № 2026-0147" },
+  { id: "L-009", time: "07:44:19", type: "info", operator: "Ночная смена", message: "Ночная смена сдана без происшествий, замечаний нет" },
+  { id: "L-010", time: "07:30:00", type: "info", operator: "Система", message: "Автоматическая синхронизация с АСУ ВГСЧ выполнена успешно" },
 ];
 
 const ALERTS: Alert[] = [
-  { id: "A-001", time: "08:47", level: "critical", title: "ДТП с пострадавшими", description: "Трасса М-4, км 34. 3 пострадавших. ПЧ-8 направлена.", read: false },
-  { id: "A-002", time: "08:42", level: "warning", title: "Запрос ресурсов СПАСО-1", description: "Требуется дополнительное оборудование на объекте.", read: false },
-  { id: "A-003", time: "08:15", level: "warning", title: "Нарушение связи АХ-7", description: "Связь прервана на 4 минуты, восстановлена.", read: true },
+  { id: "A-001", time: "08:47", level: "critical", title: "Задымление. Гор. -620 м", description: "Участок №7, шахта «Северная». ВГСО-5 введён в выработки.", read: false },
+  { id: "A-002", time: "08:42", level: "warning", title: "Запрос снаряжения ДКС-1", description: "Требуются дополнительные аппараты КИП-8 на гор. -480 м.", read: false },
+  { id: "A-003", time: "08:15", level: "warning", title: "Нарушение связи ГТС-2", description: "Связь прервана на 4 минуты, восстановлена.", read: true },
 ];
 
 const STATUS_COLORS = {
@@ -241,7 +241,7 @@ function Tablo() {
     <div className="fade-in grid-scan min-h-screen p-6 space-y-6" style={{ background: "hsl(220 20% 4%)" }}>
       <div className="flex items-center justify-between border-b border-border pb-4">
         <div>
-          <div className="text-xs uppercase tracking-widest mb-1" style={{ color: "hsl(var(--muted-foreground))" }}>ЦУКС МЧС России</div>
+          <div className="text-xs uppercase tracking-widest mb-1" style={{ color: "hsl(var(--muted-foreground))" }}>ФГУП ВГСЧ МЧС России</div>
           <h1 className="text-4xl font-bold" style={{ fontFamily: "Oswald", color: "hsl(var(--primary))" }}>
             ОПЕРАТИВНОЕ ТАБЛО
           </h1>
@@ -379,12 +379,12 @@ function Statuses() {
         </div>
         <div className="p-4 grid grid-cols-3 gap-3">
           {[
-            { name: "Радиостанция P-168", status: "active", freq: "146.500 МГц", lastCheck: "08:39" },
-            { name: "ГЛОНАСС-терминал", status: "active", freq: "Спутник", lastCheck: "08:40" },
-            { name: "КВ-станция", status: "warning", freq: "7.050 МГц", lastCheck: "08:15" },
-            { name: "Телефония ЦУКС", status: "active", freq: "Цифровой", lastCheck: "08:42" },
-            { name: "УКВ-ретранслятор", status: "idle", freq: "432.100 МГц", lastCheck: "07:55" },
-            { name: "АПОИ", status: "active", freq: "TCP/IP", lastCheck: "08:47" },
+            { name: "Р/С шахтная ИГС-01", status: "active", freq: "ИГС-01, 433 МГц", lastCheck: "08:39" },
+            { name: "Телефония подземная", status: "active", freq: "Шахтный коммут.", lastCheck: "08:40" },
+            { name: "КВ-станция Р-130", status: "warning", freq: "7.050 МГц", lastCheck: "08:15" },
+            { name: "Связь штаб ВГСЧ", status: "active", freq: "Цифровой VoIP", lastCheck: "08:42" },
+            { name: "Р/С поверхностная", status: "idle", freq: "УКВ 148 МГц", lastCheck: "07:55" },
+            { name: "АИАС ВГСЧ", status: "active", freq: "TCP/IP", lastCheck: "08:47" },
           ].map(c => (
             <div key={c.name} className="panel-card p-3">
               <div className="flex items-center gap-2 mb-2">
@@ -495,12 +495,12 @@ function Alerts() {
         <h3 className="text-sm font-semibold uppercase tracking-widest mb-3" style={{ fontFamily: "Oswald" }}>Настройка уведомлений</h3>
         <div className="grid grid-cols-2 gap-0">
           {[
-            { label: "ДТП с пострадавшими", enabled: true },
-            { label: "Пожар 2 и выше категории", enabled: true },
-            { label: "Разлив АХОВ", enabled: true },
+            { label: "Задымление в выработках", enabled: true },
+            { label: "Обрушение / завал", enabled: true },
+            { label: "Выброс газа (CH₄, CO)", enabled: true },
             { label: "Отказ связи более 10 мин.", enabled: false },
-            { label: "Запрос ресурсов", enabled: true },
-            { label: "Синхронизация БД МЧС", enabled: false },
+            { label: "Запрос снаряжения / ресурсов", enabled: true },
+            { label: "Синхронизация АСУ ВГСЧ", enabled: false },
           ].map(item => (
             <div key={item.label} className="flex items-center justify-between py-2 px-2 border-b border-border">
               <span className="text-sm">{item.label}</span>
@@ -532,9 +532,9 @@ function Analytics() {
     <div className="fade-in space-y-4">
       <div className="grid grid-cols-3 gap-3">
         {[
-          { label: "Инцидентов за смену", value: "14", delta: "+2", up: false },
-          { label: "Среднее время реагирования", value: "7.4 мин", delta: "-0.8", up: true },
-          { label: "Закрыто инцидентов", value: "11", delta: "79%", up: true },
+          { label: "Вызовов за смену", value: "4", delta: "-1", up: true },
+          { label: "Среднее время ввода отряда", value: "9.2 мин", delta: "-1.1", up: true },
+          { label: "Закрыто / ликвидировано", value: "3", delta: "75%", up: true },
         ].map(s => (
           <div key={s.label} className="panel-card p-4">
             <div className="text-xs mb-1" style={{ color: "hsl(var(--muted-foreground))" }}>{s.label}</div>
@@ -641,12 +641,12 @@ function Archive() {
         </div>
         <div className="divide-y divide-border">
           {[
-            { date: "2026-05-04", shift: "08:00–20:00", operator: "Иванов А.С.", incidents: 14, closed: 11 },
-            { date: "2026-05-03", shift: "20:00–08:00", operator: "Петрова М.И.", incidents: 8, closed: 8 },
-            { date: "2026-05-03", shift: "08:00–20:00", operator: "Сидоров К.В.", incidents: 11, closed: 9 },
-            { date: "2026-05-02", shift: "20:00–08:00", operator: "Козлов Р.Д.", incidents: 5, closed: 5 },
-            { date: "2026-05-02", shift: "08:00–20:00", operator: "Иванов А.С.", incidents: 17, closed: 15 },
-            { date: "2026-05-01", shift: "20:00–08:00", operator: "Петрова М.И.", incidents: 9, closed: 9 },
+            { date: "2026-05-04", shift: "08:00–20:00", operator: "Иванов А.С.", incidents: 4, closed: 3 },
+            { date: "2026-05-03", shift: "20:00–08:00", operator: "Петрова М.И.", incidents: 2, closed: 2 },
+            { date: "2026-05-03", shift: "08:00–20:00", operator: "Сидоров К.В.", incidents: 5, closed: 4 },
+            { date: "2026-05-02", shift: "20:00–08:00", operator: "Козлов Р.Д.", incidents: 1, closed: 1 },
+            { date: "2026-05-02", shift: "08:00–20:00", operator: "Иванов А.С.", incidents: 6, closed: 6 },
+            { date: "2026-05-01", shift: "20:00–08:00", operator: "Петрова М.И.", incidents: 3, closed: 3 },
           ].map((row, i) => (
             <div key={i} className="flex items-center gap-6 px-4 py-3 hover:bg-secondary/30 transition-colors text-sm">
               <span className="mono text-xs w-24 flex-shrink-0" style={{ color: "hsl(var(--muted-foreground))" }}>{row.date}</span>
@@ -669,12 +669,12 @@ function Archive() {
 
 function Systems() {
   const systems = [
-    { name: "АИУС МЧС России", type: "Оперативная БД", status: "active" as const, lastSync: "08:47:10", version: "v4.2.1", latency: "42 мс" },
-    { name: "ЦУКС Федеральный", type: "API-интеграция", status: "active" as const, lastSync: "08:47:05", version: "REST 2.1", latency: "120 мс" },
-    { name: "ЕСИМО", type: "Гидрометеоданные", status: "active" as const, lastSync: "08:40:00", version: "v2.0", latency: "85 мс" },
-    { name: "Система 112", type: "Приём вызовов", status: "warning" as const, lastSync: "08:32:15", version: "v3.5", latency: ">500 мс" },
-    { name: "ГИС МЧС", type: "Геоинформация", status: "active" as const, lastSync: "08:45:00", version: "v1.8", latency: "210 мс" },
-    { name: "КСЭОН", type: "Оповещение", status: "idle" as const, lastSync: "07:00:00", version: "v3.0", latency: "—" },
+    { name: "АСУ ВГСЧ", type: "Основная система управления", status: "active" as const, lastSync: "08:47:10", version: "v3.1.4", latency: "38 мс" },
+    { name: "АИАС ВГСЧ", type: "Аварийно-инф. система", status: "active" as const, lastSync: "08:47:05", version: "v2.4", latency: "95 мс" },
+    { name: "АГК (газ. контроль)", type: "Мониторинг атмосферы", status: "active" as const, lastSync: "08:45:00", version: "v5.0", latency: "62 мс" },
+    { name: "ПРТС (позицион.)", type: "Позиционирование в шахте", status: "warning" as const, lastSync: "08:32:15", version: "v1.9", latency: ">400 мс" },
+    { name: "Штаб ВГСЧ (API)", type: "API-интеграция со штабом", status: "active" as const, lastSync: "08:46:00", version: "REST 1.5", latency: "130 мс" },
+    { name: "МЧС России (ЕДДС)", type: "Единая диспетч. служба", status: "idle" as const, lastSync: "07:00:00", version: "v4.0", latency: "—" },
   ];
 
   return (
@@ -714,11 +714,11 @@ function Systems() {
         <h3 className="text-sm font-semibold uppercase tracking-widest mb-3" style={{ fontFamily: "Oswald" }}>Журнал синхронизации</h3>
         <div className="divide-y divide-border">
           {[
-            { time: "08:47:10", system: "АИУС МЧС", event: "Синхронизация выполнена. Получено 3 новых записи.", ok: true },
-            { time: "08:45:00", system: "ГИС МЧС", event: "Обновлены координаты 8 подразделений.", ok: true },
-            { time: "08:40:00", system: "ЕСИМО", event: "Получен метеобюллетень № 142.", ok: true },
-            { time: "08:32:15", system: "Система 112", event: "Превышение порога задержки (520 мс). Повтор через 5 мин.", ok: false },
-            { time: "08:30:00", system: "АИУС МЧС", event: "Синхронизация выполнена.", ok: true },
+            { time: "08:47:10", system: "АСУ ВГСЧ", event: "Синхронизация выполнена. Получено 2 новых оперативных записи.", ok: true },
+            { time: "08:46:00", system: "Штаб ВГСЧ", event: "Данные о составе смен переданы в штаб.", ok: true },
+            { time: "08:45:00", system: "АГК", event: "Обновлены показатели газового контроля: CH₄ в норме.", ok: true },
+            { time: "08:32:15", system: "ПРТС", event: "Превышение порога задержки (420 мс). Повтор через 5 мин.", ok: false },
+            { time: "08:30:00", system: "АСУ ВГСЧ", event: "Синхронизация выполнена успешно.", ok: true },
           ].map((row, i) => (
             <div key={i} className="flex items-start gap-3 py-2 text-xs">
               <span className="mono w-16 flex-shrink-0" style={{ color: "hsl(var(--muted-foreground))" }}>{row.time}</span>
@@ -778,7 +778,7 @@ export default function Index() {
               <div className="text-xs font-bold tracking-widest" style={{ fontFamily: "Oswald", color: "hsl(var(--primary))" }}>
                 АРМ ДЕЖУРНОГО
               </div>
-              <div style={{ color: "hsl(var(--muted-foreground))", fontSize: 9 }}>МЧС России</div>
+              <div style={{ color: "hsl(var(--muted-foreground))", fontSize: 9 }}>ФГУП ВГСЧ МЧС России</div>
             </div>
           </div>
         </div>
@@ -814,7 +814,7 @@ export default function Index() {
             <span>Система в работе</span>
           </div>
           <div className="mono mt-0.5" style={{ color: "hsl(var(--muted-foreground))", fontSize: 10 }}>
-            БД синхр.: 08:47
+            АСУ синхр.: 08:47
           </div>
         </div>
       </aside>
@@ -830,7 +830,7 @@ export default function Index() {
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-1.5 text-xs" style={{ color: "hsl(var(--muted-foreground))" }}>
               <span className="status-dot status-active" />
-              <span>АИУС онлайн</span>
+              <span>АСУ ВГСЧ онлайн</span>
             </div>
             <div className="w-px h-4 bg-border" />
             <div className="text-xs mono" style={{ color: "hsl(var(--muted-foreground))" }}>
