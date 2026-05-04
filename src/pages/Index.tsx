@@ -1039,6 +1039,16 @@ export default function Index() {
             <div className="text-xs mono" style={{ color: "hsl(var(--muted-foreground))" }}>
               {new Date().toLocaleDateString("ru-RU", { day: "2-digit", month: "2-digit", year: "numeric" })}
             </div>
+            <div className="w-px h-4 bg-border" />
+            <button
+              onClick={() => window.open("/tablo", "_blank", "noopener,noreferrer")}
+              className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded transition-all"
+              style={{ background: "hsl(var(--primary) / 0.15)", color: "hsl(var(--primary))", border: "1px solid hsl(var(--primary) / 0.3)" }}
+            >
+              <Icon name="Monitor" size={13} />
+              <span className="uppercase tracking-wide font-semibold" style={{ fontFamily: "Oswald", fontSize: 11 }}>Открыть табло</span>
+              <Icon name="ExternalLink" size={11} />
+            </button>
           </div>
         </header>
 
