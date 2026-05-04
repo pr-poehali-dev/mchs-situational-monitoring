@@ -1,4 +1,4 @@
-// Справочник ОПО и личного состава — хранится в localStorage
+// Справочник ОПО, личного состава и подразделений — хранится в localStorage
 
 export interface PersonEntry {
   id: string;
@@ -14,20 +14,29 @@ export interface OpoEntry {
   area: string;       // Участок
 }
 
+export interface DivisionEntry {
+  id: string;         // Идентификатор подразделения
+  name: string;       // Наименование подразделения
+  location: string;   // Местоположение
+  lastContact: string; // Последняя проверка связи
+}
+
 export interface Directory {
   personnel: PersonEntry[];
   opo: OpoEntry[];
+  divisions: DivisionEntry[];
 }
 
 const KEY = "vgsch_directory";
 const VERSION_KEY = "vgsch_directory_version";
-const CURRENT_VERSION = "2"; // увеличь при смене DEFAULT
+const CURRENT_VERSION = "3"; // увеличь при смене DEFAULT
 
 const DEFAULT: Directory = {
   personnel: [],
   opo: [
     { id: "o1", name: "Шахта «Учебная»", horizon: "", area: "" },
   ],
+  divisions: [],
 };
 
 export function loadDirectory(): Directory {
@@ -44,6 +53,7 @@ export function loadDirectory(): Directory {
     return {
       personnel: parsed.personnel ?? DEFAULT.personnel,
       opo: parsed.opo ?? DEFAULT.opo,
+      divisions: parsed.divisions ?? DEFAULT.divisions,
     };
   } catch {
     return structuredClone(DEFAULT);

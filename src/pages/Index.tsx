@@ -14,6 +14,7 @@ import {
   type Directory,
   type PersonEntry,
   type OpoEntry,
+  type DivisionEntry,
   loadDirectory,
   saveDirectory,
   subscribeDirectory,
@@ -320,47 +321,46 @@ function AccidentPanel() {
 }
 
 function Dashboard() {
+  const [dir, setDir] = useState<Directory>(loadDirectory);
+  useEffect(() => subscribeDirectory(setDir), []);
+
+  const divisions = dir.divisions;
+
   return (
     <div className="fade-in space-y-4">
       <div className="grid grid-cols-3 gap-3">
         <div className="panel-card col-span-2">
           <div className="flex items-center justify-between px-4 py-3 border-b border-border">
             <h2 className="text-sm font-semibold uppercase tracking-widest" style={{ fontFamily: "Oswald" }}>Подразделения</h2>
-            <span className="tag" style={{ background: "hsl(var(--muted))", color: "hsl(var(--muted-foreground))" }}>{UNITS.length} единиц</span>
+            <span className="tag" style={{ background: "hsl(var(--muted))", color: "hsl(var(--muted-foreground))" }}>{divisions.length} единиц</span>
           </div>
           <div className="overflow-auto max-h-72 scrollbar-thin">
-            <table className="w-full text-sm">
-              <thead>
-                <tr style={{ color: "hsl(var(--muted-foreground))" }} className="text-xs uppercase tracking-wide">
-                  <th className="text-left px-4 py-2 font-medium">ID</th>
-                  <th className="text-left px-4 py-2 font-medium">Подразделение</th>
-                  <th className="text-left px-4 py-2 font-medium">Статус</th>
-                  <th className="text-left px-4 py-2 font-medium">Местоположение</th>
-                  <th className="text-left px-4 py-2 font-medium">Связь</th>
-                </tr>
-              </thead>
-              <tbody>
-                {UNITS.map(u => (
-                  <tr key={u.id} className="border-t border-border hover:bg-secondary/40 transition-colors">
-                    <td className="px-4 py-2 mono text-xs" style={{ color: "hsl(var(--muted-foreground))" }}>{u.id}</td>
-                    <td className="px-4 py-2">
-                      <div className="font-medium">{u.name}</div>
-                      <div className="text-xs" style={{ color: "hsl(var(--muted-foreground))" }}>{u.type}</div>
-                    </td>
-                    <td className="px-4 py-2">
-                      <div className="flex items-center gap-2">
-                        <StatusDot status={u.status} />
-                        <span className="text-xs" style={{ color: u.status === "critical" ? "hsl(var(--status-critical))" : u.status === "warning" ? "hsl(var(--status-warning))" : u.status === "active" ? "hsl(var(--status-active))" : "hsl(var(--status-idle))" }}>
-                          {STATUS_LABELS[u.status]}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-2 text-xs">{u.location}</td>
-                    <td className="px-4 py-2 mono text-xs" style={{ color: "hsl(var(--muted-foreground))" }}>{u.lastContact}</td>
+            {divisions.length === 0 ? (
+              <div className="p-8 text-center text-sm" style={{ color: "hsl(var(--muted-foreground))" }}>
+                Список пуст — добавьте подразделения в разделе <b>Справочники</b>
+              </div>
+            ) : (
+              <table className="w-full text-sm">
+                <thead>
+                  <tr style={{ color: "hsl(var(--muted-foreground))" }} className="text-xs uppercase tracking-wide">
+                    <th className="text-left px-4 py-2 font-medium">ID</th>
+                    <th className="text-left px-4 py-2 font-medium">Подразделение</th>
+                    <th className="text-left px-4 py-2 font-medium">Местоположение</th>
+                    <th className="text-left px-4 py-2 font-medium">Проверка связи</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {divisions.map(d => (
+                    <tr key={d.id} className="border-t border-border hover:bg-secondary/40 transition-colors">
+                      <td className="px-4 py-2 mono text-xs" style={{ color: "hsl(var(--muted-foreground))" }}>{d.id}</td>
+                      <td className="px-4 py-2 font-medium text-sm">{d.name}</td>
+                      <td className="px-4 py-2 text-xs">{d.location}</td>
+                      <td className="px-4 py-2 mono text-xs" style={{ color: "hsl(var(--muted-foreground))" }}>{d.lastContact}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
           </div>
         </div>
 
@@ -834,7 +834,7 @@ function Systems() {
 
 function DirectorySection() {
   const [dir, setDir] = useState<Directory>(loadDirectory);
-  const [tab, setTab] = useState<"personnel" | "opo">("personnel");
+  const [tab, setTab] = useState<"personnel" | "opo" | "divisions">("personnel");
 
   // Форма персонала
   const [pForm, setPForm] = useState<Omit<PersonEntry, "id">>({ name: "", rank: "", phone: "" });
@@ -843,6 +843,10 @@ function DirectorySection() {
   // Форма ОПО
   const [oForm, setOForm] = useState<Omit<OpoEntry, "id">>({ name: "", horizon: "", area: "" });
   const [oEdit, setOEdit] = useState<string | null>(null);
+
+  // Форма Подразделений
+  const [dForm, setDForm] = useState<DivisionEntry>({ id: "", name: "", location: "", lastContact: "" });
+  const [dEdit, setDEdit] = useState<string | null>(null);
 
   const persist = (next: Directory) => { setDir(next); saveDirectory(next); };
 
@@ -876,6 +880,23 @@ function DirectorySection() {
   const delO  = (id: string) => persist({ ...dir, opo: dir.opo.filter(o => o.id !== id) });
   const cancelO = () => { setOEdit(null); setOForm({ name: "", horizon: "", area: "" }); };
 
+  // ── Подразделения CRUD ──
+  const saveD = () => {
+    if (!dForm.id.trim() || !dForm.name.trim()) return;
+    if (dEdit) {
+      persist({ ...dir, divisions: dir.divisions.map(d => d.id === dEdit ? { ...dForm, id: dEdit } : d) });
+      setDEdit(null);
+    } else {
+      // проверка уникальности ID
+      if (dir.divisions.some(d => d.id === dForm.id.trim())) return;
+      persist({ ...dir, divisions: [...dir.divisions, { ...dForm, id: dForm.id.trim() }] });
+    }
+    setDForm({ id: "", name: "", location: "", lastContact: "" });
+  };
+  const editD = (d: DivisionEntry) => { setDEdit(d.id); setDForm({ ...d }); };
+  const delD  = (id: string) => persist({ ...dir, divisions: dir.divisions.filter(d => d.id !== id) });
+  const cancelD = () => { setDEdit(null); setDForm({ id: "", name: "", location: "", lastContact: "" }); };
+
   const inputCls: React.CSSProperties = {
     background: "hsl(var(--secondary))", border: "1px solid hsl(var(--border))",
     color: "hsl(var(--foreground))", padding: "5px 10px", borderRadius: 4,
@@ -886,7 +907,7 @@ function DirectorySection() {
     <div className="fade-in space-y-4">
       {/* Вкладки */}
       <div className="flex gap-2">
-        {([["personnel", "Личный состав", "Users"], ["opo", "Объекты ОПО", "Building2"]] as const).map(([id, label, icon]) => (
+        {([["personnel", "Личный состав", "Users"], ["opo", "Объекты ОПО", "Building2"], ["divisions", "Подразделения", "Shield"]] as const).map(([id, label, icon]) => (
           <button key={id} onClick={() => setTab(id)}
             className="flex items-center gap-2 px-4 py-2 rounded text-sm transition-all"
             style={{
@@ -1028,6 +1049,85 @@ function DirectorySection() {
                       Изменить
                     </button>
                     <button onClick={() => delO(o.id)} className="text-xs px-2 py-1 rounded border transition-colors flex-shrink-0"
+                      style={{ borderColor: "hsl(var(--status-critical) / 0.3)", color: "hsl(var(--status-critical))" }}>
+                      Удалить
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ── Подразделения ── */}
+      {tab === "divisions" && (
+        <div className="grid grid-cols-3 gap-4">
+          {/* Форма */}
+          <div className="panel-card p-4 space-y-3">
+            <h3 className="text-sm font-semibold uppercase tracking-widest" style={{ fontFamily: "Oswald" }}>
+              {dEdit ? "Редактировать" : "Добавить подразделение"}
+            </h3>
+            {([
+              { label: "ID *", key: "id", placeholder: "ВГСО-1", disabled: !!dEdit },
+              { label: "Подразделение *", key: "name", placeholder: "ВГСО-1 Центральный" },
+              { label: "Местоположение", key: "location", placeholder: "Шахта «Северная»" },
+              { label: "Проверка связи", key: "lastContact", placeholder: "08:42" },
+            ] as const).map(f => (
+              <div key={f.key}>
+                <label className="text-xs block mb-1" style={{ color: "hsl(var(--muted-foreground))" }}>{f.label}</label>
+                <input
+                  style={{ ...inputCls, opacity: f.disabled ? 0.5 : 1 }}
+                  placeholder={f.placeholder}
+                  disabled={f.disabled}
+                  value={dForm[f.key]}
+                  onChange={e => setDForm(d => ({ ...d, [f.key]: e.target.value }))}
+                />
+              </div>
+            ))}
+            <div className="flex gap-2 pt-1">
+              <button onClick={saveD}
+                className="flex-1 py-2 rounded text-sm font-medium transition-all hover:opacity-90"
+                style={{ background: "hsl(var(--primary))", color: "hsl(var(--primary-foreground))", fontFamily: "Oswald" }}>
+                {dEdit ? "Сохранить" : "Добавить"}
+              </button>
+              {dEdit && (
+                <button onClick={cancelD}
+                  className="px-3 py-2 rounded border border-border text-sm hover:bg-secondary transition-colors"
+                  style={{ color: "hsl(var(--muted-foreground))" }}>
+                  Отмена
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Список */}
+          <div className="panel-card col-span-2">
+            <div className="px-4 py-3 border-b border-border flex items-center justify-between">
+              <h3 className="text-sm font-semibold uppercase tracking-widest" style={{ fontFamily: "Oswald" }}>Список подразделений</h3>
+              <span className="tag" style={{ background: "hsl(var(--muted))", color: "hsl(var(--muted-foreground))" }}>
+                {dir.divisions.length} записей
+              </span>
+            </div>
+            {dir.divisions.length === 0 ? (
+              <div className="p-8 text-center text-sm" style={{ color: "hsl(var(--muted-foreground))" }}>Список пуст — добавьте подразделения</div>
+            ) : (
+              <div className="divide-y divide-border">
+                {dir.divisions.map(d => (
+                  <div key={d.id} className="flex items-center gap-3 px-4 py-2.5 hover:bg-secondary/30 transition-colors">
+                    <span className="mono text-xs w-16 flex-shrink-0" style={{ color: "hsl(var(--primary))" }}>{d.id}</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium text-sm">{d.name}</div>
+                      <div className="text-xs" style={{ color: "hsl(var(--muted-foreground))" }}>
+                        {d.location && <span>{d.location}</span>}
+                        {d.location && d.lastContact && <span> · </span>}
+                        {d.lastContact && <span className="mono">Связь: {d.lastContact}</span>}
+                      </div>
+                    </div>
+                    <button onClick={() => editD(d)} className="text-xs px-2 py-1 rounded border border-border hover:bg-secondary transition-colors flex-shrink-0">
+                      Изменить
+                    </button>
+                    <button onClick={() => delD(d.id)} className="text-xs px-2 py-1 rounded border transition-colors flex-shrink-0"
                       style={{ borderColor: "hsl(var(--status-critical) / 0.3)", color: "hsl(var(--status-critical))" }}>
                       Удалить
                     </button>
