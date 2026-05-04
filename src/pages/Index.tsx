@@ -301,34 +301,8 @@ function AccidentPanel() {
 }
 
 function Dashboard() {
-  const counts = {
-    active: UNITS.filter(u => u.status === "active").length,
-    warning: UNITS.filter(u => u.status === "warning").length,
-    critical: UNITS.filter(u => u.status === "critical").length,
-    idle: UNITS.filter(u => u.status === "idle").length,
-  };
-
   return (
     <div className="fade-in space-y-4">
-      <div className="grid grid-cols-4 gap-3">
-        {[
-          { label: "Активны", value: counts.active, color: "var(--status-active)", icon: "CheckCircle" },
-          { label: "Внимание", value: counts.warning, color: "var(--status-warning)", icon: "AlertTriangle" },
-          { label: "Критично", value: counts.critical, color: "var(--status-critical)", icon: "AlertCircle" },
-          { label: "В резерве", value: counts.idle, color: "var(--status-idle)", icon: "Pause" },
-        ].map(item => (
-          <div key={item.label} className="panel-card p-4 flex flex-col gap-1">
-            <div className="flex items-center justify-between">
-              <span className="text-xs" style={{ color: "hsl(var(--muted-foreground))" }}>{item.label}</span>
-              <Icon name={item.icon} fallback="Circle" size={14} style={{ color: `hsl(${item.color})` }} />
-            </div>
-            <span className="text-3xl font-bold" style={{ fontFamily: "Oswald, sans-serif", color: `hsl(${item.color})` }}>
-              {item.value}
-            </span>
-          </div>
-        ))}
-      </div>
-
       <div className="grid grid-cols-3 gap-3">
         <div className="panel-card col-span-2">
           <div className="flex items-center justify-between px-4 py-3 border-b border-border">
