@@ -143,6 +143,25 @@ function AccidentPanel() {
   useEffect(() => subscribeAccident(setAcc), []);
   useEffect(() => subscribeDirectory(setDir), []);
 
+  // При загрузке справочника — подставляем первые значения если поля пустые
+  useEffect(() => {
+    if (dir.personnel.length === 0 && dir.opo.length === 0) return;
+    const personNames = dir.personnel.map(p => p.name);
+    const opoLabels   = dir.opo.map(opoLabel);
+    const stored = loadAccident();
+    const patch: Partial<AccidentState> = {};
+    if (!stored.opo && opoLabels[0])             patch.opo              = opoLabels[0];
+    if (!stored.commanderSquad && personNames[0]) patch.commanderSquad  = personNames[0];
+    if (!stored.commanderPlatoon && personNames[1]) patch.commanderPlatoon = personNames[1] ?? personNames[0] ?? "";
+    if (!stored.commanderUnit && personNames[2])  patch.commanderUnit   = personNames[2] ?? personNames[0] ?? "";
+    if (!stored.commDuty && personNames[3])       patch.commDuty        = personNames[3] ?? personNames[0] ?? "";
+    if (Object.keys(patch).length > 0) {
+      const next = { ...stored, ...patch };
+      setAcc(next);
+      saveAccident(next);
+    }
+  }, [dir]);
+
   const update = (patch: Partial<AccidentState>) => {
     const next = { ...acc, ...patch };
     setAcc(next);
@@ -213,7 +232,9 @@ function AccidentPanel() {
         <div className="space-y-3">
           <div>
             <label className="text-xs uppercase tracking-widest block mb-1" style={{ color: "hsl(var(--muted-foreground))" }}>ОПО</label>
-            <select style={sel} value={acc.opo} onChange={e => update({ opo: e.target.value })}>
+            <select style={sel}
+              value={opoLabels.includes(acc.opo) ? acc.opo : (opoLabels[0] ?? "")}
+              onChange={e => update({ opo: e.target.value })}>
               {opoLabels.length > 0
                 ? opoLabels.map(o => <option key={o} value={o}>{o}</option>)
                 : <option value="">— справочник пуст —</option>}
@@ -259,7 +280,9 @@ function AccidentPanel() {
           ]).map(({ label, field }) => (
             <div key={field}>
               <label className="text-xs block mb-1" style={{ color: "hsl(var(--muted-foreground))" }}>{label}</label>
-              <select style={sel} value={acc[field]} onChange={e => update({ [field]: e.target.value })}>
+              <select style={sel}
+                value={personNames.includes(acc[field]) ? acc[field] : (personNames[0] ?? "")}
+                onChange={e => update({ [field]: e.target.value })}>
                 {personNames.length > 0
                   ? personNames.map(p => <option key={p} value={p}>{p}</option>)
                   : <option value="">— справочник пуст —</option>}

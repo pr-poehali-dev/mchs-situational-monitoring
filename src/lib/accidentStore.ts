@@ -13,7 +13,7 @@ export interface AccidentState {
   commDuty: string;
   startedAt: string;
   startedAtMsk: string;
-  updatedAt: number; // timestamp для обнаружения изменений
+  updatedAt: number;
 }
 
 export const ACCIDENT_TYPES: { id: AccidentType; label: string; color: string; bg: string }[] = [
@@ -24,31 +24,45 @@ export const ACCIDENT_TYPES: { id: AccidentType; label: string; color: string; b
   { id: "water_break", label: "ПРОРЫВ ВОДЫ",  color: "#00aacc", bg: "rgba(0,170,204,0.12)" },
 ];
 
-// Статические fallback-списки (используются только если справочник пуст)
-export const OPO_LIST = ["Шахта «Северная», гор. -320 м"];
-export const PERSONNEL = ["Иванов А.С."];
-
 const STORAGE_KEY = "vgsch_accident_state";
 
+// Пустые строки вместо undefined — Select всегда имеет валидное значение
 export const DEFAULT_STATE: AccidentState = {
   active: false,
   type: "fire",
-  opo: OPO_LIST[0],
+  opo: "",
   location: "",
-  commanderSquad: PERSONNEL[0],
-  commanderPlatoon: PERSONNEL[1],
-  commanderUnit: PERSONNEL[2],
-  commDuty: PERSONNEL[3],
+  commanderSquad: "",
+  commanderPlatoon: "",
+  commanderUnit: "",
+  commDuty: "",
   startedAt: "",
   startedAtMsk: "",
   updatedAt: 0,
 };
 
+function safeMerge(parsed: unknown): AccidentState {
+  const p = (parsed && typeof parsed === "object" ? parsed : {}) as Partial<AccidentState>;
+  return {
+    active:           typeof p.active === "boolean"   ? p.active           : false,
+    type:             p.type ?? "fire",
+    opo:              p.opo ?? "",
+    location:         p.location ?? "",
+    commanderSquad:   p.commanderSquad ?? "",
+    commanderPlatoon: p.commanderPlatoon ?? "",
+    commanderUnit:    p.commanderUnit ?? "",
+    commDuty:         p.commDuty ?? "",
+    startedAt:        p.startedAt ?? "",
+    startedAtMsk:     p.startedAtMsk ?? "",
+    updatedAt:        p.updatedAt ?? 0,
+  };
+}
+
 export function loadAccident(): AccidentState {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return { ...DEFAULT_STATE };
-    return { ...DEFAULT_STATE, ...JSON.parse(raw) };
+    return safeMerge(JSON.parse(raw));
   } catch {
     return { ...DEFAULT_STATE };
   }
@@ -57,7 +71,6 @@ export function loadAccident(): AccidentState {
 export function saveAccident(state: AccidentState) {
   const toSave = { ...state, updatedAt: Date.now() };
   localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
-  // Принудительно тригеррим storage-событие для одного домена
   window.dispatchEvent(new StorageEvent("storage", { key: STORAGE_KEY, newValue: JSON.stringify(toSave) }));
 }
 
@@ -68,11 +81,10 @@ export function clearAccident() {
 }
 
 export function subscribeAccident(onChange: (s: AccidentState) => void) {
-  // Подписка на изменения из другого окна через storage-событие
   const handler = (e: StorageEvent) => {
     if (e.key === STORAGE_KEY && e.newValue) {
       try {
-        onChange({ ...DEFAULT_STATE, ...JSON.parse(e.newValue) });
+        onChange(safeMerge(JSON.parse(e.newValue)));
       } catch { /* ignore */ }
     }
   };
