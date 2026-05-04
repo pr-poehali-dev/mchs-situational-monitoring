@@ -545,6 +545,16 @@ function Dashboard() {
           ))}
         </div>
       </div>
+
+      {/* Подпись разработчика */}
+      <div className="flex justify-end pt-1 pb-2">
+        <span style={{ fontSize: 11, color: "hsl(var(--muted-foreground) / 0.5)", letterSpacing: "0.04em" }}>
+          Разработчик:&nbsp;
+          <span style={{ color: "hsl(var(--primary) / 0.7)", fontWeight: 600 }}>
+            СДС филиала «Копейский ВГСО»&nbsp;С.Г.&nbsp;Ипатов
+          </span>
+        </span>
+      </div>
     </div>
   );
 }

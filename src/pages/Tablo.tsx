@@ -9,10 +9,32 @@ import {
   subscribeAccident,
 } from "@/lib/accidentStore";
 
-const OBJ_LAT = 55.7558;
-const OBJ_LON = 37.6173;
-const OBJ_TZ  = "Europe/Moscow";
 const WIND_DIRS = ["С","СВ","В","ЮВ","Ю","ЮЗ","З","СЗ"];
+
+const CITY_STORAGE_KEY = "vgsch_weather_city";
+const CITIES_GEO: { name: string; lat: number; lon: number; tz: string }[] = [
+  { name: "Москва",              lat: 55.7558, lon: 37.6173, tz: "Europe/Moscow" },
+  { name: "Санкт-Петербург",    lat: 59.9343, lon: 30.3351, tz: "Europe/Moscow" },
+  { name: "Новосибирск",         lat: 54.9833, lon: 82.8964, tz: "Asia/Novosibirsk" },
+  { name: "Екатеринбург",        lat: 56.8431, lon: 60.6454, tz: "Asia/Yekaterinburg" },
+  { name: "Кемерово",            lat: 55.3908, lon: 86.0847, tz: "Asia/Krasnoyarsk" },
+  { name: "Ростов-на-Дону",     lat: 47.2224, lon: 39.7187, tz: "Europe/Moscow" },
+  { name: "Воркута",             lat: 67.4992, lon: 64.0552, tz: "Europe/Moscow" },
+  { name: "Инта",                lat: 66.0339, lon: 60.1203, tz: "Europe/Moscow" },
+  { name: "Шахты",               lat: 47.7083, lon: 40.2167, tz: "Europe/Moscow" },
+  { name: "Прокопьевск",         lat: 53.8872, lon: 86.7355, tz: "Asia/Krasnoyarsk" },
+  { name: "Сибай",               lat: 52.7167, lon: 58.6667, tz: "Asia/Yekaterinburg" },
+  { name: "Соль-Илецк",          lat: 51.1614, lon: 54.9986, tz: "Asia/Yekaterinburg" },
+  { name: "Гай",                 lat: 51.4667, lon: 58.4500, tz: "Asia/Yekaterinburg" },
+  { name: "Пласт",               lat: 54.3667, lon: 60.8167, tz: "Asia/Yekaterinburg" },
+  { name: "пос. Межозерный",     lat: 54.0600, lon: 59.8700, tz: "Asia/Yekaterinburg" },
+  { name: "Копейск",             lat: 55.1167, lon: 61.6167, tz: "Asia/Yekaterinburg" },
+];
+
+function getSelectedCity() {
+  const name = localStorage.getItem(CITY_STORAGE_KEY) ?? "Москва";
+  return CITIES_GEO.find(c => c.name === name) ?? CITIES_GEO[0];
+}
 
 interface Weather {
   temp: number;
@@ -34,7 +56,7 @@ function useClock() {
 function useMoscowTime() {
   const [msk, setMsk] = useState("");
   useEffect(() => {
-    const update = () => setMsk(new Date().toLocaleTimeString("ru-RU", { timeZone: OBJ_TZ, hour: "2-digit", minute: "2-digit", second: "2-digit" }));
+    const update = () => setMsk(new Date().toLocaleTimeString("ru-RU", { timeZone: "Europe/Moscow", hour: "2-digit", minute: "2-digit", second: "2-digit" }));
     update();
     const t = setInterval(update, 1000);
     return () => clearInterval(t);
@@ -42,18 +64,32 @@ function useMoscowTime() {
   return msk;
 }
 
+const WMO: Record<number, [string, string]> = {
+  0:["Ясно","☀️"],1:["Малооблачно","🌤️"],2:["Переменная облачность","⛅"],3:["Пасмурно","☁️"],
+  45:["Туман","🌫️"],48:["Изморозь","🌫️"],51:["Морось","🌦️"],53:["Морось","🌦️"],55:["Сильная морось","🌧️"],
+  61:["Дождь","🌧️"],63:["Умеренный дождь","🌧️"],65:["Ливень","🌧️"],71:["Снег","🌨️"],73:["Умеренный снег","❄️"],
+  75:["Метель","🌨️"],80:["Ливень","🌦️"],81:["Сильный ливень","🌧️"],95:["Гроза","⛈️"],96:["Гроза с градом","⛈️"],
+};
+
 function useWeather() {
   const [weather, setWeather] = useState<Weather | null>(null);
-  const WMO: Record<number, [string, string]> = {
-    0:["Ясно","☀️"],1:["Малооблачно","🌤️"],2:["Переменная облачность","⛅"],3:["Пасмурно","☁️"],
-    45:["Туман","🌫️"],48:["Изморозь","🌫️"],51:["Морось","🌦️"],53:["Морось","🌦️"],55:["Сильная морось","🌧️"],
-    61:["Дождь","🌧️"],63:["Умеренный дождь","🌧️"],65:["Ливень","🌧️"],71:["Снег","🌨️"],73:["Умеренный снег","❄️"],
-    75:["Метель","🌨️"],80:["Ливень","🌦️"],81:["Сильный ливень","🌧️"],95:["Гроза","⛈️"],96:["Гроза с градом","⛈️"],
-  };
+  const [cityName, setCityName] = useState(() => localStorage.getItem(CITY_STORAGE_KEY) ?? "Москва");
+
   useEffect(() => {
+    const onStorage = () => {
+      const v = localStorage.getItem(CITY_STORAGE_KEY) ?? "Москва";
+      setCityName(v);
+    };
+    window.addEventListener("storage", onStorage);
+    const poll = setInterval(onStorage, 3000);
+    return () => { window.removeEventListener("storage", onStorage); clearInterval(poll); };
+  }, []);
+
+  useEffect(() => {
+    const city = CITIES_GEO.find(c => c.name === cityName) ?? CITIES_GEO[0];
     const fetch_w = async () => {
       try {
-        const url = `https://api.open-meteo.com/v1/forecast?latitude=${OBJ_LAT}&longitude=${OBJ_LON}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,wind_direction_10m,surface_pressure,weather_code&wind_speed_unit=ms&timezone=${OBJ_TZ}`;
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${city.lat}&longitude=${city.lon}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,wind_direction_10m,surface_pressure,weather_code&wind_speed_unit=ms&timezone=${city.tz}`;
         const res = await fetch(url);
         const data = await res.json();
         const c = data.current;
@@ -62,7 +98,7 @@ function useWeather() {
           temp: Math.round(c.temperature_2m), windSpeed: Math.round(c.wind_speed_10m),
           windDir: c.wind_direction_10m, humidity: c.relative_humidity_2m,
           pressure: Math.round(c.surface_pressure * 0.750062), desc, icon,
-          updated: new Date().toLocaleTimeString("ru-RU", { timeZone: OBJ_TZ, hour: "2-digit", minute: "2-digit" }),
+          updated: `${city.name}, обн. ${new Date().toLocaleTimeString("ru-RU", { timeZone: city.tz, hour: "2-digit", minute: "2-digit" })}`,
         });
       } catch {
         setWeather({ temp: 0, windSpeed: 0, windDir: 0, humidity: 0, pressure: 0, desc: "Нет связи", icon: "❌", updated: "--:--" });
@@ -71,7 +107,8 @@ function useWeather() {
     fetch_w();
     const t = setInterval(fetch_w, 5 * 60 * 1000);
     return () => clearInterval(t);
-  }, []);
+  }, [cityName]);
+
   return weather;
 }
 
@@ -396,40 +433,96 @@ export default function TabloPage() {
 
       ) : (
         /* ══ ШТАТНЫЙ РЕЖИМ ════════════════════════════════════════════════════ */
-        <div className="flex-1 flex flex-col items-center justify-center gap-6 p-12">
-          <div className="rounded-2xl px-12 py-8 text-center"
+        <div className="flex-1 flex flex-col gap-5 p-8">
+
+          {/* Статус — штатный */}
+          <div className="rounded-2xl px-10 py-5 flex items-center justify-between"
             style={{ background: "hsl(220 14% 9%)", border: "1px solid hsl(220 12% 16%)" }}>
-            <div className="flex items-center justify-center gap-3 mb-3">
+            <div className="flex items-center gap-3">
               <div className="w-3 h-3 rounded-full" style={{ background: "hsl(142 70% 45%)" }} />
-              <span style={{ fontFamily: "Oswald, sans-serif", fontSize: 28, color: "hsl(142 70% 45%)",
+              <span style={{ fontFamily: "Oswald, sans-serif", fontSize: 26, color: "hsl(142 70% 45%)",
                 textTransform: "uppercase", letterSpacing: "0.1em" }}>
                 Штатный режим — аварий нет
               </span>
             </div>
-            <div style={{ fontSize: 14, color: "hsl(210 10% 40%)" }}>
+            <div style={{ fontSize: 13, color: "hsl(210 10% 40%)" }}>
               Управление аварией — в АРМ дежурного
             </div>
           </div>
 
-          {/* Погода в штатном режиме */}
-          {weather && (
-            <div className="flex items-center gap-8 rounded-2xl px-10 py-6"
+          {/* Главный блок: ответственные + погода */}
+          <div className="grid grid-cols-2 gap-5 flex-1">
+
+            {/* Ответственные лица — всегда */}
+            <div className="rounded-2xl p-8"
               style={{ background: "hsl(220 14% 9%)", border: "1px solid hsl(220 12% 16%)" }}>
-              <span style={{ fontSize: 48 }}>{weather.icon}</span>
-              <div>
-                <div style={{ fontFamily: "Oswald, sans-serif", fontSize: 48, fontWeight: 700, lineHeight: 1 }}>
-                  {weather.temp > 0 ? "+" : ""}{weather.temp}°C &nbsp; {weather.desc}
-                </div>
-                <div style={{ fontSize: 16, color: "hsl(210 10% 50%)", marginTop: 6 }}>
-                  💨 {weather.windSpeed} м/с {WIND_DIRS[Math.round(weather.windDir / 45) % 8]}
-                  &nbsp;·&nbsp; 💧 {weather.humidity}%
-                  &nbsp;·&nbsp; {weather.pressure} мм рт.ст.
-                </div>
+              <div style={{ fontSize: 11, color: "hsl(210 10% 40%)", textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: 20 }}>
+                Ответственные лица
+              </div>
+              <div className="grid grid-cols-2 gap-x-8 gap-y-6">
+                {[
+                  { label: "По отряду",            value: acc.commanderSquad },
+                  { label: "По взводу / пункту",   value: acc.commanderPlatoon },
+                  { label: "Командир отделения",   value: acc.commanderUnit },
+                  { label: "Деж. у средств связи", value: acc.commDuty },
+                ].map(r => (
+                  <div key={r.label}>
+                    <div style={{ fontSize: 11, color: "hsl(210 10% 42%)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>
+                      {r.label}
+                    </div>
+                    <div style={{ fontFamily: "Oswald, sans-serif", fontSize: 30, fontWeight: 700, color: r.value ? "#e8d5b0" : "hsl(210 10% 30%)", lineHeight: 1.1 }}>
+                      {r.value || "—"}
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
-          )}
+
+            {/* Погода в штатном режиме */}
+            {weather && (
+              <div className="rounded-2xl p-8"
+                style={{ background: "hsl(220 14% 9%)", border: "1px solid hsl(220 12% 16%)" }}>
+                <div style={{ fontSize: 11, color: "hsl(210 10% 40%)", textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: 20 }}>
+                  Погодные условия · {weather.updated}
+                </div>
+                <div className="flex items-center gap-5 mb-6">
+                  <span style={{ fontSize: 56 }}>{weather.icon}</span>
+                  <div>
+                    <div style={{ fontFamily: "Oswald, sans-serif", fontSize: 56, fontWeight: 700, lineHeight: 1 }}>
+                      {weather.temp > 0 ? "+" : ""}{weather.temp}°C
+                    </div>
+                    <div style={{ fontSize: 18, color: "hsl(210 10% 55%)", marginTop: 6 }}>{weather.desc}</div>
+                  </div>
+                </div>
+                <div className="grid grid-cols-3 gap-4">
+                  {[
+                    { l: "Ветер", v: `${weather.windSpeed} м/с ${WIND_DIRS[Math.round(weather.windDir / 45) % 8]}` },
+                    { l: "Влажность", v: `${weather.humidity}%` },
+                    { l: "Давление", v: `${weather.pressure} мм` },
+                  ].map(r => (
+                    <div key={r.l} className="rounded-xl p-4 text-center"
+                      style={{ background: "hsl(220 14% 13%)" }}>
+                      <div style={{ fontSize: 11, color: "hsl(210 10% 45%)", textTransform: "uppercase", letterSpacing: "0.06em" }}>{r.l}</div>
+                      <div style={{ fontFamily: "Oswald, sans-serif", fontSize: 24, fontWeight: 700, marginTop: 4 }}>{r.v}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       )}
+
+      {/* ══ ПОДПИСЬ ══════════════════════════════════════════════════════════════ */}
+      <footer className="flex-shrink-0 px-8 py-3 flex items-center justify-end border-t"
+        style={{ borderColor: "hsl(220 12% 12%)", background: "hsl(220 20% 3% / 0.95)" }}>
+        <div style={{ fontSize: 11, color: "hsl(210 10% 30%)", letterSpacing: "0.04em" }}>
+          Разработчик:&nbsp;
+          <span style={{ color: "hsl(14 80% 45%)", fontWeight: 600 }}>
+            СДС филиала «Копейский ВГСО»&nbsp;С.Г.&nbsp;Ипатов
+          </span>
+        </div>
+      </footer>
     </div>
   );
 }
