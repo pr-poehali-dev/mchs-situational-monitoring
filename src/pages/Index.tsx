@@ -1784,6 +1784,14 @@ export default function Index() {
   const [section, setSection] = useState<SectionId>("dashboard");
   const current = NAV.find(n => n.id === section)!;
 
+  const [installPrompt, setInstallPrompt] = useState<Event & { prompt: () => void } | null>(null);
+  useEffect(() => {
+    const handler = (e: Event) => { e.preventDefault(); setInstallPrompt(e as Event & { prompt: () => void }); };
+    window.addEventListener("beforeinstallprompt", handler);
+    return () => window.removeEventListener("beforeinstallprompt", handler);
+  }, []);
+  const handleInstall = () => { if (installPrompt) { installPrompt.prompt(); setInstallPrompt(null); } };
+
   const renderSection = () => {
     switch (section) {
       case "dashboard": return <Dashboard />;
@@ -1854,6 +1862,16 @@ export default function Index() {
               {new Date().toLocaleDateString("ru-RU", { day: "2-digit", month: "2-digit", year: "numeric" })}
             </div>
             <div className="w-px h-4 bg-border" />
+            {installPrompt && (
+              <button
+                onClick={handleInstall}
+                className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded transition-all"
+                style={{ background: "hsl(45 95% 55% / 0.12)", color: "hsl(45 95% 55%)", border: "1px solid hsl(45 95% 55% / 0.3)" }}
+              >
+                <Icon name="Download" size={13} />
+                <span className="uppercase tracking-wide font-semibold" style={{ fontFamily: "Oswald", fontSize: 11 }}>Установить</span>
+              </button>
+            )}
             <button
               onClick={() => window.open("/tablo", "_blank", "noopener,noreferrer")}
               className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded transition-all"
