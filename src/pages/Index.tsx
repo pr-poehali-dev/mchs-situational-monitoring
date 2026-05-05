@@ -989,15 +989,7 @@ function Dashboard() {
         )}
       </div>
 
-      {/* Подпись разработчика */}
-      <div className="flex justify-end pt-1 pb-2">
-        <span style={{ fontSize: 11, color: "hsl(var(--muted-foreground) / 0.5)", letterSpacing: "0.04em" }}>
-          Разработчик:&nbsp;
-          <span style={{ color: "hsl(var(--primary) / 0.7)", fontWeight: 600 }}>
-            СДС филиала «Копейский ВГСО»&nbsp;С.Г.&nbsp;Ипатов
-          </span>
-        </span>
-      </div>
+
     </div>
   );
 }
@@ -1831,6 +1823,14 @@ export default function Index() {
           </div>
           <div className="mono mt-0.5" style={{ color: "hsl(var(--muted-foreground))", fontSize: 10 }}>
             АСУ синхр.: 08:47
+          </div>
+        </div>
+        <div className="px-4 py-2 border-t border-border">
+          <div style={{ fontSize: 9, color: "hsl(var(--muted-foreground) / 0.45)", letterSpacing: "0.03em", lineHeight: 1.5 }}>
+            Разработчик:<br />
+            <span style={{ color: "hsl(var(--primary) / 0.6)", fontWeight: 600 }}>
+              СДС филиала «Копейский ВГСО»&nbsp;С.Г.&nbsp;Ипатов
+            </span>
           </div>
         </div>
       </aside>
