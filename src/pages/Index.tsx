@@ -518,6 +518,46 @@ ${putevka(2, "Экземпляр 2 остаётся у дежурного у с�
   setTimeout(() => win.print(), 400);
 }
 
+// ─── Siren ───────────────────────────────────────────────────────────────────
+
+function playSiren() {
+  const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+  if (!AudioCtx) return;
+  const ctx = new AudioCtx();
+
+  // Три цикла подъём-спуск (как настоящая сирена)
+  const cycles = 3;
+  const cycleDuration = 1.2;
+  const totalDuration = cycles * cycleDuration;
+
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+
+  osc.type = "sawtooth";
+
+  // Плавный подъём и спуск частоты — классическая сирена 500→1200 Гц
+  const start = ctx.currentTime + 0.05;
+  for (let i = 0; i < cycles; i++) {
+    const t = start + i * cycleDuration;
+    osc.frequency.setValueAtTime(500, t);
+    osc.frequency.linearRampToValueAtTime(1200, t + cycleDuration * 0.5);
+    osc.frequency.linearRampToValueAtTime(500, t + cycleDuration);
+  }
+
+  // Огибающая громкости — плавный старт и затухание
+  gain.gain.setValueAtTime(0, start);
+  gain.gain.linearRampToValueAtTime(0.35, start + 0.1);
+  gain.gain.setValueAtTime(0.35, start + totalDuration - 0.2);
+  gain.gain.linearRampToValueAtTime(0, start + totalDuration);
+
+  osc.start(start);
+  osc.stop(start + totalDuration);
+  osc.onended = () => ctx.close();
+}
+
 // ─── Sections ────────────────────────────────────────────────────────────────
 
 function AccidentPanel() {
@@ -559,6 +599,7 @@ function AccidentPanel() {
     const next = { ...acc, active: true, startedAt: localNow, startedAtMsk: mskNow };
     setAcc(next);
     saveAccident(next);
+    playSiren();
   };
 
   const cancel = () => { clearAccident(); setAcc({ ...DEFAULT_STATE }); };
