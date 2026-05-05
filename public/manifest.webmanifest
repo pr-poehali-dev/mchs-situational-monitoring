@@ -11,22 +11,16 @@
   "lang": "ru",
   "icons": [
     {
+      "src": "https://cdn.poehali.dev/projects/e8b93a3a-e9ed-40ee-8196-78090d463984/files/70ad7d95-2630-438c-b2bb-76115fb8fa2a.jpg",
+      "sizes": "1024x1024",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    },
+    {
       "src": "/favicon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/logo-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/logo-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     }
   ],
   "categories": ["productivity", "utilities"],
