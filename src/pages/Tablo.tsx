@@ -310,32 +310,39 @@ export default function TabloPage() {
 
             {/* Погода + кнопки */}
             <div className="flex flex-col gap-4">
-              {weather && (
-                <div className="rounded-xl p-8 flex-1"
-                  style={{ background: "hsl(218 30% 8%)", border: "1px solid hsl(218 25% 15%)" }}>
-                  <div style={lbl()}>Погодные условия</div>
-                  <div className="flex items-center gap-4 mt-4">
-                    <span style={{ fontSize: 48 }}>{weather.icon}</span>
-                    <div>
-                      <div style={{ fontFamily: "Oswald, sans-serif", fontSize: 48, fontWeight: 700, lineHeight: 1 }}>
-                        {weather.temp > 0 ? "+" : ""}{weather.temp}°C
-                      </div>
-                      <div style={{ fontSize: 16, color: "hsl(210 10% 55%)", marginTop: 6 }}>{weather.desc}</div>
-                    </div>
-                    {/* Ручное условие из АРМ */}
-                    {acc.weatherCondition && (() => {
-                      const wc = WEATHER_CONDITIONS.find(w => w.id === acc.weatherCondition);
-                      return wc ? (
-                        <div className="ml-4 rounded-lg px-5 py-3 flex items-center gap-3"
-                          style={{ background: "hsl(45 80% 20%)", border: "1px solid hsl(45 80% 35%)" }}>
-                          <span style={{ fontSize: 32 }}>{wc.icon}</span>
-                          <div style={{ fontFamily: "Oswald, sans-serif", fontSize: 22, fontWeight: 700, color: "hsl(45 90% 70%)", textTransform: "uppercase" }}>
-                            {wc.label}
-                          </div>
+              <div className="rounded-xl p-8 flex-1"
+                style={{ background: "hsl(218 30% 8%)", border: "1px solid hsl(218 25% 15%)" }}>
+                <div style={lbl()}>Погодные условия</div>
+                <div className="flex items-center gap-4 mt-4 flex-wrap">
+                  {weather && (
+                    <>
+                      <span style={{ fontSize: 48 }}>{weather.icon}</span>
+                      <div>
+                        <div style={{ fontFamily: "Oswald, sans-serif", fontSize: 48, fontWeight: 700, lineHeight: 1 }}>
+                          {weather.temp > 0 ? "+" : ""}{weather.temp}°C
                         </div>
-                      ) : null;
-                    })()}
-                  </div>
+                        <div style={{ fontSize: 16, color: "hsl(210 10% 55%)", marginTop: 6 }}>{weather.desc}</div>
+                      </div>
+                    </>
+                  )}
+                  {/* Ручное условие из АРМ */}
+                  {acc.weatherCondition && (() => {
+                    const wc = WEATHER_CONDITIONS.find(w => w.id === acc.weatherCondition);
+                    return wc ? (
+                      <div className="rounded-lg px-5 py-3 flex items-center gap-3"
+                        style={{ background: "hsl(45 80% 20%)", border: "2px solid hsl(45 80% 45%)" }}>
+                        <span style={{ fontSize: 40 }}>{wc.icon}</span>
+                        <div style={{ fontFamily: "Oswald, sans-serif", fontSize: 30, fontWeight: 700, color: "hsl(45 90% 70%)", textTransform: "uppercase" }}>
+                          {wc.label}
+                        </div>
+                      </div>
+                    ) : null;
+                  })()}
+                  {!weather && !acc.weatherCondition && (
+                    <div style={{ color: "hsl(210 10% 40%)", fontSize: 16 }}>Нет данных</div>
+                  )}
+                </div>
+                {weather && (
                   <div className="grid grid-cols-3 gap-4 mt-6">
                     {[
                       { l: "Ветер", v: `${weather.windSpeed} м/с ${WIND_DIRS[Math.round(weather.windDir / 45) % 8]}` },
@@ -349,8 +356,8 @@ export default function TabloPage() {
                       </div>
                     ))}
                   </div>
-                </div>
-              )}
+                )}
+              </div>
 
               {/* Кнопка управления */}
               <div className="flex gap-3">

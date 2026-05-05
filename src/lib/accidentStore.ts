@@ -29,7 +29,7 @@ export const ACCIDENT_TYPES: { id: AccidentType; label: string; color: string; b
 export const WEATHER_CONDITIONS: { id: WeatherCondition; label: string; icon: string }[] = [
   { id: "",      label: "Не указано", icon: "—"  },
   { id: "ice",   label: "Гололедица", icon: "🧊" },
-  { id: "fog",   label: "Туман",      icon: "🌫️" },
+  { id: "fog",   label: "Туман",      icon: "🌁" },
   { id: "rain",  label: "Дождь",      icon: "🌧️" },
   { id: "snow",  label: "Снег",       icon: "❄️" },
   { id: "storm", label: "Шторм",      icon: "⛈️" },
