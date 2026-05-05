@@ -140,45 +140,116 @@ function StatusDot({ status }: { status: Unit["status"] }) {
 
 function printAccident(acc: AccidentState) {
   const atype = ACCIDENT_TYPES.find(t => t.id === acc.type)!;
+  const now = new Date();
+  const dateStr = now.toLocaleDateString("ru-RU", { day: "2-digit", month: "long", year: "numeric" });
+  const wc = WEATHER_CONDITIONS.find(w => w.id === acc.weatherCondition);
+
   const html = `<!DOCTYPE html><html lang="ru"><head><meta charset="UTF-8"/>
 <title>Аварийный листок — ВГСЧ</title>
 <style>
-  @page{margin:15mm;size:A4}
-  body{font-family:Arial,sans-serif;font-size:13px;color:#111}
-  h1{font-size:22px;text-transform:uppercase;text-align:center;border-bottom:3px solid #cc0000;padding-bottom:8px;margin-bottom:16px}
-  .org{text-align:center;font-size:11px;color:#555;margin-bottom:4px}
-  .alarm{background:#cc0000;color:white;font-size:28px;font-weight:bold;text-align:center;padding:12px;letter-spacing:4px;border-radius:4px;margin-bottom:16px}
-  table{width:100%;border-collapse:collapse;margin-bottom:12px}
-  td{padding:6px 10px;border:1px solid #ccc;vertical-align:top}
-  td:first-child{font-weight:bold;width:42%;background:#f5f5f5}
-  .sec{font-size:11px;font-weight:bold;text-transform:uppercase;color:#555;letter-spacing:1px;margin:14px 0 4px}
-  .footer{margin-top:20px;font-size:10px;color:#999;text-align:center;border-top:1px solid #ddd;padding-top:8px}
-  .sig{margin-top:30px;display:flex;justify-content:space-between;font-size:12px}
-  .sig div{border-top:1px solid #333;width:45%;text-align:center;padding-top:4px}
+  @page { size: A4; margin: 20mm 15mm 20mm 25mm; }
+  * { box-sizing: border-box; }
+  body { font-family: Arial, sans-serif; font-size: 12px; color: #000; margin: 0; }
+
+  .app-label {
+    text-align: right; font-size: 10px; line-height: 1.6; margin-bottom: 18px;
+    border-left: 3px solid #cc0000; padding-left: 8px; float: right; max-width: 230px;
+  }
+  .clearfix { clear: both; }
+
+  .header { text-align: center; margin-bottom: 20px; }
+  .header .org { font-size: 11px; color: #444; margin-bottom: 4px; letter-spacing: 0.05em; text-transform: uppercase; }
+  .header h1 {
+    font-size: 17px; font-weight: bold; text-transform: uppercase;
+    border-top: 3px solid #cc0000; border-bottom: 3px solid #cc0000;
+    padding: 8px 0; margin: 0; letter-spacing: 0.06em;
+  }
+
+  .alarm-band {
+    background: #cc0000; color: #fff; font-size: 22px; font-weight: bold;
+    text-align: center; padding: 10px; letter-spacing: 6px;
+    text-transform: uppercase; margin: 14px 0;
+  }
+
+  .sec {
+    font-size: 10px; font-weight: bold; text-transform: uppercase;
+    color: #555; letter-spacing: 1px; margin: 14px 0 4px;
+    border-bottom: 1px solid #ddd; padding-bottom: 2px;
+  }
+
+  table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+  td { padding: 5px 8px; border: 1px solid #ccc; vertical-align: top; font-size: 12px; }
+  td.lbl { font-weight: bold; width: 44%; background: #f7f7f7; }
+
+  .sig-block { margin-top: 28px; display: flex; justify-content: space-between; gap: 20px; }
+  .sig-item { flex: 1; text-align: center; }
+  .sig-item .sig-line { border-top: 1px solid #333; padding-top: 4px; font-size: 11px; color: #555; margin-top: 28px; }
+  .sig-item .sig-role { font-size: 11px; font-weight: bold; margin-bottom: 2px; }
+
+  .footer { margin-top: 20px; font-size: 9px; color: #aaa; text-align: center; border-top: 1px solid #eee; padding-top: 6px; }
 </style></head><body>
-<div class="org">ФГУП ВГСЧ МЧС России</div>
-<h1>Аварийный листок</h1>
-<div class="alarm">⚠ ${atype.label}</div>
-<div class="sec">Время и место</div>
+
+<div class="app-label">
+  Приложение № 1<br>
+  к Уставу военизированной<br>
+  горноспасательной части<br>
+  по организации и ведению<br>
+  горноспасательных работ,<br>
+  утверждённому приказом МЧС России<br>
+  от 09.06.2017 № 251
+</div>
+<div class="clearfix"></div>
+
+<div class="header">
+  <div class="org">ФГУП ВГСЧ МЧС России</div>
+  <h1>Аварийный листок</h1>
+</div>
+
+<div class="alarm-band">⚠ &nbsp; ${atype.label} &nbsp; ⚠</div>
+
+<div class="sec">I. Время и место аварии</div>
 <table>
-  <tr><td>Время объявления (местное)</td><td>${acc.startedAt}</td></tr>
-  <tr><td>Время объявления (МСК)</td><td>${acc.startedAtMsk}</td></tr>
-  <tr><td>ОПО (объект)</td><td>${acc.opo}</td></tr>
-  <tr><td>Место аварии</td><td>${acc.location || "—"}</td></tr>
-  <tr><td>Вид аварии</td><td><b>${atype.label}</b></td></tr>
+  <tr><td class="lbl">Время объявления (местное)</td><td><b>${acc.startedAt}</b></td></tr>
+  <tr><td class="lbl">Время объявления (МСК)</td><td>${acc.startedAtMsk}</td></tr>
+  <tr><td class="lbl">Дата</td><td>${dateStr}</td></tr>
+  <tr><td class="lbl">Опасный производственный объект (ОПО)</td><td><b>${acc.opo}</b></td></tr>
+  <tr><td class="lbl">Место аварии (уточнение)</td><td>${acc.location || "—"}</td></tr>
+  <tr><td class="lbl">Вид аварии</td><td><b>${atype.label}</b></td></tr>
 </table>
-<div class="sec">Ответственные лица</div>
+
+<div class="sec">II. Ответственные лица</div>
 <table>
-  <tr><td>По отряду</td><td>${acc.commanderSquad}</td></tr>
-  <tr><td>По взводу / пункту</td><td>${acc.commanderPlatoon}</td></tr>
-  <tr><td>Командир отделения</td><td>${acc.commanderUnit}</td></tr>
-  <tr><td>Дежурный у средств связи</td><td>${acc.commDuty}</td></tr>
+  <tr><td class="lbl">Ответственный по отряду</td><td>${acc.commanderSquad || "—"}</td></tr>
+  <tr><td class="lbl">Ответственный по взводу / пункту</td><td>${acc.commanderPlatoon || "—"}</td></tr>
+  <tr><td class="lbl">Командир дежурного отделения</td><td>${acc.commanderUnit || "—"}</td></tr>
+  <tr><td class="lbl">Дежурный у средств связи</td><td>${acc.commDuty || "—"}</td></tr>
 </table>
-${acc.weatherCondition ? `<div class="sec">Особые погодные условия</div><table><tr><td>Условие</td><td><b>${WEATHER_CONDITIONS.find(w => w.id === acc.weatherCondition)?.icon ?? ""} ${WEATHER_CONDITIONS.find(w => w.id === acc.weatherCondition)?.label ?? ""}</b></td></tr></table>` : ""}
-<div class="sig"><div>Дежурный оператор</div><div>Принял командир</div></div>
-<div class="footer">Распечатано: ${new Date().toLocaleString("ru-RU")} | ФГУП ВГСЧ МЧС России | АРМ Дежурного</div>
+
+${wc && wc.id ? `
+<div class="sec">III. Особые погодные условия</div>
+<table>
+  <tr><td class="lbl">Условие</td><td><b>${wc.icon} ${wc.label}</b></td></tr>
+</table>` : ""}
+
+<div class="sig-block">
+  <div class="sig-item">
+    <div class="sig-role">Дежурный оператор</div>
+    <div class="sig-line">подпись &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Фамилия И.О.</div>
+  </div>
+  <div class="sig-item">
+    <div class="sig-role">Командир дежурного отделения</div>
+    <div class="sig-line">подпись &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Фамилия И.О.</div>
+  </div>
+  <div class="sig-item">
+    <div class="sig-role">Ответственный по отряду</div>
+    <div class="sig-line">подпись &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Фамилия И.О.</div>
+  </div>
+</div>
+
+<div class="footer">Распечатано: ${now.toLocaleString("ru-RU")} &nbsp;|&nbsp; ФГУП ВГСЧ МЧС России &nbsp;|&nbsp; АРМ Дежурного оператора</div>
 </body></html>`;
-  const win = window.open("", "_blank", "width=800,height=900");
+
+  const win = window.open("", "_blank", "width=820,height=1060");
   if (!win) return;
   win.document.write(html);
   win.document.close();
@@ -188,97 +259,136 @@ ${acc.weatherCondition ? `<div class="sec">Особые погодные усл�
 
 function printPutevka(acc: AccidentState) {
   const atype = ACCIDENT_TYPES.find(t => t.id === acc.type)!;
-  // Парсим время вызова: "08:15:33" → часы и минуты
   const timeParts = acc.startedAt ? acc.startedAt.split(":") : [];
-  const callH = timeParts[0] ?? "___";
-  const callM = timeParts[1] ?? "___";
-  // Дата
-  const now = new Date();
-  const day   = String(now.getDate()).padStart(2, "0");
-  const month = String(now.getMonth() + 1).padStart(2, "0");
-  const year  = String(now.getFullYear());
+  const callH = timeParts[0] ?? "____";
+  const callM = timeParts[1] ?? "____";
+  const now  = new Date();
+  const day  = String(now.getDate()).padStart(2, "0");
+  const mon  = now.toLocaleDateString("ru-RU", { month: "long" });
+  const year = String(now.getFullYear());
 
-  const one = `
+  const putevka = (num: number, dest: string) => `
 <div class="putevka">
-  <div class="title">Путевка на выезд подразделения ВГСЧ на ликвидацию аварии</div>
-  <div class="row">
-    <span class="lbl">На выезд</span>
-    <span class="line flex3"></span>
-    <span class="lbl">ВГСВ (ВГСП)</span>
-    <span class="line flex3"></span>
-    <span class="lbl">ВГСО</span>
-    <span class="line flex2"></span>
-  </div>
-  <div class="row">
-    <span class="lbl">на ликвидацию аварии</span>
-    <span class="line flex3"></span>
-    <span class="lbl">&nbsp;&nbsp;${day}&nbsp;</span>
-    <span class="lbl">"&nbsp;&nbsp;&nbsp;&nbsp;"</span>
-    <span class="line flex1"></span>
-    <span class="lbl">&nbsp;20</span>
-    <span class="val bold">${year.slice(2)}</span>
-    <span class="lbl">&nbsp;г.</span>
-  </div>
-  <div class="row">
-    <span class="lbl">Опасный производственный объект</span>
-    <span class="line flex5 val">${acc.opo}</span>
-  </div>
-  <div class="row">
-    <span class="lbl">Вид аварии</span>
-    <span class="line flex5 val bold">${atype.label}</span>
-  </div>
-  <div class="row">
-    <span class="lbl">Место аварии</span>
-    <span class="line flex5 val">${acc.location || ""}</span>
-  </div>
-  <div class="row">
-    <span class="lbl">Время вызова</span>
-    <span class="line short val">${callH}</span>
-    <span class="lbl">&nbsp;ч.&nbsp;</span>
-    <span class="line short val">${callM}</span>
-    <span class="lbl">&nbsp;мин.</span>
-    <span class="flex3"></span>
-  </div>
-  <div class="row">
-    <span class="lbl">Фамилия И.О. вызвавшего</span>
-    <span class="line flex5 val">${acc.commanderSquad}</span>
-  </div>
-  <div class="row">
-    <span class="lbl">Фамилия И.О. принявшего вызов</span>
-    <span class="line flex5 val">${acc.commanderPlatoon}</span>
-  </div>
-  <div class="cut-note">✂ &nbsp; экземпляр 1 — остаётся в части</div>
-</div>`;
+  <div class="copy-badge">Экземпляр ${num}</div>
+  <div class="title">Путёвка на выезд подразделения ВГСЧ<br>на ликвидацию аварии</div>
 
-  const two = one.replace('экземпляр 1 — остаётся в части', 'экземпляр 2 — выдаётся командиру подразделения');
+  <table class="form-table">
+    <tr>
+      <td class="fl">На выезд</td>
+      <td class="fv"></td>
+      <td class="fl" style="padding-left:12px">ВГСВ (ВГСП)</td>
+      <td class="fv"></td>
+      <td class="fl" style="padding-left:12px">ВГСО</td>
+      <td class="fv"></td>
+    </tr>
+    <tr>
+      <td class="fl">на ликвидацию аварии</td>
+      <td class="fv" colspan="3"></td>
+      <td class="fl" style="white-space:nowrap; padding-left:12px">«${day}» ${mon} ${year} г.</td>
+      <td class="fv" style="width:10px"></td>
+    </tr>
+    <tr>
+      <td class="fl">Опасный производственный объект</td>
+      <td class="fv filled" colspan="5">${acc.opo}</td>
+    </tr>
+    <tr>
+      <td class="fl">Вид аварии</td>
+      <td class="fv filled bold" colspan="5">${atype.label}</td>
+    </tr>
+    <tr>
+      <td class="fl">Место аварии</td>
+      <td class="fv filled" colspan="5">${acc.location || ""}</td>
+    </tr>
+    <tr>
+      <td class="fl">Время вызова</td>
+      <td class="fv filled bold" style="width:40px; text-align:center">${callH}</td>
+      <td class="fl" style="padding-left:6px">ч.</td>
+      <td class="fv filled bold" style="width:40px; text-align:center">${callM}</td>
+      <td class="fl" style="padding-left:6px">мин.</td>
+      <td class="fv"></td>
+    </tr>
+    <tr>
+      <td class="fl">Фамилия И.О. вызвавшего</td>
+      <td class="fv filled" colspan="5">${acc.commanderSquad || ""}</td>
+    </tr>
+    <tr>
+      <td class="fl">Фамилия И.О. принявшего вызов</td>
+      <td class="fv filled" colspan="5">${acc.commanderPlatoon || ""}</td>
+    </tr>
+  </table>
+
+  <div class="sig-row">
+    <div class="sig-item">
+      <div class="sig-role">Дежурный у средств связи</div>
+      <div class="sig-line"></div>
+      <div class="sig-hint">подпись &nbsp;&nbsp;&nbsp; Фамилия И.О.</div>
+    </div>
+    <div class="sig-item">
+      <div class="sig-role">Командир дежурного отделения</div>
+      <div class="sig-line"></div>
+      <div class="sig-hint">подпись &nbsp;&nbsp;&nbsp; Фамилия И.О.</div>
+    </div>
+  </div>
+
+  <div class="dest-note">${dest}</div>
+</div>`;
 
   const html = `<!DOCTYPE html><html lang="ru"><head><meta charset="UTF-8"/>
 <title>Путёвка на выезд — ВГСЧ</title>
 <style>
-  @page { size: A4; margin: 20mm 10mm 20mm 30mm; }
+  @page { size: A4 portrait; margin: 20mm 10mm 15mm 30mm; }
   * { box-sizing: border-box; }
-  body { font-family: Arial, sans-serif; font-size: 13px; color: #000; margin: 0; padding: 0; }
-  .putevka { width: 100%; padding-bottom: 12mm; border-bottom: 1px dashed #999; margin-bottom: 10mm; page-break-inside: avoid; }
-  .putevka:last-child { border-bottom: none; margin-bottom: 0; }
-  .title { font-size: 14px; font-weight: bold; text-align: center; margin-bottom: 14px; text-decoration: underline; letter-spacing: 0.02em; }
-  .row { display: flex; align-items: flex-end; margin-bottom: 10px; flex-wrap: nowrap; white-space: nowrap; }
-  .lbl { font-size: 13px; flex-shrink: 0; }
-  .line { border-bottom: 1px solid #000; min-width: 10px; flex-shrink: 1; display: inline-block; }
-  .val { font-size: 13px; font-weight: normal; text-align: center; }
+  body { font-family: Arial, sans-serif; font-size: 13px; color: #000; margin: 0; padding: 0; height: 100%; }
+
+  .putevka {
+    height: calc(50vh - 10mm);
+    min-height: 120mm;
+    display: flex; flex-direction: column;
+    padding: 8mm 0 6mm 0;
+    border-bottom: 2px dashed #999;
+    page-break-inside: avoid;
+    position: relative;
+  }
+  .putevka:last-child { border-bottom: none; }
+
+  .copy-badge {
+    position: absolute; top: 8mm; right: 0;
+    font-size: 10px; font-style: italic; color: #888;
+    border: 1px solid #ccc; padding: 2px 8px; border-radius: 3px;
+  }
+
+  .title {
+    font-size: 15px; font-weight: bold; text-align: center;
+    text-decoration: underline; line-height: 1.4;
+    margin-bottom: 10mm; letter-spacing: 0.02em;
+  }
+
+  .form-table { width: 100%; border-collapse: collapse; margin-bottom: 8mm; }
+  .form-table tr td { padding: 0 2px 6px 2px; vertical-align: bottom; white-space: nowrap; }
+  .fl { font-size: 13px; width: 1%; white-space: nowrap; padding-right: 4px; }
+  .fv {
+    border-bottom: 1px solid #000; width: auto;
+    font-size: 13px; padding-bottom: 1px; min-width: 20px;
+  }
+  .fv.filled { color: #000; }
   .bold { font-weight: bold; }
-  .flex1 { flex: 1; }
-  .flex2 { flex: 2; }
-  .flex3 { flex: 3; }
-  .flex4 { flex: 4; }
-  .flex5 { flex: 5; }
-  .short { width: 30px; flex-shrink: 0; text-align: center; }
-  .cut-note { font-size: 10px; color: #888; text-align: right; margin-top: 8px; font-style: italic; }
+
+  .sig-row { display: flex; gap: 16mm; margin-bottom: 6mm; }
+  .sig-item { flex: 1; }
+  .sig-role { font-size: 11px; font-weight: bold; margin-bottom: 10mm; }
+  .sig-line { border-top: 1px solid #333; margin-bottom: 3px; }
+  .sig-hint { font-size: 10px; color: #666; text-align: center; }
+
+  .dest-note {
+    margin-top: auto; font-size: 11px; font-style: italic;
+    color: #444; border-top: 1px dotted #bbb; padding-top: 4px;
+  }
 </style></head><body>
-${one}
-${two}
+${putevka(1, "Экземпляр 1 передаётся командиру дежурного отделения.")}
+${putevka(2, "Экземпляр 2 остаётся у дежурного у средств связи до окончания выполнения горноспасательных работ.")}
 </body></html>`;
 
-  const win = window.open("", "_blank", "width=820,height=1000");
+  const win = window.open("", "_blank", "width=820,height=1060");
   if (!win) return;
   win.document.write(html);
   win.document.close();
