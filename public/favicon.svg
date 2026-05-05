@@ -1,23 +1,23 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192">
-  <!-- Фон — тёмно-синий, без скруглений для PWA maskable -->
-  <rect width="192" height="192" fill="#001a40"/>
-
-  <!-- Щит -->
-  <path d="M96 28 L148 52 L148 108 Q148 148 96 170 Q44 148 44 108 L44 52 Z" fill="#FF6000"/>
-
-  <!-- Каска — корпус -->
-  <ellipse cx="96" cy="98" rx="32" ry="20" fill="white"/>
-  <!-- Каска — купол -->
-  <path d="M64 98 Q64 68 96 65 Q128 68 128 98 Z" fill="white"/>
-  <!-- Каска — козырёк -->
-  <rect x="60" y="96" width="72" height="7" rx="3" fill="white"/>
-  <!-- Каска — тёмная полоса на козырьке для объёма -->
-  <rect x="60" y="96" width="72" height="3" rx="1.5" fill="#001a40" opacity="0.2"/>
+  <!-- Щит оранжевый -->
+  <path d="M96 22 L154 48 L154 110 Q154 155 96 178 Q38 155 38 110 L38 48 Z" fill="#E85D04"/>
 
   <!-- Пламя над щитом -->
-  <path d="M88 32 C85 22 90 14 96 10 C102 14 107 22 104 32 C108 24 112 18 110 10 C118 16 120 26 114 34 C112 20 108 16 104 14 C106 22 102 30 96 36 C90 30 86 22 88 32Z" fill="#FF6000"/>
-  <path d="M92 30 C90 24 93 18 96 14 C99 18 102 24 100 30 C101 22 104 18 102 14 C107 19 108 26 104 32 C102 22 100 18 96 22 C92 18 90 22 88 32 C86 26 88 19 92 30Z" fill="#ffaa00"/>
+  <path d="M82 50 C79 38 84 26 90 18 C87 28 92 34 95 28 C96 22 98 16 102 12 C104 22 100 30 104 36 C108 28 110 20 108 12 C116 20 118 34 114 46 C110 34 106 28 104 36 C102 44 98 48 96 44 C94 40 90 36 88 44 Z" fill="#E85D04"/>
+  <!-- Внутренний огонь (светлее) -->
+  <path d="M88 46 C86 36 90 26 94 20 C93 28 96 34 98 28 C100 22 102 18 104 14 C106 22 103 30 106 36 C109 28 110 22 108 14 C114 22 115 34 112 44 C109 34 106 28 104 36 C102 44 99 48 96 44 C93 40 90 36 88 46Z" fill="#FF8C42"/>
+
+  <!-- Каска — основной силуэт белый с тёмной обводкой -->
+  <!-- Купол каски -->
+  <path d="M60 105 Q58 72 96 66 Q134 72 132 105 Z" fill="white" stroke="#1a2a4a" stroke-width="3.5" stroke-linejoin="round"/>
+  <!-- Поля каски -->
+  <path d="M52 105 Q52 112 60 114 L132 114 Q140 112 140 105 Z" fill="white" stroke="#1a2a4a" stroke-width="3.5" stroke-linejoin="round"/>
+  <!-- Полоска вентиляции сверху -->
+  <path d="M88 68 Q96 65 104 68" fill="none" stroke="#1a2a4a" stroke-width="3" stroke-linecap="round"/>
+  <!-- Подбородочная дуга -->
+  <path d="M68 114 Q68 130 96 133 Q124 130 124 114" fill="none" stroke="white" stroke-width="5" stroke-linecap="round"/>
+  <path d="M68 114 Q68 130 96 133 Q124 130 124 114" fill="none" stroke="#1a2a4a" stroke-width="3" stroke-linecap="round"/>
 
   <!-- Текст МЧС -->
-  <text x="96" y="155" font-family="Arial Black, sans-serif" font-size="18" font-weight="900" fill="white" text-anchor="middle" letter-spacing="2">МЧС</text>
+  <text x="96" y="163" font-family="Arial, sans-serif" font-size="22" font-weight="700" fill="white" text-anchor="middle" letter-spacing="3">МЧС</text>
 </svg>
