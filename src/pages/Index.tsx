@@ -204,7 +204,7 @@ function printPutevka(acc: AccidentState) {
   <div class="row">
     <span class="lbl">На выезд</span>
     <span class="line flex3"></span>
-    <span class="lbl">ВГСБ (ВГСП)</span>
+    <span class="lbl">ВГСВ (ВГСП)</span>
     <span class="line flex3"></span>
     <span class="lbl">ВГСО</span>
     <span class="line flex2"></span>
