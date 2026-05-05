@@ -108,62 +108,7 @@ function useWeather() {
   return weather;
 }
 
-// ─── Печать ──────────────────────────────────────────────────────────────────
 
-function printAccident(acc: AccidentState, weather: Weather | null) {
-  const atype = ACCIDENT_TYPES.find(t => t.id === acc.type)!;
-  const html = `<!DOCTYPE html><html lang="ru"><head><meta charset="UTF-8"/>
-<title>Аварийный листок — ВГСЧ</title>
-<style>
-  @page{margin:15mm;size:A4}
-  body{font-family:Arial,sans-serif;font-size:13px;color:#111}
-  h1{font-size:22px;text-transform:uppercase;text-align:center;border-bottom:3px solid #cc0000;padding-bottom:8px;margin-bottom:16px}
-  .org{text-align:center;font-size:11px;color:#555;margin-bottom:4px}
-  .alarm{background:#cc0000;color:white;font-size:28px;font-weight:bold;text-align:center;padding:12px;letter-spacing:4px;border-radius:4px;margin-bottom:16px}
-  table{width:100%;border-collapse:collapse;margin-bottom:12px}
-  td{padding:6px 10px;border:1px solid #ccc;vertical-align:top}
-  td:first-child{font-weight:bold;width:42%;background:#f5f5f5}
-  .sec{font-size:11px;font-weight:bold;text-transform:uppercase;color:#555;letter-spacing:1px;margin:14px 0 4px}
-  .footer{margin-top:20px;font-size:10px;color:#999;text-align:center;border-top:1px solid #ddd;padding-top:8px}
-  .sig{margin-top:30px;display:flex;justify-content:space-between;font-size:12px}
-  .sig div{border-top:1px solid #333;width:45%;text-align:center;padding-top:4px}
-</style></head><body>
-<div class="org">ФГУП ВГСЧ МЧС России</div>
-<h1>Аварийный листок</h1>
-<div class="alarm">⚠ ${atype.label}</div>
-<div class="sec">Время и место</div>
-<table>
-  <tr><td>Время объявления (местное)</td><td>${acc.startedAt}</td></tr>
-  <tr><td>Время объявления (МСК)</td><td>${acc.startedAtMsk}</td></tr>
-  <tr><td>ОПО (объект)</td><td>${acc.opo}</td></tr>
-  <tr><td>Место аварии</td><td>${acc.location || "—"}</td></tr>
-  <tr><td>Вид аварии</td><td><b>${atype.label}</b></td></tr>
-</table>
-<div class="sec">Ответственные лица</div>
-<table>
-  <tr><td>По отряду</td><td>${acc.commanderSquad}</td></tr>
-  <tr><td>По взводу / пункту</td><td>${acc.commanderPlatoon}</td></tr>
-  <tr><td>Командир отделения</td><td>${acc.commanderUnit}</td></tr>
-  <tr><td>Дежурный у средств связи</td><td>${acc.commDuty}</td></tr>
-</table>
-${weather ? `<div class="sec">Погодные условия</div><table>
-  <tr><td>Температура</td><td>${weather.temp > 0 ? "+" : ""}${weather.temp} °C</td></tr>
-  <tr><td>Ветер</td><td>${weather.windSpeed} м/с, ${WIND_DIRS[Math.round(weather.windDir / 45) % 8]}</td></tr>
-  <tr><td>Влажность</td><td>${weather.humidity}%</td></tr>
-  <tr><td>Давление</td><td>${weather.pressure} мм рт. ст.</td></tr>
-  <tr><td>Описание</td><td>${weather.desc}</td></tr>
-  ${acc.weatherCondition ? `<tr><td>Особые условия</td><td><b>${WEATHER_CONDITIONS.find(w => w.id === acc.weatherCondition)?.icon ?? ""} ${WEATHER_CONDITIONS.find(w => w.id === acc.weatherCondition)?.label ?? ""}</b></td></tr>` : ""}
-</table>` : ""}
-<div class="sig"><div>Дежурный оператор</div><div>Принял командир</div></div>
-<div class="footer">Распечатано: ${new Date().toLocaleString("ru-RU")} | ФГУП ВГСЧ МЧС России | АРМ Дежурного</div>
-</body></html>`;
-  const win = window.open("", "_blank", "width=800,height=900");
-  if (!win) return;
-  win.document.write(html);
-  win.document.close();
-  win.focus();
-  setTimeout(() => win.print(), 400);
-}
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
@@ -408,14 +353,8 @@ export default function TabloPage() {
                 </div>
               )}
 
-              {/* Кнопки управления */}
+              {/* Кнопка управления */}
               <div className="flex gap-3">
-                <button onClick={() => printAccident(acc, weather)}
-                  className="flex-1 py-4 rounded-xl font-bold uppercase tracking-widest transition-all hover:opacity-90"
-                  style={{ background: "hsl(0 50% 22%)", border: "1px solid hsl(0 50% 35%)",
-                    color: "#ffcccc", fontFamily: "Oswald, sans-serif", fontSize: 16, letterSpacing: "0.1em" }}>
-                  🖨 Распечатать
-                </button>
                 <button onClick={cancel}
                   className="flex-1 py-4 rounded-xl transition-all hover:opacity-90"
                   style={{ background: "hsl(220 14% 13%)", border: "1px solid hsl(220 12% 22%)",

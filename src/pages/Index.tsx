@@ -136,6 +136,56 @@ function StatusDot({ status }: { status: Unit["status"] }) {
   );
 }
 
+// ─── Print ───────────────────────────────────────────────────────────────────
+
+function printAccident(acc: AccidentState) {
+  const atype = ACCIDENT_TYPES.find(t => t.id === acc.type)!;
+  const html = `<!DOCTYPE html><html lang="ru"><head><meta charset="UTF-8"/>
+<title>Аварийный листок — ВГСЧ</title>
+<style>
+  @page{margin:15mm;size:A4}
+  body{font-family:Arial,sans-serif;font-size:13px;color:#111}
+  h1{font-size:22px;text-transform:uppercase;text-align:center;border-bottom:3px solid #cc0000;padding-bottom:8px;margin-bottom:16px}
+  .org{text-align:center;font-size:11px;color:#555;margin-bottom:4px}
+  .alarm{background:#cc0000;color:white;font-size:28px;font-weight:bold;text-align:center;padding:12px;letter-spacing:4px;border-radius:4px;margin-bottom:16px}
+  table{width:100%;border-collapse:collapse;margin-bottom:12px}
+  td{padding:6px 10px;border:1px solid #ccc;vertical-align:top}
+  td:first-child{font-weight:bold;width:42%;background:#f5f5f5}
+  .sec{font-size:11px;font-weight:bold;text-transform:uppercase;color:#555;letter-spacing:1px;margin:14px 0 4px}
+  .footer{margin-top:20px;font-size:10px;color:#999;text-align:center;border-top:1px solid #ddd;padding-top:8px}
+  .sig{margin-top:30px;display:flex;justify-content:space-between;font-size:12px}
+  .sig div{border-top:1px solid #333;width:45%;text-align:center;padding-top:4px}
+</style></head><body>
+<div class="org">ФГУП ВГСЧ МЧС России</div>
+<h1>Аварийный листок</h1>
+<div class="alarm">⚠ ${atype.label}</div>
+<div class="sec">Время и место</div>
+<table>
+  <tr><td>Время объявления (местное)</td><td>${acc.startedAt}</td></tr>
+  <tr><td>Время объявления (МСК)</td><td>${acc.startedAtMsk}</td></tr>
+  <tr><td>ОПО (объект)</td><td>${acc.opo}</td></tr>
+  <tr><td>Место аварии</td><td>${acc.location || "—"}</td></tr>
+  <tr><td>Вид аварии</td><td><b>${atype.label}</b></td></tr>
+</table>
+<div class="sec">Ответственные лица</div>
+<table>
+  <tr><td>По отряду</td><td>${acc.commanderSquad}</td></tr>
+  <tr><td>По взводу / пункту</td><td>${acc.commanderPlatoon}</td></tr>
+  <tr><td>Командир отделения</td><td>${acc.commanderUnit}</td></tr>
+  <tr><td>Дежурный у средств связи</td><td>${acc.commDuty}</td></tr>
+</table>
+${acc.weatherCondition ? `<div class="sec">Особые погодные условия</div><table><tr><td>Условие</td><td><b>${WEATHER_CONDITIONS.find(w => w.id === acc.weatherCondition)?.icon ?? ""} ${WEATHER_CONDITIONS.find(w => w.id === acc.weatherCondition)?.label ?? ""}</b></td></tr></table>` : ""}
+<div class="sig"><div>Дежурный оператор</div><div>Принял командир</div></div>
+<div class="footer">Распечатано: ${new Date().toLocaleString("ru-RU")} | ФГУП ВГСЧ МЧС России | АРМ Дежурного</div>
+</body></html>`;
+  const win = window.open("", "_blank", "width=800,height=900");
+  if (!win) return;
+  win.document.write(html);
+  win.document.close();
+  win.focus();
+  setTimeout(() => win.print(), 400);
+}
+
 // ─── Sections ────────────────────────────────────────────────────────────────
 
 function AccidentPanel() {
@@ -202,13 +252,24 @@ function AccidentPanel() {
             </span>
           )}
         </div>
-        <button
-          onClick={() => window.open("/tablo", "_blank", "noopener,noreferrer")}
-          className="flex items-center gap-1.5 text-xs px-2 py-1 rounded border border-border hover:bg-secondary transition-colors"
-          style={{ color: "hsl(var(--muted-foreground))" }}
-        >
-          <Icon name="Monitor" size={12} />Открыть табло
-        </button>
+        <div className="flex items-center gap-2">
+          {acc.active && (
+            <button
+              onClick={() => printAccident(acc)}
+              className="flex items-center gap-1.5 text-xs px-2 py-1 rounded border transition-colors hover:opacity-90"
+              style={{ background: "hsl(var(--status-critical) / 0.12)", borderColor: "hsl(var(--status-critical) / 0.4)", color: "hsl(var(--status-critical))", fontWeight: 600 }}
+            >
+              <Icon name="Printer" size={12} />Распечатать листок
+            </button>
+          )}
+          <button
+            onClick={() => window.open("/tablo", "_blank", "noopener,noreferrer")}
+            className="flex items-center gap-1.5 text-xs px-2 py-1 rounded border border-border hover:bg-secondary transition-colors"
+            style={{ color: "hsl(var(--muted-foreground))" }}
+          >
+            <Icon name="Monitor" size={12} />Открыть табло
+          </button>
+        </div>
       </div>
 
       <div className="p-4 grid grid-cols-3 gap-4">
