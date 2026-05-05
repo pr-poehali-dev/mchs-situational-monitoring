@@ -1848,7 +1848,7 @@ export default function Index() {
       <aside className="w-56 flex-shrink-0 flex flex-col border-r border-border" style={{ background: "hsl(220 16% 6%)" }}>
         <div className="px-4 py-4 border-b border-border">
           <div className="flex items-center gap-2">
-            <img src="/favicon.svg" alt="ВГСЧ" className="w-8 h-8 flex-shrink-0" style={{ borderRadius: 6 }} />
+            <img src="https://cdn.poehali.dev/projects/e8b93a3a-e9ed-40ee-8196-78090d463984/files/70ad7d95-2630-438c-b2bb-76115fb8fa2a.jpg" alt="ВГСЧ" className="w-8 h-8 flex-shrink-0" style={{ borderRadius: 6, objectFit: "cover" }} />
             <div>
               <div className="text-xs font-bold tracking-widest" style={{ fontFamily: "Oswald", color: "hsl(var(--primary))" }}>
                 АРМ ДЕЖУРНОГО
