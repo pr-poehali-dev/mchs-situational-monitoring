@@ -620,22 +620,13 @@ function AccidentPanel() {
         </div>
         <div className="flex items-center gap-2">
           {acc.active && (
-            <>
-              <button
-                onClick={() => printAccident(acc)}
-                className="flex items-center gap-1.5 text-xs px-2 py-1 rounded border transition-colors hover:opacity-90"
-                style={{ background: "hsl(var(--status-critical) / 0.12)", borderColor: "hsl(var(--status-critical) / 0.4)", color: "hsl(var(--status-critical))", fontWeight: 600 }}
-              >
-                <Icon name="Printer" size={12} />Листок
-              </button>
-              <button
-                onClick={() => printPutevka(acc)}
-                className="flex items-center gap-1.5 text-xs px-2 py-1 rounded border transition-colors hover:opacity-90"
-                style={{ background: "hsl(var(--status-warning) / 0.12)", borderColor: "hsl(var(--status-warning) / 0.4)", color: "hsl(var(--status-warning))", fontWeight: 600 }}
-              >
-                <Icon name="FileText" size={12} />Путёвка
-              </button>
-            </>
+            <button
+              onClick={() => printPutevka(acc)}
+              className="flex items-center gap-1.5 text-xs px-2 py-1 rounded border transition-colors hover:opacity-90"
+              style={{ background: "hsl(var(--status-warning) / 0.12)", borderColor: "hsl(var(--status-warning) / 0.4)", color: "hsl(var(--status-warning))", fontWeight: 600 }}
+            >
+              <Icon name="FileText" size={12} />Путёвка
+            </button>
           )}
           <button
             onClick={() => printDisposition()}
