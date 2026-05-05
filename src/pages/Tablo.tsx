@@ -166,8 +166,8 @@ export default function TabloPage() {
 
         {/* Лого */}
         <div className="flex items-center gap-4">
-          <img src="/favicon.svg" alt="ВГСЧ"
-            style={{ width: 48, height: 48, borderRadius: 8, flexShrink: 0,
+          <img src="https://cdn.poehali.dev/projects/e8b93a3a-e9ed-40ee-8196-78090d463984/bucket/c5b61ccf-b314-4fc7-ae72-5788ddf14090.png" alt="ВГСЧ"
+            style={{ width: 48, height: 48, flexShrink: 0,
               boxShadow: `0 0 12px ${C.accent}55`, transition: "box-shadow 0.4s" }} />
           <div>
             <div style={{ fontSize: 10, color: "hsl(210 10% 45%)", textTransform: "uppercase", letterSpacing: "0.12em" }}>ФГУП ВГСЧ МЧС России</div>
