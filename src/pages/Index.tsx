@@ -1807,10 +1807,7 @@ export default function Index() {
       <aside className="w-56 flex-shrink-0 flex flex-col border-r border-border" style={{ background: "hsl(220 16% 6%)" }}>
         <div className="px-4 py-4 border-b border-border">
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded flex items-center justify-center flex-shrink-0"
-              style={{ background: "hsl(var(--primary))" }}>
-              <Icon name="Shield" size={14} className="text-white" />
-            </div>
+            <img src="/favicon.svg" alt="ВГСЧ" className="w-8 h-8 flex-shrink-0" style={{ borderRadius: 6 }} />
             <div>
               <div className="text-xs font-bold tracking-widest" style={{ fontFamily: "Oswald", color: "hsl(var(--primary))" }}>
                 АРМ ДЕЖУРНОГО

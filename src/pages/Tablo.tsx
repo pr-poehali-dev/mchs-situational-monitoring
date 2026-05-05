@@ -166,10 +166,9 @@ export default function TabloPage() {
 
         {/* Лого */}
         <div className="flex items-center gap-4">
-          <div className="w-10 h-10 rounded flex items-center justify-center font-bold text-white flex-shrink-0"
-            style={{ background: C.accent, fontFamily: "Oswald, sans-serif", fontSize: 20, transition: "background 0.4s" }}>
-            В
-          </div>
+          <img src="/favicon.svg" alt="ВГСЧ"
+            style={{ width: 48, height: 48, borderRadius: 8, flexShrink: 0,
+              boxShadow: `0 0 12px ${C.accent}55`, transition: "box-shadow 0.4s" }} />
           <div>
             <div style={{ fontSize: 10, color: "hsl(210 10% 45%)", textTransform: "uppercase", letterSpacing: "0.12em" }}>ФГУП ВГСЧ МЧС России</div>
             <div style={{ fontFamily: "Oswald, sans-serif", fontSize: 20, fontWeight: 700, color: C.accent, textTransform: "uppercase", letterSpacing: "0.06em", lineHeight: 1.1, transition: "color 0.4s" }}>
