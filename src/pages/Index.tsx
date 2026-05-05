@@ -25,7 +25,7 @@ import {
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-type SectionId = "dashboard" | "journal" | "alerts" | "archive" | "systems" | "directory";
+type SectionId = "dashboard" | "journal" | "alerts" | "directory";
 
 interface Unit {
   id: string;
@@ -1321,142 +1321,6 @@ function Alerts() {
 }
 
 
-function Archive() {
-  const [dateFrom, setDateFrom] = useState("2026-05-01");
-  const [dateTo, setDateTo] = useState("2026-05-04");
-
-  const inputStyle: React.CSSProperties = {
-    background: "hsl(var(--secondary))",
-    border: "1px solid hsl(var(--border))",
-    color: "hsl(var(--foreground))",
-    padding: "6px 10px",
-    borderRadius: 4,
-    fontSize: 13,
-    fontFamily: "IBM Plex Mono, monospace",
-  };
-
-  return (
-    <div className="fade-in space-y-4">
-      <div className="panel-card p-4">
-        <div className="flex items-end gap-4">
-          <div>
-            <label className="text-xs mb-1 block" style={{ color: "hsl(var(--muted-foreground))" }}>Дата с</label>
-            <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} style={inputStyle} />
-          </div>
-          <div>
-            <label className="text-xs mb-1 block" style={{ color: "hsl(var(--muted-foreground))" }}>Дата по</label>
-            <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} style={inputStyle} />
-          </div>
-          <button className="px-4 py-1.5 rounded text-sm font-medium transition-opacity hover:opacity-90"
-            style={{ background: "hsl(var(--primary))", color: "hsl(var(--primary-foreground))" }}>
-            Применить
-          </button>
-          <button className="px-4 py-1.5 rounded text-sm border border-border hover:bg-secondary transition-colors">
-            Экспорт
-          </button>
-        </div>
-      </div>
-
-      <div className="panel-card">
-        <div className="px-4 py-3 border-b border-border flex items-center justify-between">
-          <h2 className="text-sm font-semibold uppercase tracking-widest" style={{ fontFamily: "Oswald" }}>Архив операций</h2>
-          <span className="tag" style={{ background: "hsl(var(--muted))", color: "hsl(var(--muted-foreground))" }}>
-            {dateFrom} — {dateTo}
-          </span>
-        </div>
-        <div className="divide-y divide-border">
-          {[
-            { date: "2026-05-04", shift: "08:00–20:00", operator: "Иванов А.С.", incidents: 4, closed: 3 },
-            { date: "2026-05-03", shift: "20:00–08:00", operator: "Петрова М.И.", incidents: 2, closed: 2 },
-            { date: "2026-05-03", shift: "08:00–20:00", operator: "Сидоров К.В.", incidents: 5, closed: 4 },
-            { date: "2026-05-02", shift: "20:00–08:00", operator: "Козлов Р.Д.", incidents: 1, closed: 1 },
-            { date: "2026-05-02", shift: "08:00–20:00", operator: "Иванов А.С.", incidents: 6, closed: 6 },
-            { date: "2026-05-01", shift: "20:00–08:00", operator: "Петрова М.И.", incidents: 3, closed: 3 },
-          ].map((row, i) => (
-            <div key={i} className="flex items-center gap-6 px-4 py-3 hover:bg-secondary/30 transition-colors text-sm">
-              <span className="mono text-xs w-24 flex-shrink-0" style={{ color: "hsl(var(--muted-foreground))" }}>{row.date}</span>
-              <span className="mono text-xs w-24 flex-shrink-0" style={{ color: "hsl(var(--muted-foreground))" }}>{row.shift}</span>
-              <span className="flex-1">{row.operator}</span>
-              <span className="text-xs" style={{ color: "hsl(var(--muted-foreground))" }}>Инцидентов: <b style={{ color: "hsl(var(--foreground))" }}>{row.incidents}</b></span>
-              <span className="text-xs" style={{ color: row.closed === row.incidents ? "hsl(var(--status-active))" : "hsl(var(--status-warning))" }}>
-                Закрыто: {row.closed}
-              </span>
-              <button className="text-xs px-2 py-1 rounded border border-border hover:bg-secondary transition-colors flex-shrink-0">
-                Открыть
-              </button>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function Systems() {
-  const systems = [
-    { name: "АСУ ВГСЧ", type: "Основная система управления", status: "active" as const, lastSync: "08:47:10", version: "v3.1.4", latency: "38 мс" },
-    { name: "АИАС ВГСЧ", type: "Аварийно-инф. система", status: "active" as const, lastSync: "08:47:05", version: "v2.4", latency: "95 мс" },
-    { name: "ПРТС (позицион.)", type: "Позиционирование в шахте", status: "warning" as const, lastSync: "08:32:15", version: "v1.9", latency: ">400 мс" },
-    { name: "Штаб ВГСЧ (API)", type: "API-интеграция со штабом", status: "active" as const, lastSync: "08:46:00", version: "REST 1.5", latency: "130 мс" },
-    { name: "МЧС России (ЕДДС)", type: "Единая диспетч. служба", status: "idle" as const, lastSync: "07:00:00", version: "v4.0", latency: "—" },
-  ];
-
-  return (
-    <div className="fade-in space-y-4">
-      <div className="grid grid-cols-3 gap-3">
-        {systems.map(s => (
-          <div key={s.name} className="panel-card p-4">
-            <div className="flex items-start justify-between mb-3">
-              <div>
-                <div className="font-semibold text-sm">{s.name}</div>
-                <div className="text-xs mt-0.5" style={{ color: "hsl(var(--muted-foreground))" }}>{s.type}</div>
-              </div>
-              <StatusDot status={s.status} />
-            </div>
-            <div className="space-y-1.5 text-xs" style={{ color: "hsl(var(--muted-foreground))" }}>
-              <div className="flex justify-between">
-                <span>Последняя синхр.</span>
-                <span className="mono">{s.lastSync}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Версия</span>
-                <span className="mono">{s.version}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Задержка</span>
-                <span className="mono" style={{ color: s.latency === "—" ? "hsl(var(--status-idle))" : s.latency.includes(">") ? "hsl(var(--status-warning))" : parseInt(s.latency) > 200 ? "hsl(var(--status-warning))" : "hsl(var(--status-active))" }}>{s.latency}</span>
-              </div>
-            </div>
-            <button className="mt-3 w-full text-xs py-1.5 rounded border border-border hover:bg-secondary transition-colors">
-              Синхронизировать
-            </button>
-          </div>
-        ))}
-      </div>
-
-      <div className="panel-card p-4">
-        <h3 className="text-sm font-semibold uppercase tracking-widest mb-3" style={{ fontFamily: "Oswald" }}>Журнал синхронизации</h3>
-        <div className="divide-y divide-border">
-          {[
-            { time: "08:47:10", system: "АСУ ВГСЧ", event: "Синхронизация выполнена. Получено 2 новых оперативных записи.", ok: true },
-            { time: "08:46:00", system: "Штаб ВГСЧ", event: "Данные о составе смен переданы в штаб.", ok: true },
-            { time: "08:45:00", system: "АГК", event: "Обновлены показатели газового контроля: CH₄ в норме.", ok: true },
-            { time: "08:32:15", system: "ПРТС", event: "Превышение порога задержки (420 мс). Повтор через 5 мин.", ok: false },
-            { time: "08:30:00", system: "АСУ ВГСЧ", event: "Синхронизация выполнена успешно.", ok: true },
-          ].map((row, i) => (
-            <div key={i} className="flex items-start gap-3 py-2 text-xs">
-              <span className="mono w-16 flex-shrink-0" style={{ color: "hsl(var(--muted-foreground))" }}>{row.time}</span>
-              <span className="w-28 flex-shrink-0 font-medium" style={{ color: "hsl(var(--primary))" }}>{row.system}</span>
-              <span className="flex-1">{row.event}</span>
-              <span className="flex-shrink-0" style={{ color: row.ok ? "hsl(var(--status-active))" : "hsl(var(--status-warning))" }}>{row.ok ? "OK" : "WARN"}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
 // ─── Directory Section ────────────────────────────────────────────────────────
 
 function DirectorySection() {
@@ -1919,8 +1783,6 @@ const NAV: { id: SectionId; label: string; icon: string; badge?: number }[] = [
   { id: "journal",    label: "Журнал событий",    icon: "ScrollText" },
   { id: "alerts",     label: "Уведомления",       icon: "Bell", badge: 2 },
 
-  { id: "archive",    label: "Архив",             icon: "Archive" },
-  { id: "systems",    label: "Внешние системы",   icon: "Network" },
   { id: "directory",  label: "Справочники",       icon: "BookOpen" },
 ];
 
@@ -1936,8 +1798,6 @@ export default function Index() {
       case "journal": return <Journal />;
       case "alerts": return <Alerts />;
 
-      case "archive":    return <Archive />;
-      case "systems":    return <Systems />;
       case "directory":  return <DirectorySection />;
     }
   };
