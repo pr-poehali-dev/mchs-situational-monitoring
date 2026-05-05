@@ -1,11 +1,23 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192">
-  <rect width="192" height="192" rx="28" fill="#001a40"/>
-  <circle cx="96" cy="96" r="72" fill="none" stroke="#FF6B00" stroke-width="5"/>
+  <!-- Фон — тёмно-синий, без скруглений для PWA maskable -->
+  <rect width="192" height="192" fill="#001a40"/>
+
   <!-- Щит -->
-  <path d="M96 30 L130 50 L130 98 Q130 128 96 148 Q62 128 62 98 L62 50 Z" fill="#002d6b" stroke="#FF6B00" stroke-width="3"/>
-  <!-- Пламя -->
-  <path d="M96 60 C88 72 82 80 82 90 C82 104 88 114 96 118 C104 114 110 104 110 90 C110 80 104 72 96 60Z" fill="#FF6B00"/>
-  <path d="M96 74 C91 82 89 88 89 94 C89 102 92 108 96 111 C100 108 103 102 103 94 C103 88 101 82 96 74Z" fill="#ffaa44"/>
-  <!-- Буква В -->
-  <text x="96" y="142" font-family="Arial Black, sans-serif" font-size="22" font-weight="900" fill="white" text-anchor="middle" letter-spacing="1">В</text>
+  <path d="M96 28 L148 52 L148 108 Q148 148 96 170 Q44 148 44 108 L44 52 Z" fill="#FF6000"/>
+
+  <!-- Каска — корпус -->
+  <ellipse cx="96" cy="98" rx="32" ry="20" fill="white"/>
+  <!-- Каска — купол -->
+  <path d="M64 98 Q64 68 96 65 Q128 68 128 98 Z" fill="white"/>
+  <!-- Каска — козырёк -->
+  <rect x="60" y="96" width="72" height="7" rx="3" fill="white"/>
+  <!-- Каска — тёмная полоса на козырьке для объёма -->
+  <rect x="60" y="96" width="72" height="3" rx="1.5" fill="#001a40" opacity="0.2"/>
+
+  <!-- Пламя над щитом -->
+  <path d="M88 32 C85 22 90 14 96 10 C102 14 107 22 104 32 C108 24 112 18 110 10 C118 16 120 26 114 34 C112 20 108 16 104 14 C106 22 102 30 96 36 C90 30 86 22 88 32Z" fill="#FF6000"/>
+  <path d="M92 30 C90 24 93 18 96 14 C99 18 102 24 100 30 C101 22 104 18 102 14 C107 19 108 26 104 32 C102 22 100 18 96 22 C92 18 90 22 88 32 C86 26 88 19 92 30Z" fill="#ffaa00"/>
+
+  <!-- Текст МЧС -->
+  <text x="96" y="155" font-family="Arial Black, sans-serif" font-size="18" font-weight="900" fill="white" text-anchor="middle" letter-spacing="2">МЧС</text>
 </svg>
