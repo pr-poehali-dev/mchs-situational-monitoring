@@ -686,7 +686,7 @@ function AccidentPanel() {
               <button onClick={declare}
                 className="w-full py-3 rounded font-bold uppercase tracking-widest transition-all hover:opacity-90"
                 style={{ background: "hsl(var(--status-critical))", color: "white", fontFamily: "Oswald", fontSize: 15, letterSpacing: "0.1em" }}>
-                🚨 ОБЪЯВИТЬ АВАРИЮ
+                🚨 ТРЕВОГА
               </button>
             ) : (
               <button onClick={cancel}
