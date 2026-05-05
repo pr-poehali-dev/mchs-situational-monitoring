@@ -942,8 +942,8 @@ function Dashboard() {
                   <tr style={{ color: "hsl(var(--muted-foreground))" }} className="text-xs uppercase tracking-wide">
                     <th className="text-left px-4 py-2 font-medium">ID</th>
                     <th className="text-left px-4 py-2 font-medium">Подразделение</th>
-                    <th className="text-left px-4 py-2 font-medium">Местоположение</th>
-                    <th className="text-left px-4 py-2 font-medium">Проверка связи</th>
+                    <th className="text-left px-4 py-2 font-medium">Адрес</th>
+                    <th className="text-left px-4 py-2 font-medium">Телефон</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1566,8 +1566,8 @@ function DirectorySection() {
             {([
               { label: "ID *", key: "id", placeholder: "ВГСО-1", disabled: !!dEdit },
               { label: "Подразделение *", key: "name", placeholder: "ВГСО-1 Центральный" },
-              { label: "Местоположение", key: "location", placeholder: "Шахта «Северная»" },
-              { label: "Проверка связи", key: "lastContact", placeholder: "08:42" },
+              { label: "Адрес", key: "location", placeholder: "г. Копейск, ул. Ленина, 1" },
+              { label: "Телефон", key: "lastContact", placeholder: "+7 (351) 123-45-67" },
             ] as const).map(f => (
               <div key={f.key}>
                 <label className="text-xs block mb-1" style={{ color: "hsl(var(--muted-foreground))" }}>{f.label}</label>
@@ -1616,7 +1616,7 @@ function DirectorySection() {
                       <div className="text-xs" style={{ color: "hsl(var(--muted-foreground))" }}>
                         {d.location && <span>{d.location}</span>}
                         {d.location && d.lastContact && <span> · </span>}
-                        {d.lastContact && <span className="mono">Связь: {d.lastContact}</span>}
+                        {d.lastContact && <span className="mono">📞 {d.lastContact}</span>}
                       </div>
                     </div>
                     <button onClick={() => editD(d)} className="text-xs px-2 py-1 rounded border border-border hover:bg-secondary transition-colors flex-shrink-0">

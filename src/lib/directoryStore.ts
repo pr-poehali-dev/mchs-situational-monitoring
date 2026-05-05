@@ -17,8 +17,8 @@ export interface OpoEntry {
 export interface DivisionEntry {
   id: string;         // Идентификатор подразделения
   name: string;       // Наименование подразделения
-  location: string;   // Местоположение
-  lastContact: string; // Последняя проверка связи
+  location: string;   // Адрес
+  lastContact: string; // Номер телефона
 }
 
 // Строка диспозиции выездов — одна организация (ОПО)
