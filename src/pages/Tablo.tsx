@@ -420,21 +420,40 @@ export default function TabloPage() {
             </div>
 
             {/* Погода в штатном режиме */}
-            {weather && (
-              <div className="rounded-2xl p-8"
-                style={{ background: "hsl(218 30% 8%)", border: "1px solid hsl(218 25% 14%)" }}>
-                <div style={{ fontSize: 11, color: "hsl(215 15% 42%)", textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: 20 }}>
-                  Погодные условия · {weather.updated}
-                </div>
-                <div className="flex items-center gap-5 mb-6">
-                  <span style={{ fontSize: 56 }}>{weather.icon}</span>
-                  <div>
-                    <div style={{ fontFamily: "Oswald, sans-serif", fontSize: 56, fontWeight: 700, lineHeight: 1 }}>
-                      {weather.temp > 0 ? "+" : ""}{weather.temp}°C
+            <div className="rounded-2xl p-8"
+              style={{ background: "hsl(218 30% 8%)", border: "1px solid hsl(218 25% 14%)" }}>
+              <div style={{ fontSize: 11, color: "hsl(215 15% 42%)", textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: 20 }}>
+                Погодные условия{weather ? ` · ${weather.updated}` : ""}
+              </div>
+              <div className="flex items-center gap-5 mb-6 flex-wrap">
+                {weather && (
+                  <>
+                    <span style={{ fontSize: 56 }}>{weather.icon}</span>
+                    <div>
+                      <div style={{ fontFamily: "Oswald, sans-serif", fontSize: 56, fontWeight: 700, lineHeight: 1 }}>
+                        {weather.temp > 0 ? "+" : ""}{weather.temp}°C
+                      </div>
+                      <div style={{ fontSize: 18, color: "hsl(210 10% 55%)", marginTop: 6 }}>{weather.desc}</div>
                     </div>
-                    <div style={{ fontSize: 18, color: "hsl(210 10% 55%)", marginTop: 6 }}>{weather.desc}</div>
-                  </div>
-                </div>
+                  </>
+                )}
+                {acc.weatherCondition && (() => {
+                  const wc = WEATHER_CONDITIONS.find(w => w.id === acc.weatherCondition);
+                  return wc ? (
+                    <div className="rounded-xl px-6 py-4 flex items-center gap-3"
+                      style={{ background: "hsl(45 80% 20%)", border: "2px solid hsl(45 80% 45%)" }}>
+                      <span style={{ fontSize: 40 }}>{wc.icon}</span>
+                      <div style={{ fontFamily: "Oswald, sans-serif", fontSize: 30, fontWeight: 700, color: "hsl(45 90% 70%)", textTransform: "uppercase" }}>
+                        {wc.label}
+                      </div>
+                    </div>
+                  ) : null;
+                })()}
+                {!weather && !acc.weatherCondition && (
+                  <div style={{ color: "hsl(210 10% 35%)", fontSize: 16 }}>Нет данных</div>
+                )}
+              </div>
+              {weather && (
                 <div className="grid grid-cols-3 gap-4">
                   {[
                     { l: "Ветер", v: `${weather.windSpeed} м/с ${WIND_DIRS[Math.round(weather.windDir / 45) % 8]}` },
@@ -448,8 +467,8 @@ export default function TabloPage() {
                     </div>
                   ))}
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
       )}

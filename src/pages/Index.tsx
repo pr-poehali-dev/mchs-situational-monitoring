@@ -1825,12 +1825,15 @@ export default function Index() {
             АСУ синхр.: 08:47
           </div>
         </div>
-        <div className="px-4 py-2 border-t border-border">
-          <div style={{ fontSize: 9, color: "hsl(var(--muted-foreground) / 0.45)", letterSpacing: "0.03em", lineHeight: 1.5 }}>
-            Разработчик:<br />
-            <span style={{ color: "hsl(var(--primary) / 0.6)", fontWeight: 600 }}>
-              СДС филиала «Копейский ВГСО»&nbsp;С.Г.&nbsp;Ипатов
-            </span>
+        <div className="px-3 py-2 border-t border-border">
+          <div style={{ fontSize: 8.5, color: "hsl(var(--muted-foreground) / 0.35)", letterSpacing: "0.04em", lineHeight: 1.6 }}>
+            <div style={{ textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 1 }}>Разработчик</div>
+            <div style={{ color: "hsl(var(--primary) / 0.55)", fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+              СДС филиала «Копейский ВГСО»
+            </div>
+            <div style={{ color: "hsl(var(--muted-foreground) / 0.5)", fontWeight: 500 }}>
+              С.Г. Ипатов
+            </div>
           </div>
         </div>
       </aside>
