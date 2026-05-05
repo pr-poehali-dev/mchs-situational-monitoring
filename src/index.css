@@ -4,50 +4,54 @@
 
 @layer base {
   :root {
-    --background: 220 16% 7%;
-    --foreground: 210 20% 92%;
+    /* ── Основа: глубокий тёмно-синий МЧС ── */
+    --background: 218 35% 6%;
+    --foreground: 210 25% 93%;
 
-    --card: 220 14% 10%;
-    --card-foreground: 210 20% 92%;
+    --card: 218 30% 9%;
+    --card-foreground: 210 25% 93%;
 
-    --popover: 220 14% 10%;
-    --popover-foreground: 210 20% 92%;
+    --popover: 218 30% 9%;
+    --popover-foreground: 210 25% 93%;
 
-    --primary: 14 90% 52%;
+    /* Акцент — оранжевый МЧС */
+    --primary: 24 95% 52%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 220 12% 15%;
-    --secondary-foreground: 210 20% 80%;
+    --secondary: 218 25% 13%;
+    --secondary-foreground: 210 20% 78%;
 
-    --muted: 220 12% 13%;
-    --muted-foreground: 210 10% 50%;
+    --muted: 218 22% 11%;
+    --muted-foreground: 215 15% 48%;
 
-    --accent: 14 90% 52%;
+    --accent: 24 95% 52%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 80% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 12% 16%;
-    --input: 220 12% 16%;
-    --ring: 14 90% 52%;
+    --border: 218 22% 14%;
+    --input: 218 22% 14%;
+    --ring: 24 95% 52%;
 
     --radius: 0.25rem;
 
-    --sidebar-background: 220 16% 7%;
-    --sidebar-foreground: 210 20% 92%;
-    --sidebar-primary: 14 90% 52%;
+    /* Сайдбар — чуть темнее фона, с синей ноткой */
+    --sidebar-background: 218 38% 5%;
+    --sidebar-foreground: 210 25% 90%;
+    --sidebar-primary: 24 95% 52%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 12% 13%;
-    --sidebar-accent-foreground: 210 20% 80%;
-    --sidebar-border: 220 12% 16%;
-    --sidebar-ring: 14 90% 52%;
+    --sidebar-accent: 218 25% 11%;
+    --sidebar-accent-foreground: 210 20% 78%;
+    --sidebar-border: 218 25% 12%;
+    --sidebar-ring: 24 95% 52%;
 
-    --status-active: 142 70% 45%;
-    --status-warning: 45 95% 55%;
-    --status-critical: 0 80% 50%;
-    --status-idle: 210 10% 45%;
-    --status-unavailable: 220 12% 30%;
+    /* Статусы */
+    --status-active: 142 65% 42%;
+    --status-warning: 38 95% 55%;
+    --status-critical: 0 82% 52%;
+    --status-idle: 215 15% 44%;
+    --status-unavailable: 218 18% 28%;
   }
 }
 
@@ -166,8 +170,8 @@
 
   .grid-scan {
     background-image:
-      linear-gradient(hsl(var(--border) / 0.5) 1px, transparent 1px),
-      linear-gradient(90deg, hsl(var(--border) / 0.5) 1px, transparent 1px);
+      linear-gradient(hsl(218 30% 12% / 0.6) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(218 30% 12% / 0.6) 1px, transparent 1px);
     background-size: 32px 32px;
   }
 

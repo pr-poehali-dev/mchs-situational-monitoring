@@ -136,9 +136,9 @@ export default function TabloPage() {
   const atype  = ACCIDENT_TYPES.find(t => t.id === acc.type)!;
 
   const C = {
-    bg:      acc.active ? (flashRed ? "hsl(0 70% 8%)" : "hsl(0 60% 5%)") : "hsl(220 20% 4%)",
-    border:  acc.active ? (flashRed ? "#ff3300" : "#881100") : "hsl(220 12% 14%)",
-    accent:  acc.active ? "#ff4422" : "hsl(14 90% 52%)",
+    bg:      acc.active ? (flashRed ? "hsl(0 70% 8%)" : "hsl(0 60% 5%)") : "hsl(218 35% 5%)",
+    border:  acc.active ? (flashRed ? "#ff3300" : "#881100") : "hsl(218 25% 13%)",
+    accent:  acc.active ? "#ff4422" : "hsl(24 95% 52%)",
   };
 
   // Стиль метки-заголовка
@@ -152,7 +152,7 @@ export default function TabloPage() {
       className="min-h-screen flex flex-col select-none overflow-hidden"
       style={{
         background: C.bg,
-        backgroundImage: "linear-gradient(hsl(220 18% 9% / 0.4) 1px, transparent 1px), linear-gradient(90deg, hsl(220 18% 9% / 0.4) 1px, transparent 1px)",
+        backgroundImage: "linear-gradient(hsl(218 30% 10% / 0.5) 1px, transparent 1px), linear-gradient(90deg, hsl(218 30% 10% / 0.5) 1px, transparent 1px)",
         backgroundSize: "40px 40px",
         fontFamily: "IBM Plex Sans, sans-serif",
         color: "hsl(210 20% 92%)",
@@ -162,7 +162,7 @@ export default function TabloPage() {
 
       {/* ══ ШАПКА: лого + время + погода ════════════════════════════════════════ */}
       <header className="flex items-center justify-between px-8 py-4 flex-shrink-0 border-b"
-        style={{ borderColor: C.border, background: "hsl(220 20% 3% / 0.95)", transition: "border-color 0.4s" }}>
+        style={{ borderColor: C.border, background: "hsl(218 38% 4% / 0.97)", transition: "border-color 0.4s" }}>
 
         {/* Лого */}
         <div className="flex items-center gap-4">
@@ -288,7 +288,7 @@ export default function TabloPage() {
 
             {/* Ответственные лица */}
             <div className="rounded-xl p-8"
-              style={{ background: "hsl(220 16% 9%)", border: "1px solid hsl(220 12% 18%)" }}>
+              style={{ background: "hsl(218 30% 8%)", border: "1px solid hsl(218 25% 15%)" }}>
               <div style={lbl()}>Ответственные лица</div>
               <div className="grid grid-cols-2 gap-6 mt-4">
                 {[
@@ -313,7 +313,7 @@ export default function TabloPage() {
             <div className="flex flex-col gap-4">
               {weather && (
                 <div className="rounded-xl p-8 flex-1"
-                  style={{ background: "hsl(220 16% 9%)", border: "1px solid hsl(220 12% 18%)" }}>
+                  style={{ background: "hsl(218 30% 8%)", border: "1px solid hsl(218 25% 15%)" }}>
                   <div style={lbl()}>Погодные условия</div>
                   <div className="flex items-center gap-4 mt-4">
                     <span style={{ fontSize: 48 }}>{weather.icon}</span>
@@ -344,7 +344,7 @@ export default function TabloPage() {
                       { l: "Давление", v: `${weather.pressure} мм` },
                     ].map(r => (
                       <div key={r.l} className="rounded-lg p-3 text-center"
-                        style={{ background: "hsl(220 14% 13%)" }}>
+                        style={{ background: "hsl(218 25% 12%)" }}>
                         <div style={{ fontSize: 11, color: "hsl(210 10% 45%)", textTransform: "uppercase", letterSpacing: "0.06em" }}>{r.l}</div>
                         <div style={{ fontFamily: "Oswald, sans-serif", fontSize: 22, fontWeight: 700, marginTop: 2 }}>{r.v}</div>
                       </div>
@@ -357,8 +357,8 @@ export default function TabloPage() {
               <div className="flex gap-3">
                 <button onClick={cancel}
                   className="flex-1 py-4 rounded-xl transition-all hover:opacity-90"
-                  style={{ background: "hsl(220 14% 13%)", border: "1px solid hsl(220 12% 22%)",
-                    color: "hsl(210 10% 55%)", fontSize: 15 }}>
+                  style={{ background: "hsl(218 25% 12%)", border: "1px solid hsl(218 20% 20%)",
+                    color: "hsl(215 15% 55%)", fontSize: 15 }}>
                   Отбой аварии
                 </button>
               </div>
@@ -372,7 +372,7 @@ export default function TabloPage() {
 
           {/* Статус — штатный */}
           <div className="rounded-2xl px-10 py-5 flex items-center justify-between"
-            style={{ background: "hsl(220 14% 9%)", border: "1px solid hsl(220 12% 16%)" }}>
+            style={{ background: "hsl(218 30% 8%)", border: "1px solid hsl(218 25% 14%)" }}>
             <div className="flex items-center gap-3">
               <div className="w-3 h-3 rounded-full" style={{ background: "hsl(142 70% 45%)" }} />
               <span style={{ fontFamily: "Oswald, sans-serif", fontSize: 26, color: "hsl(142 70% 45%)",
@@ -390,8 +390,8 @@ export default function TabloPage() {
 
             {/* Ответственные лица — всегда */}
             <div className="rounded-2xl p-8"
-              style={{ background: "hsl(220 14% 9%)", border: "1px solid hsl(220 12% 16%)" }}>
-              <div style={{ fontSize: 11, color: "hsl(210 10% 40%)", textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: 20 }}>
+              style={{ background: "hsl(218 30% 8%)", border: "1px solid hsl(218 25% 14%)" }}>
+              <div style={{ fontSize: 11, color: "hsl(215 15% 42%)", textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: 20 }}>
                 Ответственные лица
               </div>
               <div className="grid grid-cols-2 gap-x-8 gap-y-6">
@@ -416,8 +416,8 @@ export default function TabloPage() {
             {/* Погода в штатном режиме */}
             {weather && (
               <div className="rounded-2xl p-8"
-                style={{ background: "hsl(220 14% 9%)", border: "1px solid hsl(220 12% 16%)" }}>
-                <div style={{ fontSize: 11, color: "hsl(210 10% 40%)", textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: 20 }}>
+                style={{ background: "hsl(218 30% 8%)", border: "1px solid hsl(218 25% 14%)" }}>
+                <div style={{ fontSize: 11, color: "hsl(215 15% 42%)", textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: 20 }}>
                   Погодные условия · {weather.updated}
                 </div>
                 <div className="flex items-center gap-5 mb-6">
@@ -436,7 +436,7 @@ export default function TabloPage() {
                     { l: "Давление", v: `${weather.pressure} мм` },
                   ].map(r => (
                     <div key={r.l} className="rounded-xl p-4 text-center"
-                      style={{ background: "hsl(220 14% 13%)" }}>
+                      style={{ background: "hsl(218 25% 12%)" }}>
                       <div style={{ fontSize: 11, color: "hsl(210 10% 45%)", textTransform: "uppercase", letterSpacing: "0.06em" }}>{r.l}</div>
                       <div style={{ fontFamily: "Oswald, sans-serif", fontSize: 24, fontWeight: 700, marginTop: 4 }}>{r.v}</div>
                     </div>
