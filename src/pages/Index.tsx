@@ -15,6 +15,7 @@ import {
   type PersonEntry,
   type OpoEntry,
   type DivisionEntry,
+  type DispositionRow,
   loadDirectory,
   saveDirectory,
   subscribeDirectory,
@@ -257,6 +258,127 @@ ${wc && wc.id ? `
   setTimeout(() => win.print(), 400);
 }
 
+function printDisposition() {
+  const dir = loadDirectory();
+  const meta = dir.dispositionMeta;
+  const rows = dir.dispositionRows;
+  const now = new Date();
+
+  const rowsHtml = rows.length === 0
+    ? `<tr><td colspan="7" style="text-align:center;color:#999;padding:20px;">Строки диспозиции не заполнены</td></tr>`
+    : rows.map((r, i) => `
+      <tr>
+        <td style="vertical-align:top;font-size:11px;">${i + 1}. ${r.opoName}</td>
+        <td style="vertical-align:top;font-size:11px;white-space:pre-wrap">${r.explosion || ""}</td>
+        <td style="vertical-align:top;font-size:11px;white-space:pre-wrap">${r.fire || ""}</td>
+        <td style="vertical-align:top;font-size:11px;white-space:pre-wrap">${r.collapse || ""}</td>
+        <td style="vertical-align:top;font-size:11px;white-space:pre-wrap">${r.flood || ""}</td>
+        <td style="vertical-align:top;font-size:11px;text-align:center">${r.phone || ""}</td>
+        <td style="vertical-align:top;font-size:11px;text-align:center">${r.callsign || ""}</td>
+      </tr>`).join("");
+
+  const html = `<!DOCTYPE html><html lang="ru"><head><meta charset="UTF-8"/>
+<title>Приложение №1 — Диспозиция ВГСО</title>
+<style>
+  @page { size: A4 landscape; margin: 15mm 10mm 15mm 20mm; }
+  * { box-sizing: border-box; }
+  body { font-family: Arial, sans-serif; font-size: 12px; color: #000; margin: 0; }
+
+  .app-label { text-align: right; font-size: 10px; line-height: 1.7; margin-bottom: 10px; }
+
+  .utv { float: right; text-align: left; font-size: 11px; line-height: 1.9; margin-bottom: 6px; }
+  .utv .utv-line { display: flex; align-items: flex-end; gap: 4px; }
+  .utv .utv-ul { border-bottom: 1px solid #000; min-width: 80px; display: inline-block; }
+  .clearfix { clear: both; }
+
+  .disptitle {
+    font-family: "Courier New", monospace; font-size: 13px; letter-spacing: 0.15em;
+    margin: 8px 0 14px 0; text-align: left;
+  }
+  .disptitle span { border-bottom: 1px solid #000; display: inline-block; min-width: 120px; }
+
+  table.main {
+    width: 100%; border-collapse: collapse; margin-bottom: 14px;
+  }
+  table.main th, table.main td {
+    border: 1px solid #000; padding: 4px 5px; vertical-align: top;
+  }
+  table.main th {
+    background: #f0f0f0; font-size: 10px; text-align: center; font-weight: bold;
+  }
+  .num { text-align: center; font-weight: bold; background: #f5f5f5; }
+
+  .legend { font-size: 10px; margin-top: 10px; border-top: 1px solid #999; padding-top: 6px; }
+  .legend p { margin: 2px 0; }
+
+  .footer { font-size: 9px; color: #aaa; text-align: right; margin-top: 8px; }
+</style></head><body>
+
+<div class="app-label">
+  Приложение № 1<br>
+  к Уставу военизированной горноспасательной части<br>
+  по организации и ведению горноспасательных работ,<br>
+  утверждённому приказом МЧС России от 09.06.2017 № 251
+</div>
+
+<div class="utv">
+  <div>Утверждаю:</div>
+  <div class="utv-line">Командир <span class="utv-ul">&nbsp;${meta.vgsoName}&nbsp;</span> ВГСО</div>
+  <div class="utv-line"><span class="utv-ul">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span> <span class="utv-ul">&nbsp;${meta.commanderName}&nbsp;</span></div>
+  <div style="display:flex;gap:4px;font-size:10px;color:#555"><span>Подпись</span><span style="padding-left:36px">Фамилия И.О.</span></div>
+  <div class="utv-line">«___» <span class="utv-ul">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span> ${meta.year} г.</div>
+</div>
+<div class="clearfix"></div>
+
+<div class="disptitle">
+  Диспозиция выездов подразделений&nbsp;&nbsp;
+  <span>&nbsp;${meta.vgsoName || ""}&nbsp;</span>&nbsp;
+  ВГСО в ${meta.year} г.
+</div>
+
+<table class="main">
+  <thead>
+    <tr>
+      <th rowspan="2" style="width:12%">Наименование организаций<br>(опасных производственных объектов)</th>
+      <th colspan="4">Вид аварии, привлекаемые подразделения, количество отделений, транспортные и технические средства</th>
+      <th rowspan="2" style="width:7%">Номер телефона на ВГСВ (ВГСП)</th>
+      <th rowspan="2" style="width:7%">Радиопозывные ВГСВ (ВГСП)</th>
+    </tr>
+    <tr>
+      <th style="width:16%">Взрыв (вспышка)</th>
+      <th style="width:16%">Пожар</th>
+      <th style="width:16%">Обрушение, внезапный выброс, горный удар</th>
+      <th style="width:16%">Загазирование, затопление, прорыв воды (рассола), пульпы, другие виды аварий</th>
+    </tr>
+    <tr class="num">
+      <td class="num">1</td><td class="num">2</td><td class="num">3</td>
+      <td class="num">4</td><td class="num">5</td><td class="num">6</td><td class="num">7</td>
+    </tr>
+  </thead>
+  <tbody>
+    ${rowsHtml}
+  </tbody>
+</table>
+
+<div class="legend">
+  <p>МБЭР — медицинская бригада экстренного реагирования;</p>
+  <p>КИЛ — контрольно-испытательная лаборатория;</p>
+  <p>СДС — служба депрессионных съёмок;</p>
+  <p>АПО — автомобиль пожарного оборудования;</p>
+  <p>АСИ — аварийно-спасательный инструмент.</p>
+</div>
+
+<div class="footer">Распечатано: ${now.toLocaleString("ru-RU")} &nbsp;|&nbsp; АРМ Дежурного оператора ВГСЧ МЧС России</div>
+</body></html>`;
+
+  const win = window.open("", "_blank", "width=1100,height=820");
+  if (!win) return;
+  win.document.write(html);
+  win.document.close();
+  win.focus();
+  setTimeout(() => win.print(), 400);
+}
+
 function printPutevka(acc: AccidentState) {
   const atype = ACCIDENT_TYPES.find(t => t.id === acc.type)!;
   const timeParts = acc.startedAt ? acc.startedAt.split(":") : [];
@@ -470,7 +592,7 @@ function AccidentPanel() {
                 className="flex items-center gap-1.5 text-xs px-2 py-1 rounded border transition-colors hover:opacity-90"
                 style={{ background: "hsl(var(--status-critical) / 0.12)", borderColor: "hsl(var(--status-critical) / 0.4)", color: "hsl(var(--status-critical))", fontWeight: 600 }}
               >
-                <Icon name="Printer" size={12} />Приложение №1
+                <Icon name="Printer" size={12} />Листок
               </button>
               <button
                 onClick={() => printPutevka(acc)}
@@ -481,6 +603,13 @@ function AccidentPanel() {
               </button>
             </>
           )}
+          <button
+            onClick={() => printDisposition()}
+            className="flex items-center gap-1.5 text-xs px-2 py-1 rounded border transition-colors hover:opacity-90"
+            style={{ background: "hsl(var(--primary) / 0.1)", borderColor: "hsl(var(--primary) / 0.4)", color: "hsl(var(--primary))", fontWeight: 600 }}
+          >
+            <Icon name="BookOpen" size={12} />Приложение №1
+          </button>
           <button
             onClick={() => window.open("/tablo", "_blank", "noopener,noreferrer")}
             className="flex items-center gap-1.5 text-xs px-2 py-1 rounded border border-border hover:bg-secondary transition-colors"
@@ -1332,7 +1461,7 @@ function Systems() {
 
 function DirectorySection() {
   const [dir, setDir] = useState<Directory>(loadDirectory);
-  const [tab, setTab] = useState<"personnel" | "opo" | "divisions">("personnel");
+  const [tab, setTab] = useState<"personnel" | "opo" | "divisions" | "disposition">("personnel");
 
   // Форма персонала
   const [pForm, setPForm] = useState<Omit<PersonEntry, "id">>({ name: "", rank: "", phone: "" });
@@ -1395,6 +1524,25 @@ function DirectorySection() {
   const delD  = (id: string) => persist({ ...dir, divisions: dir.divisions.filter(d => d.id !== id) });
   const cancelD = () => { setDEdit(null); setDForm({ id: "", name: "", location: "", lastContact: "" }); };
 
+  // ── Диспозиция CRUD ──
+  const emptyDisp = (): Omit<DispositionRow, "id"> => ({ opoName: "", explosion: "", fire: "", collapse: "", flood: "", phone: "", callsign: "" });
+  const [dispForm, setDispForm] = useState<Omit<DispositionRow, "id">>(emptyDisp());
+  const [dispEdit, setDispEdit] = useState<string | null>(null);
+  const [dispMeta, setDispMeta] = useState(dir.dispositionMeta);
+
+  const saveDisp = () => {
+    if (!dispForm.opoName.trim()) return;
+    const rows = dispEdit
+      ? dir.dispositionRows.map(r => r.id === dispEdit ? { id: dispEdit, ...dispForm } : r)
+      : [...dir.dispositionRows, { id: uid(), ...dispForm }];
+    persist({ ...dir, dispositionRows: rows });
+    setDispEdit(null); setDispForm(emptyDisp());
+  };
+  const editDisp = (r: DispositionRow) => { setDispEdit(r.id); setDispForm({ opoName: r.opoName, explosion: r.explosion, fire: r.fire, collapse: r.collapse, flood: r.flood, phone: r.phone, callsign: r.callsign }); };
+  const delDisp  = (id: string) => persist({ ...dir, dispositionRows: dir.dispositionRows.filter(r => r.id !== id) });
+  const cancelDisp = () => { setDispEdit(null); setDispForm(emptyDisp()); };
+  const saveMeta = () => persist({ ...dir, dispositionMeta: dispMeta });
+
   const inputCls: React.CSSProperties = {
     background: "hsl(var(--secondary))", border: "1px solid hsl(var(--border))",
     color: "hsl(var(--foreground))", padding: "5px 10px", borderRadius: 4,
@@ -1405,7 +1553,7 @@ function DirectorySection() {
     <div className="fade-in space-y-4">
       {/* Вкладки */}
       <div className="flex gap-2">
-        {([["personnel", "Личный состав", "Users"], ["opo", "Объекты ОПО", "Building2"], ["divisions", "Подразделения", "Shield"]] as const).map(([id, label, icon]) => (
+        {([["personnel", "Личный состав", "Users"], ["opo", "Объекты ОПО", "Building2"], ["divisions", "Подразделения", "Shield"], ["disposition", "Диспозиция", "BookOpen"]] as const).map(([id, label, icon]) => (
           <button key={id} onClick={() => setTab(id)}
             className="flex items-center gap-2 px-4 py-2 rounded text-sm transition-all"
             style={{
@@ -1631,6 +1779,130 @@ function DirectorySection() {
                     </button>
                   </div>
                 ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ── Диспозиция ── */}
+      {tab === "disposition" && (
+        <div className="space-y-4">
+
+          {/* Реквизиты документа */}
+          <div className="panel-card p-4">
+            <h3 className="text-sm font-semibold uppercase tracking-widest mb-3" style={{ fontFamily: "Oswald" }}>Реквизиты документа</h3>
+            <div className="grid grid-cols-3 gap-3">
+              {([
+                { label: "Командир ВГСО (Фамилия И.О.)", key: "commanderName" as const, placeholder: "Иванов А.С." },
+                { label: "Наименование ВГСО", key: "vgsoName" as const, placeholder: 'филиала "Копейский ВГСО"' },
+                { label: "Год", key: "year" as const, placeholder: "2026" },
+              ]).map(f => (
+                <div key={f.key}>
+                  <label className="text-xs block mb-1" style={{ color: "hsl(var(--muted-foreground))" }}>{f.label}</label>
+                  <input style={inputCls} placeholder={f.placeholder}
+                    value={dispMeta[f.key]}
+                    onChange={e => setDispMeta(m => ({ ...m, [f.key]: e.target.value }))} />
+                </div>
+              ))}
+            </div>
+            <button onClick={saveMeta}
+              className="mt-3 px-4 py-1.5 rounded text-sm font-medium transition-all hover:opacity-90"
+              style={{ background: "hsl(var(--primary))", color: "hsl(var(--primary-foreground))", fontFamily: "Oswald" }}>
+              Сохранить реквизиты
+            </button>
+          </div>
+
+          {/* Форма строки */}
+          <div className="panel-card p-4">
+            <h3 className="text-sm font-semibold uppercase tracking-widest mb-3" style={{ fontFamily: "Oswald" }}>
+              {dispEdit ? "Редактировать строку" : "Добавить организацию (ОПО)"}
+            </h3>
+            <div className="grid grid-cols-2 gap-3 mb-3">
+              <div className="col-span-2">
+                <label className="text-xs block mb-1" style={{ color: "hsl(var(--muted-foreground))" }}>Наименование организации (ОПО) *</label>
+                <input style={inputCls} placeholder='Шахта «Северная»'
+                  value={dispForm.opoName} onChange={e => setDispForm(f => ({ ...f, opoName: e.target.value }))} />
+              </div>
+              {([
+                { label: "Взрыв (вспышка)", key: "explosion" as const, placeholder: "ВГСВ №1 — 2 отд., МБЭР, КИЛ" },
+                { label: "Пожар", key: "fire" as const, placeholder: "ВГСВ №1 — 2 отд., МБЭР" },
+                { label: "Обрушение, выброс, горный удар", key: "collapse" as const, placeholder: "ВГСВ №1 — 2 отд., МБЭР" },
+                { label: "Загазирование, затопление, прорыв воды", key: "flood" as const, placeholder: "ВГСВ №1 — 2 отд., МБЭР" },
+                { label: "Номер телефона ВГСВ (ВГСП)", key: "phone" as const, placeholder: "2-43-77" },
+                { label: "Радиопозывные ВГСВ (ВГСП)", key: "callsign" as const, placeholder: "Лава-1" },
+              ]).map(f => (
+                <div key={f.key}>
+                  <label className="text-xs block mb-1" style={{ color: "hsl(var(--muted-foreground))" }}>{f.label}</label>
+                  <textarea style={{ ...inputCls, resize: "vertical", minHeight: 52 }} placeholder={f.placeholder}
+                    value={dispForm[f.key]} onChange={e => setDispForm(frm => ({ ...frm, [f.key]: e.target.value }))} />
+                </div>
+              ))}
+            </div>
+            <div className="flex gap-2">
+              <button onClick={saveDisp}
+                className="px-4 py-1.5 rounded text-sm font-medium transition-all hover:opacity-90"
+                style={{ background: "hsl(var(--primary))", color: "hsl(var(--primary-foreground))", fontFamily: "Oswald" }}>
+                {dispEdit ? "Сохранить" : "Добавить"}
+              </button>
+              {dispEdit && (
+                <button onClick={cancelDisp}
+                  className="px-3 py-1.5 rounded border border-border text-sm hover:bg-secondary transition-colors"
+                  style={{ color: "hsl(var(--muted-foreground))" }}>
+                  Отмена
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Список строк */}
+          <div className="panel-card">
+            <div className="px-4 py-3 border-b border-border flex items-center justify-between">
+              <h3 className="text-sm font-semibold uppercase tracking-widest" style={{ fontFamily: "Oswald" }}>Строки диспозиции</h3>
+              <span className="tag" style={{ background: "hsl(var(--muted))", color: "hsl(var(--muted-foreground))" }}>
+                {dir.dispositionRows.length} объектов
+              </span>
+            </div>
+            {dir.dispositionRows.length === 0 ? (
+              <div className="p-8 text-center text-sm" style={{ color: "hsl(var(--muted-foreground))" }}>
+                Добавьте организации для диспозиции
+              </div>
+            ) : (
+              <div className="overflow-auto">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr style={{ background: "hsl(var(--muted))", color: "hsl(var(--muted-foreground))" }} className="uppercase tracking-wide">
+                      <th className="text-left px-3 py-2 font-medium">Организация (ОПО)</th>
+                      <th className="text-left px-3 py-2 font-medium">Взрыв</th>
+                      <th className="text-left px-3 py-2 font-medium">Пожар</th>
+                      <th className="text-left px-3 py-2 font-medium">Обрушение</th>
+                      <th className="text-left px-3 py-2 font-medium">Затопление</th>
+                      <th className="text-left px-3 py-2 font-medium">Тел.</th>
+                      <th className="text-left px-3 py-2 font-medium">Позывной</th>
+                      <th className="px-3 py-2"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {dir.dispositionRows.map((r, i) => (
+                      <tr key={r.id} className="border-t border-border hover:bg-secondary/30 transition-colors">
+                        <td className="px-3 py-2 font-medium">{i + 1}. {r.opoName}</td>
+                        <td className="px-3 py-2" style={{ color: "hsl(var(--muted-foreground))", whiteSpace: "pre-wrap", maxWidth: 140 }}>{r.explosion || "—"}</td>
+                        <td className="px-3 py-2" style={{ color: "hsl(var(--muted-foreground))", whiteSpace: "pre-wrap", maxWidth: 140 }}>{r.fire || "—"}</td>
+                        <td className="px-3 py-2" style={{ color: "hsl(var(--muted-foreground))", whiteSpace: "pre-wrap", maxWidth: 140 }}>{r.collapse || "—"}</td>
+                        <td className="px-3 py-2" style={{ color: "hsl(var(--muted-foreground))", whiteSpace: "pre-wrap", maxWidth: 140 }}>{r.flood || "—"}</td>
+                        <td className="px-3 py-2 mono">{r.phone || "—"}</td>
+                        <td className="px-3 py-2">{r.callsign || "—"}</td>
+                        <td className="px-3 py-2">
+                          <div className="flex gap-1">
+                            <button onClick={() => editDisp(r)} className="text-xs px-2 py-0.5 rounded border border-border hover:bg-secondary transition-colors">Изм.</button>
+                            <button onClick={() => delDisp(r.id)} className="text-xs px-2 py-0.5 rounded border transition-colors"
+                              style={{ borderColor: "hsl(var(--status-critical) / 0.3)", color: "hsl(var(--status-critical))" }}>Удл.</button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             )}
           </div>
