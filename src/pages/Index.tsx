@@ -186,6 +186,106 @@ ${acc.weatherCondition ? `<div class="sec">Особые погодные усл�
   setTimeout(() => win.print(), 400);
 }
 
+function printPutevka(acc: AccidentState) {
+  const atype = ACCIDENT_TYPES.find(t => t.id === acc.type)!;
+  // Парсим время вызова: "08:15:33" → часы и минуты
+  const timeParts = acc.startedAt ? acc.startedAt.split(":") : [];
+  const callH = timeParts[0] ?? "___";
+  const callM = timeParts[1] ?? "___";
+  // Дата
+  const now = new Date();
+  const day   = String(now.getDate()).padStart(2, "0");
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const year  = String(now.getFullYear());
+
+  const one = `
+<div class="putevka">
+  <div class="title">Путевка на выезд подразделения ВГСЧ на ликвидацию аварии</div>
+  <div class="row">
+    <span class="lbl">На выезд</span>
+    <span class="line flex3"></span>
+    <span class="lbl">ВГСБ (ВГСП)</span>
+    <span class="line flex3"></span>
+    <span class="lbl">ВГСО</span>
+    <span class="line flex2"></span>
+  </div>
+  <div class="row">
+    <span class="lbl">на ликвидацию аварии</span>
+    <span class="line flex3"></span>
+    <span class="lbl">&nbsp;&nbsp;${day}&nbsp;</span>
+    <span class="lbl">"&nbsp;&nbsp;&nbsp;&nbsp;"</span>
+    <span class="line flex1"></span>
+    <span class="lbl">&nbsp;20</span>
+    <span class="val bold">${year.slice(2)}</span>
+    <span class="lbl">&nbsp;г.</span>
+  </div>
+  <div class="row">
+    <span class="lbl">Опасный производственный объект</span>
+    <span class="line flex5 val">${acc.opo}</span>
+  </div>
+  <div class="row">
+    <span class="lbl">Вид аварии</span>
+    <span class="line flex5 val bold">${atype.label}</span>
+  </div>
+  <div class="row">
+    <span class="lbl">Место аварии</span>
+    <span class="line flex5 val">${acc.location || ""}</span>
+  </div>
+  <div class="row">
+    <span class="lbl">Время вызова</span>
+    <span class="line short val">${callH}</span>
+    <span class="lbl">&nbsp;ч.&nbsp;</span>
+    <span class="line short val">${callM}</span>
+    <span class="lbl">&nbsp;мин.</span>
+    <span class="flex3"></span>
+  </div>
+  <div class="row">
+    <span class="lbl">Фамилия И.О. вызвавшего</span>
+    <span class="line flex5 val">${acc.commanderSquad}</span>
+  </div>
+  <div class="row">
+    <span class="lbl">Фамилия И.О. принявшего вызов</span>
+    <span class="line flex5 val">${acc.commanderPlatoon}</span>
+  </div>
+  <div class="cut-note">✂ &nbsp; экземпляр 1 — остаётся в части</div>
+</div>`;
+
+  const two = one.replace('экземпляр 1 — остаётся в части', 'экземпляр 2 — выдаётся командиру подразделения');
+
+  const html = `<!DOCTYPE html><html lang="ru"><head><meta charset="UTF-8"/>
+<title>Путёвка на выезд — ВГСЧ</title>
+<style>
+  @page { size: A4; margin: 20mm 10mm 20mm 30mm; }
+  * { box-sizing: border-box; }
+  body { font-family: Arial, sans-serif; font-size: 13px; color: #000; margin: 0; padding: 0; }
+  .putevka { width: 100%; padding-bottom: 12mm; border-bottom: 1px dashed #999; margin-bottom: 10mm; page-break-inside: avoid; }
+  .putevka:last-child { border-bottom: none; margin-bottom: 0; }
+  .title { font-size: 14px; font-weight: bold; text-align: center; margin-bottom: 14px; text-decoration: underline; letter-spacing: 0.02em; }
+  .row { display: flex; align-items: flex-end; margin-bottom: 10px; flex-wrap: nowrap; white-space: nowrap; }
+  .lbl { font-size: 13px; flex-shrink: 0; }
+  .line { border-bottom: 1px solid #000; min-width: 10px; flex-shrink: 1; display: inline-block; }
+  .val { font-size: 13px; font-weight: normal; text-align: center; }
+  .bold { font-weight: bold; }
+  .flex1 { flex: 1; }
+  .flex2 { flex: 2; }
+  .flex3 { flex: 3; }
+  .flex4 { flex: 4; }
+  .flex5 { flex: 5; }
+  .short { width: 30px; flex-shrink: 0; text-align: center; }
+  .cut-note { font-size: 10px; color: #888; text-align: right; margin-top: 8px; font-style: italic; }
+</style></head><body>
+${one}
+${two}
+</body></html>`;
+
+  const win = window.open("", "_blank", "width=820,height=1000");
+  if (!win) return;
+  win.document.write(html);
+  win.document.close();
+  win.focus();
+  setTimeout(() => win.print(), 400);
+}
+
 // ─── Sections ────────────────────────────────────────────────────────────────
 
 function AccidentPanel() {
@@ -254,13 +354,22 @@ function AccidentPanel() {
         </div>
         <div className="flex items-center gap-2">
           {acc.active && (
-            <button
-              onClick={() => printAccident(acc)}
-              className="flex items-center gap-1.5 text-xs px-2 py-1 rounded border transition-colors hover:opacity-90"
-              style={{ background: "hsl(var(--status-critical) / 0.12)", borderColor: "hsl(var(--status-critical) / 0.4)", color: "hsl(var(--status-critical))", fontWeight: 600 }}
-            >
-              <Icon name="Printer" size={12} />Распечатать листок
-            </button>
+            <>
+              <button
+                onClick={() => printAccident(acc)}
+                className="flex items-center gap-1.5 text-xs px-2 py-1 rounded border transition-colors hover:opacity-90"
+                style={{ background: "hsl(var(--status-critical) / 0.12)", borderColor: "hsl(var(--status-critical) / 0.4)", color: "hsl(var(--status-critical))", fontWeight: 600 }}
+              >
+                <Icon name="Printer" size={12} />Листок
+              </button>
+              <button
+                onClick={() => printPutevka(acc)}
+                className="flex items-center gap-1.5 text-xs px-2 py-1 rounded border transition-colors hover:opacity-90"
+                style={{ background: "hsl(var(--status-warning) / 0.12)", borderColor: "hsl(var(--status-warning) / 0.4)", color: "hsl(var(--status-warning))", fontWeight: 600 }}
+              >
+                <Icon name="FileText" size={12} />Путёвка
+              </button>
+            </>
           )}
           <button
             onClick={() => window.open("/tablo", "_blank", "noopener,noreferrer")}
