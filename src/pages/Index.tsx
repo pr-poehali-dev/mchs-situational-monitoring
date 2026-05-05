@@ -11,6 +11,12 @@ import {
   subscribeAccident,
 } from "@/lib/accidentStore";
 import {
+  type LogEntry,
+  loadLog,
+  addLogEntry,
+  subscribeLog,
+} from "@/lib/logStore";
+import {
   type Directory,
   type PersonEntry,
   type OpoEntry,
@@ -25,7 +31,7 @@ import {
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-type SectionId = "dashboard" | "journal" | "alerts" | "directory";
+type SectionId = "dashboard" | "journal" | "directory";
 
 interface Unit {
   id: string;
@@ -37,23 +43,9 @@ interface Unit {
   lastContact: string;
 }
 
-interface LogEntry {
-  id: string;
-  time: string;
-  type: "info" | "warning" | "critical" | "action";
-  operator: string;
-  message: string;
-  unit?: string;
-}
 
-interface Alert {
-  id: string;
-  time: string;
-  level: "critical" | "warning";
-  title: string;
-  description: string;
-  read: boolean;
-}
+
+
 
 // ─── Mock Data ────────────────────────────────────────────────────────────────
 
@@ -68,24 +60,9 @@ const UNITS: Unit[] = [
   { id: "ВГСО-4", name: "ВГСО-4 Южный", type: "Горноспасательный отряд", status: "active", location: "Шахта «Заречная»", crew: 11, lastContact: "01:47" },
 ];
 
-const LOGS: LogEntry[] = [
-  { id: "L-001", time: "08:47:12", type: "critical", operator: "Иванов А.С.", message: "Задымление на горизонте -620 м, участок №7. ВГСО-5 направлен.", unit: "ВГСО-5" },
-  { id: "L-002", time: "08:45:03", type: "action", operator: "Иванов А.С.", message: "ВГСО-5 введён в горные выработки. Связь установлена.", unit: "ВГСО-5" },
-  { id: "L-003", time: "08:42:18", type: "warning", operator: "Петрова М.И.", message: "ДКС-1 запрашивает дополнительные дыхательные аппараты КИП-8", unit: "ДКС-1" },
-  { id: "L-004", time: "08:39:55", type: "info", operator: "Сидоров К.В.", message: "Плановая проверка связи — все подразделения ВГСЧ на связи" },
-  { id: "L-005", time: "08:35:40", type: "action", operator: "Иванов А.С.", message: "Оперативная смена принята, журнал открыт" },
-  { id: "L-006", time: "08:20:11", type: "info", operator: "Петрова М.И.", message: "МС-1: горноспасатель Рогов Д.К. прошёл медконтроль, допущен к работе", unit: "МС-1" },
-  { id: "L-007", time: "08:15:07", type: "warning", operator: "Сидоров К.В.", message: "Кратковременное нарушение связи с ГТС-2, восстановлено через 4 мин." },
-  { id: "L-008", time: "07:58:33", type: "action", operator: "Сидоров К.В.", message: "Направлен запрос в штаб ВГСЧ по инциденту № 2026-0147" },
-  { id: "L-009", time: "07:44:19", type: "info", operator: "Ночная смена", message: "Ночная смена сдана без происшествий, замечаний нет" },
-  { id: "L-010", time: "07:30:00", type: "info", operator: "Система", message: "Автоматическая синхронизация с АСУ ВГСЧ выполнена успешно" },
-];
 
-const ALERTS: Alert[] = [
-  { id: "A-001", time: "08:47", level: "critical", title: "Задымление. Гор. -620 м", description: "Участок №7, шахта «Северная». ВГСО-5 введён в выработки.", read: false },
-  { id: "A-002", time: "08:42", level: "warning", title: "Запрос снаряжения ДКС-1", description: "Требуются дополнительные аппараты КИП-8 на гор. -480 м.", read: false },
-  { id: "A-003", time: "08:15", level: "warning", title: "Нарушение связи ГТС-2", description: "Связь прервана на 4 минуты, восстановлена.", read: true },
-];
+
+
 
 const STATUS_COLORS = {
   active: "status-active",
@@ -600,9 +577,25 @@ function AccidentPanel() {
     setAcc(next);
     saveAccident(next);
     playSiren();
+    const atype = ACCIDENT_TYPES.find(t => t.id === next.type);
+    addLogEntry({
+      type: "critical",
+      operator: next.commDuty || "Дежурный",
+      message: `🚨 АВАРИЯ ОБЪЯВЛЕНА: ${atype?.label ?? next.type}${next.opo ? ` — ${next.opo}` : ""}${next.location ? `, ${next.location}` : ""}. Время объявления: ${localNow} (МСК: ${mskNow})`,
+    });
   };
 
-  const cancel = () => { clearAccident(); setAcc({ ...DEFAULT_STATE }); };
+  const cancel = () => {
+    const prev = loadAccident();
+    const atype = ACCIDENT_TYPES.find(t => t.id === prev.type);
+    addLogEntry({
+      type: "action",
+      operator: prev.commDuty || "Дежурный",
+      message: `✅ ОТБОЙ АВАРИИ: ${atype?.label ?? prev.type}${prev.opo ? ` — ${prev.opo}` : ""}${prev.location ? `, ${prev.location}` : ""}. Авария объявлялась в ${prev.startedAt}`,
+    });
+    clearAccident();
+    setAcc({ ...DEFAULT_STATE });
+  };
   const atype = ACCIDENT_TYPES.find(t => t.id === acc.type)!;
 
   const sel: React.CSSProperties = {
@@ -932,7 +925,10 @@ function WeatherWidget() {
 
 function Dashboard() {
   const [dir, setDir] = useState<Directory>(loadDirectory);
+  const [recentLogs, setRecentLogs] = useState<LogEntry[]>(() => loadLog().slice(0, 5));
+
   useEffect(() => subscribeDirectory(setDir), []);
+  useEffect(() => subscribeLog(logs => setRecentLogs(logs.slice(0, 5))), []);
 
   const divisions = dir.divisions;
 
@@ -982,18 +978,24 @@ function Dashboard() {
       <div className="panel-card">
         <div className="flex items-center justify-between px-4 py-3 border-b border-border">
           <h2 className="text-sm font-semibold uppercase tracking-widest" style={{ fontFamily: "Oswald" }}>Последние события</h2>
-          <span className="tag" style={{ background: "hsl(var(--muted))", color: "hsl(var(--muted-foreground))" }}>Сегодня</span>
+          <span className="tag" style={{ background: "hsl(var(--muted))", color: "hsl(var(--muted-foreground))" }}>{recentLogs.length} записей</span>
         </div>
-        <div className="divide-y divide-border">
-          {LOGS.slice(0, 5).map(l => (
-            <div key={l.id} className="flex items-start gap-3 px-4 py-2.5 hover:bg-secondary/30 transition-colors">
-              <span className="mono text-xs pt-0.5 flex-shrink-0 w-16" style={{ color: "hsl(var(--muted-foreground))" }}>{l.time}</span>
-              <span className="tag text-xs flex-shrink-0" style={{ background: `${LOG_COLORS[l.type]}20`, color: LOG_COLORS[l.type] }}>{LOG_LABELS[l.type]}</span>
-              <span className="text-xs flex-1">{l.message}</span>
-              <span className="text-xs flex-shrink-0" style={{ color: "hsl(var(--muted-foreground))" }}>{l.operator}</span>
-            </div>
-          ))}
-        </div>
+        {recentLogs.length === 0 ? (
+          <div className="p-6 text-center text-sm" style={{ color: "hsl(var(--muted-foreground))" }}>
+            Событий пока нет — они появятся при объявлении аварии
+          </div>
+        ) : (
+          <div className="divide-y divide-border">
+            {recentLogs.map(l => (
+              <div key={l.id} className="flex items-start gap-3 px-4 py-2.5 hover:bg-secondary/30 transition-colors">
+                <span className="mono text-xs pt-0.5 flex-shrink-0 w-16" style={{ color: "hsl(var(--muted-foreground))" }}>{l.time}</span>
+                <span className="tag text-xs flex-shrink-0" style={{ background: `${LOG_COLORS[l.type]}20`, color: LOG_COLORS[l.type] }}>{LOG_LABELS[l.type]}</span>
+                <span className="text-xs flex-1">{l.message}</span>
+                <span className="text-xs flex-shrink-0" style={{ color: "hsl(var(--muted-foreground))" }}>{l.operator}</span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Подпись разработчика */}
@@ -1250,12 +1252,16 @@ function Statuses() {
 }
 
 function Journal() {
+  const [logs, setLogs] = useState<LogEntry[]>(loadLog);
   const [filter, setFilter] = useState<"all" | LogEntry["type"]>("all");
-  const filtered = filter === "all" ? LOGS : LOGS.filter(l => l.type === filter);
+
+  useEffect(() => subscribeLog(setLogs), []);
+
+  const filtered = filter === "all" ? logs : logs.filter(l => l.type === filter);
 
   return (
     <div className="fade-in space-y-4">
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 flex-wrap">
         {(["all", "info", "action", "warning", "critical"] as const).map(f => (
           <button
             key={f}
@@ -1277,89 +1283,36 @@ function Journal() {
       </div>
 
       <div className="panel-card">
-        <div className="divide-y divide-border">
-          {filtered.map(l => (
-            <div key={l.id} className="flex items-start gap-4 px-4 py-3 hover:bg-secondary/30 transition-colors">
-              <span className="mono text-xs pt-0.5 flex-shrink-0 w-18" style={{ color: "hsl(var(--muted-foreground))" }}>{l.time}</span>
-              <span className="tag text-xs flex-shrink-0 w-24 text-center" style={{ background: `${LOG_COLORS[l.type]}20`, color: LOG_COLORS[l.type] }}>
-                {LOG_LABELS[l.type]}
-              </span>
-              <div className="flex-1 text-sm">{l.message}</div>
-              <div className="flex-shrink-0 text-right">
-                {l.unit && <div className="mono text-xs" style={{ color: "hsl(var(--primary))" }}>{l.unit}</div>}
-                <div className="text-xs" style={{ color: "hsl(var(--muted-foreground))" }}>{l.operator}</div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function Alerts() {
-  const [alerts, setAlerts] = useState(ALERTS);
-
-  const markRead = (id: string) => setAlerts(prev => prev.map(a => a.id === id ? { ...a, read: true } : a));
-  const markAllRead = () => setAlerts(prev => prev.map(a => ({ ...a, read: true })));
-
-  return (
-    <div className="fade-in space-y-4">
-      <div className="flex items-center justify-between">
-        <div className="text-xs" style={{ color: "hsl(var(--muted-foreground))" }}>
-          {alerts.filter(a => !a.read).length} непрочитанных из {alerts.length}
-        </div>
-        <button onClick={markAllRead} className="text-xs px-3 py-1.5 rounded border border-border hover:bg-secondary transition-colors">
-          Прочитать все
-        </button>
-      </div>
-
-      <div className="space-y-2">
-        {alerts.map(a => (
-          <div key={a.id} className={`panel-card p-4 transition-opacity ${a.read ? "opacity-50" : ""}`}
-            style={{ borderLeftWidth: 3, borderLeftColor: a.level === "critical" ? "hsl(var(--status-critical))" : "hsl(var(--status-warning))" }}>
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex items-start gap-3">
-                <span className={`status-dot mt-1.5 ${a.level === "critical" ? "status-critical" : "status-warning"} ${!a.read && a.level === "critical" ? "pulse-ring" : ""}`} />
-                <div>
-                  <div className="font-semibold text-sm">{a.title}</div>
-                  <div className="text-sm mt-0.5" style={{ color: "hsl(var(--muted-foreground))" }}>{a.description}</div>
-                  <div className="mono text-xs mt-2" style={{ color: "hsl(var(--muted-foreground))" }}>{a.time}</div>
+        {filtered.length === 0 ? (
+          <div className="p-8 text-center text-sm" style={{ color: "hsl(var(--muted-foreground))" }}>
+            Записей нет
+          </div>
+        ) : (
+          <div className="divide-y divide-border">
+            {filtered.map(l => (
+              <div key={l.id} className="flex items-start gap-4 px-4 py-3 hover:bg-secondary/30 transition-colors">
+                <div className="flex-shrink-0 text-right w-20">
+                  <div className="mono text-xs" style={{ color: "hsl(var(--muted-foreground))" }}>{l.time}</div>
+                  {l.date && <div className="mono text-xs" style={{ color: "hsl(var(--muted-foreground))", fontSize: 10 }}>{l.date}</div>}
+                </div>
+                <span className="tag text-xs flex-shrink-0 w-24 text-center" style={{ background: `${LOG_COLORS[l.type]}20`, color: LOG_COLORS[l.type] }}>
+                  {LOG_LABELS[l.type]}
+                </span>
+                <div className="flex-1 text-sm">{l.message}</div>
+                <div className="flex-shrink-0 text-right">
+                  {l.unit && <div className="mono text-xs" style={{ color: "hsl(var(--primary))" }}>{l.unit}</div>}
+                  <div className="text-xs" style={{ color: "hsl(var(--muted-foreground))" }}>{l.operator}</div>
                 </div>
               </div>
-              {!a.read && (
-                <button onClick={() => markRead(a.id)} className="text-xs px-2 py-1 rounded border border-border hover:bg-secondary transition-colors flex-shrink-0">
-                  Прочитано
-                </button>
-              )}
-            </div>
+            ))}
           </div>
-        ))}
-      </div>
-
-      <div className="panel-card p-4">
-        <h3 className="text-sm font-semibold uppercase tracking-widest mb-3" style={{ fontFamily: "Oswald" }}>Настройка уведомлений</h3>
-        <div className="grid grid-cols-2 gap-0">
-          {[
-            { label: "Задымление в выработках", enabled: true },
-            { label: "Обрушение / завал", enabled: true },
-            { label: "Выброс газа (CH₄, CO)", enabled: true },
-            { label: "Отказ связи более 10 мин.", enabled: false },
-            { label: "Запрос снаряжения / ресурсов", enabled: true },
-            { label: "Синхронизация АСУ ВГСЧ", enabled: false },
-          ].map(item => (
-            <div key={item.label} className="flex items-center justify-between py-2 px-2 border-b border-border">
-              <span className="text-sm">{item.label}</span>
-              <div className={`w-8 h-4 rounded-full transition-colors cursor-pointer flex-shrink-0 ${item.enabled ? "bg-green-700" : "bg-secondary"}`}>
-                <div className={`w-3 h-3 rounded-full bg-white m-0.5 transition-transform ${item.enabled ? "translate-x-4" : ""}`} />
-              </div>
-            </div>
-          ))}
-        </div>
+        )}
       </div>
     </div>
   );
 }
+
+
 
 
 // ─── Directory Section ────────────────────────────────────────────────────────
@@ -1819,11 +1772,9 @@ function DirectorySection() {
 
 // ─── Nav config ───────────────────────────────────────────────────────────────
 
-const NAV: { id: SectionId; label: string; icon: string; badge?: number }[] = [
+const NAV: { id: SectionId; label: string; icon: string }[] = [
   { id: "dashboard",  label: "Главная панель",   icon: "LayoutDashboard" },
   { id: "journal",    label: "Журнал событий",    icon: "ScrollText" },
-  { id: "alerts",     label: "Уведомления",       icon: "Bell", badge: 2 },
-
   { id: "directory",  label: "Справочники",       icon: "BookOpen" },
 ];
 
@@ -1837,8 +1788,6 @@ export default function Index() {
     switch (section) {
       case "dashboard": return <Dashboard />;
       case "journal": return <Journal />;
-      case "alerts": return <Alerts />;
-
       case "directory":  return <DirectorySection />;
     }
   };
@@ -1871,12 +1820,7 @@ export default function Index() {
             >
               <Icon name={n.icon} fallback="Circle" size={15} />
               <span className="flex-1">{n.label}</span>
-              {n.badge && (
-                <span className="text-xs px-1.5 py-0.5 rounded-full blink"
-                  style={{ background: "hsl(var(--status-critical) / 0.2)", color: "hsl(var(--status-critical))", fontSize: 10 }}>
-                  {n.badge}
-                </span>
-              )}
+
             </button>
           ))}
         </nav>
