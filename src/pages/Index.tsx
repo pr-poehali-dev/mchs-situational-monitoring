@@ -470,7 +470,7 @@ function AccidentPanel() {
                 className="flex items-center gap-1.5 text-xs px-2 py-1 rounded border transition-colors hover:opacity-90"
                 style={{ background: "hsl(var(--status-critical) / 0.12)", borderColor: "hsl(var(--status-critical) / 0.4)", color: "hsl(var(--status-critical))", fontWeight: 600 }}
               >
-                <Icon name="Printer" size={12} />Листок
+                <Icon name="Printer" size={12} />Приложение №1
               </button>
               <button
                 onClick={() => printPutevka(acc)}
