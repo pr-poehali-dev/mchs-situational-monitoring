@@ -334,23 +334,23 @@ export default function TabloPage() {
 
             {/* Ответственные лица */}
             <div className="rounded-xl p-5 flex flex-col"
-              style={{ background: "hsl(213 50% 20%)", border: "2px solid hsl(213 45% 36%)" }}>
-              <div style={{ fontSize: 12, color: "#ff9944", textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: 12, fontWeight: 700 }}>
-                Ответственные лица
+              style={{ background: "hsl(213 52% 18%)", border: "2px solid hsl(24 80% 42%)" }}>
+              <div style={{ fontSize: 15, color: "#ff9944", textTransform: "uppercase", letterSpacing: "0.14em", marginBottom: 10, fontWeight: 800, fontFamily: "Oswald, sans-serif" }}>
+                👤 Ответственные лица
               </div>
-              <div className="flex flex-col gap-0 flex-1">
+              <div className="flex flex-col flex-1" style={{ gap: 0 }}>
                 {[
-                  { label: "Ответственный по отряду",      value: acc.commanderSquad   },
-                  { label: "Ответств. по взводу / пункту", value: acc.commanderPlatoon },
-                  { label: "Командир дежурного отделения", value: acc.commanderUnit    },
-                  { label: "Дежурный у средств связи",     value: acc.commDuty         },
+                  { label: "Ответственный по отряду",          value: acc.commanderSquad   },
+                  { label: "Ответственный по взводу / пункту", value: acc.commanderPlatoon },
+                  { label: "Командир дежурного отделения",     value: acc.commanderUnit    },
+                  { label: "Дежурный у средств связи",         value: acc.commDuty         },
                 ].map((r, i) => (
                   <div key={r.label} className="flex items-center gap-3 py-3"
-                    style={{ borderBottom: i < 3 ? "1px solid hsl(213 40% 28%)" : "none" }}>
-                    <div style={{ fontFamily: "Oswald, sans-serif", fontSize: 22, fontWeight: 700, color: "hsl(0 40% 40%)", lineHeight: 1, flexShrink: 0, width: 22 }}>{i + 1}</div>
+                    style={{ borderBottom: i < 3 ? "1px solid hsl(213 40% 26%)" : "none", flex: 1 }}>
+                    <div style={{ fontFamily: "Oswald, sans-serif", fontSize: 28, fontWeight: 900, color: "hsl(24 70% 45%)", lineHeight: 1, flexShrink: 0, width: 30, textAlign: "center" }}>{i + 1}</div>
                     <div className="flex-1 min-w-0">
-                      <div style={{ fontSize: 10, color: "hsl(213 15% 50%)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 2 }}>{r.label}</div>
-                      <div style={{ fontFamily: "Oswald, sans-serif", fontSize: 26, fontWeight: 700, color: r.value ? "hsl(210 20% 97%)" : "hsl(213 15% 38%)", lineHeight: 1 }}>
+                      <div style={{ fontSize: 11, color: "hsl(213 15% 55%)", textTransform: "uppercase", letterSpacing: "0.09em", marginBottom: 3, fontWeight: 600 }}>{r.label}</div>
+                      <div style={{ fontFamily: "Oswald, sans-serif", fontSize: 30, fontWeight: 700, color: r.value ? "hsl(210 10% 98%)" : "hsl(213 15% 38%)", lineHeight: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                         {r.value || "—"}
                       </div>
                     </div>
@@ -358,7 +358,7 @@ export default function TabloPage() {
                 ))}
               </div>
               <button onClick={cancel}
-                className="mt-3 py-2.5 rounded-lg transition-all hover:opacity-90 flex-shrink-0"
+                className="mt-2 py-2.5 rounded-lg transition-all hover:opacity-90 flex-shrink-0"
                 style={{ background: "hsl(213 45% 26%)", border: "1px solid hsl(213 40% 36%)", color: "hsl(213 20% 68%)", fontSize: 13 }}>
                 Отбой аварии
               </button>
@@ -442,26 +442,26 @@ export default function TabloPage() {
 
             {/* Ответственные лица */}
             <div className="rounded-2xl p-7 flex flex-col"
-              style={{ background: "hsl(213 50% 20%)", border: "2px solid hsl(213 45% 36%)" }}>
-              <div style={{ fontSize: 13, color: C.accent, textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: 20, fontWeight: 700 }}>
-                Ответственные лица
+              style={{ background: "hsl(213 52% 18%)", border: "2px solid hsl(24 80% 42%)" }}>
+              <div style={{ fontSize: 16, color: C.accent, textTransform: "uppercase", letterSpacing: "0.14em", marginBottom: 18, fontWeight: 800, fontFamily: "Oswald, sans-serif" }}>
+                👤 Ответственные лица
               </div>
-              <div className="flex flex-col gap-5 flex-1">
+              <div className="flex flex-col flex-1" style={{ gap: 0 }}>
                 {[
-                  { label: "Ответственный по отряду",     value: acc.commanderSquad   },
+                  { label: "Ответственный по отряду",          value: acc.commanderSquad   },
                   { label: "Ответственный по взводу / пункту", value: acc.commanderPlatoon },
-                  { label: "Командир дежурного отделения", value: acc.commanderUnit    },
-                  { label: "Дежурный у средств связи",    value: acc.commDuty         },
+                  { label: "Командир дежурного отделения",     value: acc.commanderUnit    },
+                  { label: "Дежурный у средств связи",         value: acc.commDuty         },
                 ].map((r, i) => (
-                  <div key={r.label} className="flex items-center gap-4 pb-5"
-                    style={{ borderBottom: i < 3 ? "1px solid hsl(213 40% 28%)" : "none" }}>
+                  <div key={r.label} className="flex items-center gap-4 py-4"
+                    style={{ borderBottom: i < 3 ? "1px solid hsl(213 40% 26%)" : "none", flex: 1 }}>
                     <div style={{
-                      fontFamily: "Oswald, sans-serif", fontSize: 28, fontWeight: 700,
-                      color: "hsl(213 30% 45%)", lineHeight: 1, flexShrink: 0, width: 28,
+                      fontFamily: "Oswald, sans-serif", fontSize: 32, fontWeight: 900,
+                      color: "hsl(24 70% 45%)", lineHeight: 1, flexShrink: 0, width: 34, textAlign: "center",
                     }}>{i + 1}</div>
                     <div className="flex-1 min-w-0">
-                      <div style={{ fontSize: 11, color: "hsl(213 15% 50%)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 4 }}>{r.label}</div>
-                      <div style={{ fontFamily: "Oswald, sans-serif", fontSize: 30, fontWeight: 700, color: r.value ? "hsl(210 20% 97%)" : "hsl(213 15% 38%)", lineHeight: 1.1 }}>
+                      <div style={{ fontSize: 12, color: "hsl(213 15% 55%)", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 5, fontWeight: 600 }}>{r.label}</div>
+                      <div style={{ fontFamily: "Oswald, sans-serif", fontSize: 36, fontWeight: 700, color: r.value ? "hsl(210 10% 98%)" : "hsl(213 15% 36%)", lineHeight: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                         {r.value || "— не назначен —"}
                       </div>
                     </div>
