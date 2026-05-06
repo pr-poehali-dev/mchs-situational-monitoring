@@ -136,9 +136,9 @@ export default function TabloPage() {
   const atype  = ACCIDENT_TYPES.find(t => t.id === acc.type)!;
 
   const C = {
-    bg:      acc.active ? (flashRed ? "hsl(0 70% 8%)" : "hsl(0 60% 5%)") : "hsl(218 35% 5%)",
-    border:  acc.active ? (flashRed ? "#ff3300" : "#881100") : "hsl(218 25% 13%)",
-    accent:  acc.active ? "#ff4422" : "hsl(24 95% 52%)",
+    bg:      acc.active ? (flashRed ? "hsl(0 70% 8%)" : "hsl(0 60% 5%)") : "hsl(213 60% 5%)",
+    border:  acc.active ? (flashRed ? "#ff3300" : "#881100") : "hsl(213 45% 16%)",
+    accent:  acc.active ? "#ff4422" : "hsl(45 96% 54%)",
   };
 
   // Стиль метки-заголовка
@@ -152,17 +152,17 @@ export default function TabloPage() {
       className="min-h-screen flex flex-col select-none overflow-hidden"
       style={{
         background: C.bg,
-        backgroundImage: "linear-gradient(hsl(218 30% 10% / 0.5) 1px, transparent 1px), linear-gradient(90deg, hsl(218 30% 10% / 0.5) 1px, transparent 1px)",
+        backgroundImage: "linear-gradient(hsl(213 40% 14% / 0.45) 1px, transparent 1px), linear-gradient(90deg, hsl(213 40% 14% / 0.45) 1px, transparent 1px)",
         backgroundSize: "40px 40px",
         fontFamily: "IBM Plex Sans, sans-serif",
-        color: "hsl(210 20% 92%)",
+        color: "hsl(45 60% 90%)",
         transition: "background 0.4s",
       }}
     >
 
       {/* ══ ШАПКА: лого + время + погода ════════════════════════════════════════ */}
       <header className="flex items-center justify-between px-8 py-4 flex-shrink-0 border-b"
-        style={{ borderColor: C.border, background: "hsl(218 38% 4% / 0.97)", transition: "border-color 0.4s" }}>
+        style={{ borderColor: C.border, background: "hsl(213 65% 5% / 0.97)", transition: "border-color 0.4s" }}>
 
         {/* Лого */}
         <div className="flex items-center gap-4">
@@ -227,45 +227,45 @@ export default function TabloPage() {
 
       {/* ══ БЛОК АВАРИИ ══════════════════════════════════════════════════════════ */}
       {acc.active ? (
-        <div className="flex-1 flex flex-col px-8 py-6 gap-6">
+        <div className="flex-1 flex flex-col px-6 py-4 gap-4 overflow-hidden" style={{ minHeight: 0 }}>
 
-          {/* Строка 1: ВИД + МЕСТО — крупно, во всю ширину */}
-          <div className="rounded-xl px-10 py-8 flex items-center gap-10"
+          {/* Строка 1: ВИД + МЕСТО */}
+          <div className="rounded-xl px-7 py-5 flex items-center gap-7 flex-shrink-0"
             style={{
               background: flashRed ? "hsl(0 80% 18%)" : "hsl(0 75% 12%)",
               border: `3px solid ${flashRed ? "#ff3300" : "#881100"}`,
-              boxShadow: flashRed ? "0 0 60px hsl(0 80% 25%)" : "0 0 30px hsl(0 70% 15%)",
+              boxShadow: flashRed ? "0 0 50px hsl(0 80% 22%)" : "0 0 24px hsl(0 70% 12%)",
               transition: "all 0.4s",
             }}>
 
             {/* ⚠ АВАРИЯ */}
-            <div style={{ fontFamily: "Oswald, sans-serif", fontSize: 64, fontWeight: 900,
+            <div style={{ fontFamily: "Oswald, sans-serif", fontSize: 48, fontWeight: 900,
               color: flashRed ? "#ff6644" : "#ff4422", letterSpacing: "0.06em", lineHeight: 1, flexShrink: 0 }}>
               ⚠ АВАРИЯ
             </div>
 
-            <div style={{ width: 3, height: 80, background: "hsl(0 50% 35%)", flexShrink: 0 }} />
+            <div style={{ width: 3, height: 60, background: "hsl(0 50% 35%)", flexShrink: 0 }} />
 
             {/* Вид аварии */}
             <div style={{ flexShrink: 0 }}>
               <div style={lbl("hsl(0 30% 55%)")}>Вид аварии</div>
-              <div style={{ fontFamily: "Oswald, sans-serif", fontSize: 56, fontWeight: 900,
+              <div style={{ fontFamily: "Oswald, sans-serif", fontSize: 40, fontWeight: 900,
                 color: atype.color, textTransform: "uppercase", lineHeight: 1, letterSpacing: "0.04em" }}>
                 {atype.label}
               </div>
             </div>
 
-            <div style={{ width: 3, height: 80, background: "hsl(0 50% 35%)", flexShrink: 0 }} />
+            <div style={{ width: 3, height: 60, background: "hsl(0 50% 35%)", flexShrink: 0 }} />
 
             {/* Место аварии */}
             <div className="flex-1 min-w-0">
               <div style={lbl("hsl(0 30% 55%)")}>ОПО / Место аварии</div>
-              <div style={{ fontFamily: "Oswald, sans-serif", fontSize: 34, fontWeight: 700,
+              <div style={{ fontFamily: "Oswald, sans-serif", fontSize: 26, fontWeight: 700,
                 color: "hsl(0 10% 92%)", lineHeight: 1.2 }}>
                 {acc.opo}
               </div>
               {acc.location && (
-                <div style={{ fontSize: 22, color: "hsl(0 20% 70%)", marginTop: 6 }}>
+                <div style={{ fontSize: 16, color: "hsl(0 20% 70%)", marginTop: 4 }}>
                   📍 {acc.location}
                 </div>
               )}
@@ -274,22 +274,22 @@ export default function TabloPage() {
             {/* Время объявления */}
             <div style={{ flexShrink: 0, textAlign: "right" }}>
               <div style={lbl("hsl(0 30% 55%)")}>Объявлено</div>
-              <div style={{ fontFamily: "IBM Plex Mono, monospace", fontSize: 40, fontWeight: 700,
+              <div style={{ fontFamily: "IBM Plex Mono, monospace", fontSize: 32, fontWeight: 700,
                 color: "#ff9977", lineHeight: 1 }}>
                 {acc.startedAt}
               </div>
-              <div style={{ fontSize: 14, color: "hsl(0 20% 50%)", marginTop: 4 }}>МСК: {acc.startedAtMsk}</div>
+              <div style={{ fontSize: 13, color: "hsl(0 20% 50%)", marginTop: 3 }}>МСК: {acc.startedAtMsk}</div>
             </div>
           </div>
 
           {/* Строка 2: Ответственные + Погода */}
-          <div className="grid grid-cols-2 gap-6 flex-1">
+          <div className="grid grid-cols-2 gap-5 flex-1 min-h-0">
 
             {/* Ответственные лица */}
-            <div className="rounded-xl p-8"
-              style={{ background: "hsl(218 30% 8%)", border: "1px solid hsl(218 25% 15%)" }}>
-              <div style={lbl()}>Ответственные лица</div>
-              <div className="grid grid-cols-2 gap-6 mt-4">
+            <div className="rounded-xl p-5 flex flex-col"
+              style={{ background: "hsl(213 55% 9%)", border: "1px solid hsl(213 45% 18%)" }}>
+              <div style={lbl("hsl(45 60% 55%)")}>Ответственные лица</div>
+              <div className="grid grid-cols-2 gap-4 mt-3 flex-1">
                 {[
                   { label: "По отряду",            value: acc.commanderSquad },
                   { label: "По взводу / пункту",   value: acc.commanderPlatoon },
@@ -297,10 +297,10 @@ export default function TabloPage() {
                   { label: "Деж. у средств связи", value: acc.commDuty },
                 ].map(r => (
                   <div key={r.label}>
-                    <div style={{ fontSize: 12, color: "hsl(210 10% 45%)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 4 }}>
+                    <div style={{ fontSize: 11, color: "hsl(213 20% 48%)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 3 }}>
                       {r.label}
                     </div>
-                    <div style={{ fontFamily: "Oswald, sans-serif", fontSize: 28, fontWeight: 700, color: "#ffddbb", lineHeight: 1.1 }}>
+                    <div style={{ fontFamily: "Oswald, sans-serif", fontSize: 24, fontWeight: 700, color: "hsl(45 80% 72%)", lineHeight: 1.1 }}>
                       {r.value || "—"}
                     </div>
                   </div>
@@ -309,50 +309,49 @@ export default function TabloPage() {
             </div>
 
             {/* Погода + кнопки */}
-            <div className="flex flex-col gap-4">
-              <div className="rounded-xl p-8 flex-1"
-                style={{ background: "hsl(218 30% 8%)", border: "1px solid hsl(218 25% 15%)" }}>
-                <div style={lbl()}>Погодные условия</div>
-                <div className="flex items-center gap-4 mt-4 flex-wrap">
+            <div className="flex flex-col gap-3 min-h-0">
+              <div className="rounded-xl p-5 flex-1 min-h-0"
+                style={{ background: "hsl(213 55% 9%)", border: "1px solid hsl(213 45% 18%)" }}>
+                <div style={lbl("hsl(45 60% 55%)")}>Погодные условия</div>
+                <div className="flex items-center gap-4 mt-3 flex-wrap">
                   {weather && (
                     <>
-                      <span style={{ fontSize: 48 }}>{weather.icon}</span>
+                      <span style={{ fontSize: 38 }}>{weather.icon}</span>
                       <div>
-                        <div style={{ fontFamily: "Oswald, sans-serif", fontSize: 48, fontWeight: 700, lineHeight: 1 }}>
+                        <div style={{ fontFamily: "Oswald, sans-serif", fontSize: 38, fontWeight: 700, lineHeight: 1 }}>
                           {weather.temp > 0 ? "+" : ""}{weather.temp}°C
                         </div>
-                        <div style={{ fontSize: 16, color: "hsl(210 10% 55%)", marginTop: 6 }}>{weather.desc}</div>
+                        <div style={{ fontSize: 14, color: "hsl(213 15% 55%)", marginTop: 4 }}>{weather.desc}</div>
                       </div>
                     </>
                   )}
-                  {/* Ручное условие из АРМ */}
                   {acc.weatherCondition && (() => {
                     const wc = WEATHER_CONDITIONS.find(w => w.id === acc.weatherCondition);
                     return wc ? (
-                      <div className="rounded-lg px-5 py-3 flex items-center gap-3"
-                        style={{ background: "hsl(45 80% 20%)", border: "2px solid hsl(45 80% 45%)" }}>
-                        <span style={{ fontSize: 40 }}>{wc.icon}</span>
-                        <div style={{ fontFamily: "Oswald, sans-serif", fontSize: 30, fontWeight: 700, color: "hsl(45 90% 70%)", textTransform: "uppercase" }}>
+                      <div className="rounded-lg px-4 py-2 flex items-center gap-2"
+                        style={{ background: "hsl(45 70% 18%)", border: "2px solid hsl(45 80% 40%)" }}>
+                        <span style={{ fontSize: 32 }}>{wc.icon}</span>
+                        <div style={{ fontFamily: "Oswald, sans-serif", fontSize: 24, fontWeight: 700, color: "hsl(45 90% 68%)", textTransform: "uppercase" }}>
                           {wc.label}
                         </div>
                       </div>
                     ) : null;
                   })()}
                   {!weather && !acc.weatherCondition && (
-                    <div style={{ color: "hsl(210 10% 40%)", fontSize: 16 }}>Нет данных</div>
+                    <div style={{ color: "hsl(213 15% 40%)", fontSize: 15 }}>Нет данных</div>
                   )}
                 </div>
                 {weather && (
-                  <div className="grid grid-cols-3 gap-4 mt-6">
+                  <div className="grid grid-cols-3 gap-3 mt-4">
                     {[
                       { l: "Ветер", v: `${weather.windSpeed} м/с ${WIND_DIRS[Math.round(weather.windDir / 45) % 8]}` },
                       { l: "Влажность", v: `${weather.humidity}%` },
                       { l: "Давление", v: `${weather.pressure} мм` },
                     ].map(r => (
                       <div key={r.l} className="rounded-lg p-3 text-center"
-                        style={{ background: "hsl(218 25% 12%)" }}>
-                        <div style={{ fontSize: 11, color: "hsl(210 10% 45%)", textTransform: "uppercase", letterSpacing: "0.06em" }}>{r.l}</div>
-                        <div style={{ fontFamily: "Oswald, sans-serif", fontSize: 22, fontWeight: 700, marginTop: 2 }}>{r.v}</div>
+                        style={{ background: "hsl(213 50% 13%)" }}>
+                        <div style={{ fontSize: 10, color: "hsl(213 15% 48%)", textTransform: "uppercase", letterSpacing: "0.06em" }}>{r.l}</div>
+                        <div style={{ fontFamily: "Oswald, sans-serif", fontSize: 20, fontWeight: 700, marginTop: 2 }}>{r.v}</div>
                       </div>
                     ))}
                   </div>
@@ -360,25 +359,23 @@ export default function TabloPage() {
               </div>
 
               {/* Кнопка управления */}
-              <div className="flex gap-3">
-                <button onClick={cancel}
-                  className="flex-1 py-4 rounded-xl transition-all hover:opacity-90"
-                  style={{ background: "hsl(218 25% 12%)", border: "1px solid hsl(218 20% 20%)",
-                    color: "hsl(215 15% 55%)", fontSize: 15 }}>
-                  Отбой аварии
-                </button>
-              </div>
+              <button onClick={cancel}
+                className="flex-shrink-0 py-3 rounded-xl transition-all hover:opacity-90"
+                style={{ background: "hsl(213 50% 13%)", border: "1px solid hsl(213 40% 22%)",
+                  color: "hsl(213 15% 55%)", fontSize: 14 }}>
+                Отбой аварии
+              </button>
             </div>
           </div>
         </div>
 
       ) : (
         /* ══ ШТАТНЫЙ РЕЖИМ ════════════════════════════════════════════════════ */
-        <div className="flex-1 flex flex-col gap-5 p-8">
+        <div className="flex-1 flex flex-col gap-5 p-8 overflow-hidden" style={{ minHeight: 0 }}>
 
           {/* Статус — штатный */}
-          <div className="rounded-2xl px-10 py-5 flex items-center justify-between"
-            style={{ background: "hsl(218 30% 8%)", border: "1px solid hsl(218 25% 14%)" }}>
+          <div className="rounded-2xl px-10 py-5 flex items-center justify-between flex-shrink-0"
+            style={{ background: "hsl(213 55% 9%)", border: "1px solid hsl(213 45% 17%)" }}>
             <div className="flex items-center gap-3">
               <div className="w-3 h-3 rounded-full" style={{ background: "hsl(142 70% 45%)" }} />
               <span style={{ fontFamily: "Oswald, sans-serif", fontSize: 26, color: "hsl(142 70% 45%)",
@@ -386,18 +383,18 @@ export default function TabloPage() {
                 Штатный режим — аварий нет
               </span>
             </div>
-            <div style={{ fontSize: 13, color: "hsl(210 10% 40%)" }}>
+            <div style={{ fontSize: 13, color: "hsl(213 15% 40%)" }}>
               Управление аварией — в АРМ дежурного
             </div>
           </div>
 
           {/* Главный блок: ответственные + погода */}
-          <div className="grid grid-cols-2 gap-5 flex-1">
+          <div className="grid grid-cols-2 gap-5 flex-1 min-h-0">
 
             {/* Ответственные лица — всегда */}
             <div className="rounded-2xl p-8"
-              style={{ background: "hsl(218 30% 8%)", border: "1px solid hsl(218 25% 14%)" }}>
-              <div style={{ fontSize: 11, color: "hsl(215 15% 42%)", textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: 20 }}>
+              style={{ background: "hsl(213 55% 9%)", border: "1px solid hsl(213 45% 17%)" }}>
+              <div style={{ fontSize: 11, color: "hsl(45 60% 48%)", textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: 20 }}>
                 Ответственные лица
               </div>
               <div className="grid grid-cols-2 gap-x-8 gap-y-6">
@@ -408,10 +405,10 @@ export default function TabloPage() {
                   { label: "Деж. у средств связи", value: acc.commDuty },
                 ].map(r => (
                   <div key={r.label}>
-                    <div style={{ fontSize: 11, color: "hsl(210 10% 42%)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>
+                    <div style={{ fontSize: 11, color: "hsl(213 18% 42%)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>
                       {r.label}
                     </div>
-                    <div style={{ fontFamily: "Oswald, sans-serif", fontSize: 30, fontWeight: 700, color: r.value ? "#e8d5b0" : "hsl(210 10% 30%)", lineHeight: 1.1 }}>
+                    <div style={{ fontFamily: "Oswald, sans-serif", fontSize: 30, fontWeight: 700, color: r.value ? "hsl(45 80% 72%)" : "hsl(213 15% 28%)", lineHeight: 1.1 }}>
                       {r.value || "—"}
                     </div>
                   </div>
@@ -421,8 +418,8 @@ export default function TabloPage() {
 
             {/* Погода в штатном режиме */}
             <div className="rounded-2xl p-8"
-              style={{ background: "hsl(218 30% 8%)", border: "1px solid hsl(218 25% 14%)" }}>
-              <div style={{ fontSize: 11, color: "hsl(215 15% 42%)", textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: 20 }}>
+              style={{ background: "hsl(213 55% 9%)", border: "1px solid hsl(213 45% 17%)" }}>
+              <div style={{ fontSize: 11, color: "hsl(45 60% 48%)", textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: 20 }}>
                 Погодные условия{weather ? ` · ${weather.updated}` : ""}
               </div>
               <div className="flex items-center gap-5 mb-6 flex-wrap">
@@ -433,7 +430,7 @@ export default function TabloPage() {
                       <div style={{ fontFamily: "Oswald, sans-serif", fontSize: 56, fontWeight: 700, lineHeight: 1 }}>
                         {weather.temp > 0 ? "+" : ""}{weather.temp}°C
                       </div>
-                      <div style={{ fontSize: 18, color: "hsl(210 10% 55%)", marginTop: 6 }}>{weather.desc}</div>
+                      <div style={{ fontSize: 18, color: "hsl(213 15% 55%)", marginTop: 6 }}>{weather.desc}</div>
                     </div>
                   </>
                 )}
@@ -441,16 +438,16 @@ export default function TabloPage() {
                   const wc = WEATHER_CONDITIONS.find(w => w.id === acc.weatherCondition);
                   return wc ? (
                     <div className="rounded-xl px-6 py-4 flex items-center gap-3"
-                      style={{ background: "hsl(45 80% 20%)", border: "2px solid hsl(45 80% 45%)" }}>
+                      style={{ background: "hsl(45 70% 18%)", border: "2px solid hsl(45 80% 40%)" }}>
                       <span style={{ fontSize: 40 }}>{wc.icon}</span>
-                      <div style={{ fontFamily: "Oswald, sans-serif", fontSize: 30, fontWeight: 700, color: "hsl(45 90% 70%)", textTransform: "uppercase" }}>
+                      <div style={{ fontFamily: "Oswald, sans-serif", fontSize: 30, fontWeight: 700, color: "hsl(45 90% 68%)", textTransform: "uppercase" }}>
                         {wc.label}
                       </div>
                     </div>
                   ) : null;
                 })()}
                 {!weather && !acc.weatherCondition && (
-                  <div style={{ color: "hsl(210 10% 35%)", fontSize: 16 }}>Нет данных</div>
+                  <div style={{ color: "hsl(213 15% 35%)", fontSize: 16 }}>Нет данных</div>
                 )}
               </div>
               {weather && (
@@ -461,8 +458,8 @@ export default function TabloPage() {
                     { l: "Давление", v: `${weather.pressure} мм` },
                   ].map(r => (
                     <div key={r.l} className="rounded-xl p-4 text-center"
-                      style={{ background: "hsl(218 25% 12%)" }}>
-                      <div style={{ fontSize: 11, color: "hsl(210 10% 45%)", textTransform: "uppercase", letterSpacing: "0.06em" }}>{r.l}</div>
+                      style={{ background: "hsl(213 50% 13%)" }}>
+                      <div style={{ fontSize: 11, color: "hsl(213 15% 45%)", textTransform: "uppercase", letterSpacing: "0.06em" }}>{r.l}</div>
                       <div style={{ fontFamily: "Oswald, sans-serif", fontSize: 24, fontWeight: 700, marginTop: 4 }}>{r.v}</div>
                     </div>
                   ))}
@@ -475,10 +472,10 @@ export default function TabloPage() {
 
       {/* ══ ПОДПИСЬ ══════════════════════════════════════════════════════════════ */}
       <footer className="flex-shrink-0 px-8 py-3 flex items-center justify-end border-t"
-        style={{ borderColor: "hsl(220 12% 12%)", background: "hsl(220 20% 3% / 0.95)" }}>
-        <div style={{ fontSize: 11, color: "hsl(210 10% 30%)", letterSpacing: "0.04em" }}>
+        style={{ borderColor: "hsl(213 40% 14%)", background: "hsl(213 65% 4% / 0.97)" }}>
+        <div style={{ fontSize: 11, color: "hsl(213 15% 30%)", letterSpacing: "0.04em" }}>
           Разработчик:&nbsp;
-          <span style={{ color: "hsl(14 80% 45%)", fontWeight: 600 }}>
+          <span style={{ color: "hsl(45 70% 40%)", fontWeight: 600 }}>
             СДС филиала «Копейский ВГСО»&nbsp;С.Г.&nbsp;Ипатов
           </span>
         </div>
