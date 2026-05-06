@@ -1,10 +1,21 @@
 // Справочник ОПО, личного состава и подразделений — хранится в localStorage
 
+export type PersonRole = "commanderSquad" | "commanderPlatoon" | "commanderUnit" | "commDuty" | "";
+
+export const PERSON_ROLES: { id: PersonRole; label: string }[] = [
+  { id: "",                label: "— не назначена —"        },
+  { id: "commanderSquad",  label: "Ответственный по отряду" },
+  { id: "commanderPlatoon",label: "Ответственный по взводу/пункту" },
+  { id: "commanderUnit",   label: "Командир отделения"      },
+  { id: "commDuty",        label: "Дежурный у средств связи"},
+];
+
 export interface PersonEntry {
   id: string;
   name: string;       // ФИО
   rank: string;       // Должность
   phone: string;      // Телефон
+  role: PersonRole;   // Роль в оперативном дежурстве
 }
 
 export interface OpoEntry {
@@ -12,32 +23,31 @@ export interface OpoEntry {
   name: string;       // Наименование ОПО
   horizon: string;    // Горизонт / уровень
   area: string;       // Участок
+  sortOrder: number;  // Порядок отображения
 }
 
 export interface DivisionEntry {
-  id: string;         // Идентификатор подразделения
-  name: string;       // Наименование подразделения
-  location: string;   // Адрес
-  lastContact: string; // Номер телефона
+  id: string;
+  name: string;
+  location: string;
+  lastContact: string;
 }
 
-// Строка диспозиции выездов — одна организация (ОПО)
 export interface DispositionRow {
   id: string;
-  opoName: string;      // Наименование организации / ОПО
-  explosion: string;    // Взрыв (вспышка)
-  fire: string;         // Пожар
-  collapse: string;     // Обрушение, выброс, горный удар
-  flood: string;        // Загазирование, затопление, прорыв воды
-  phone: string;        // Номер телефона ВГСВ (ВГСП)
-  callsign: string;     // Радиопозывные ВГСВ (ВГСП)
+  opoName: string;
+  explosion: string;
+  fire: string;
+  collapse: string;
+  flood: string;
+  phone: string;
+  callsign: string;
 }
 
-// Общие реквизиты диспозиции
 export interface DispositionMeta {
-  commanderName: string;  // Фамилия И.О. командира ВГСО
-  vgsoName: string;       // Наименование ВГСО
-  year: string;           // Год диспозиции
+  commanderName: string;
+  vgsoName: string;
+  year: string;
 }
 
 export interface Directory {
@@ -50,32 +60,61 @@ export interface Directory {
 
 const KEY = "vgsch_directory";
 const VERSION_KEY = "vgsch_directory_version";
-const CURRENT_VERSION = "4"; // увеличь при смене DEFAULT
+const CURRENT_VERSION = "5";
 
 const DEFAULT: Directory = {
   personnel: [],
   opo: [
-    { id: "o1", name: "Шахта «Учебная»", horizon: "", area: "" },
+    { id: "o1", name: "Шахта «Учебная»", horizon: "", area: "", sortOrder: 0 },
   ],
   divisions: [],
   dispositionRows: [],
   dispositionMeta: { commanderName: "", vgsoName: "", year: String(new Date().getFullYear()) },
 };
 
+function migratePerson(p: Partial<PersonEntry>): PersonEntry {
+  return {
+    id: p.id ?? uid(),
+    name: p.name ?? "",
+    rank: p.rank ?? "",
+    phone: p.phone ?? "",
+    role: p.role ?? "",
+  };
+}
+
+function migrateOpo(o: Partial<OpoEntry>, idx: number): OpoEntry {
+  return {
+    id: o.id ?? uid(),
+    name: o.name ?? "",
+    horizon: o.horizon ?? "",
+    area: o.area ?? "",
+    sortOrder: o.sortOrder ?? idx,
+  };
+}
+
 export function loadDirectory(): Directory {
   try {
-    // Если версия изменилась — сбрасываем на новые дефолты
     if (localStorage.getItem(VERSION_KEY) !== CURRENT_VERSION) {
-      localStorage.removeItem(KEY);
+      // Миграция без сброса данных
+      const raw = localStorage.getItem(KEY);
+      const parsed = raw ? JSON.parse(raw) as Partial<Directory> : null;
+      const migrated: Directory = {
+        personnel: (parsed?.personnel ?? DEFAULT.personnel).map(migratePerson),
+        opo: (parsed?.opo ?? DEFAULT.opo).map(migrateOpo),
+        divisions: parsed?.divisions ?? DEFAULT.divisions,
+        dispositionRows: parsed?.dispositionRows ?? DEFAULT.dispositionRows,
+        dispositionMeta: parsed?.dispositionMeta ?? DEFAULT.dispositionMeta,
+      };
       localStorage.setItem(VERSION_KEY, CURRENT_VERSION);
-      return structuredClone(DEFAULT);
+      localStorage.setItem(KEY, JSON.stringify(migrated));
+      return migrated;
     }
     const raw = localStorage.getItem(KEY);
     if (!raw) return structuredClone(DEFAULT);
     const parsed = JSON.parse(raw) as Partial<Directory>;
     return {
-      personnel: parsed.personnel ?? DEFAULT.personnel,
-      opo: parsed.opo ?? DEFAULT.opo,
+      personnel: (parsed.personnel ?? DEFAULT.personnel).map(migratePerson),
+      opo: (parsed.opo ?? DEFAULT.opo).map(migrateOpo),
       divisions: parsed.divisions ?? DEFAULT.divisions,
       dispositionRows: parsed.dispositionRows ?? DEFAULT.dispositionRows,
       dispositionMeta: parsed.dispositionMeta ?? DEFAULT.dispositionMeta,
@@ -101,9 +140,15 @@ export function subscribeDirectory(cb: (d: Directory) => void) {
 }
 
 export function opoLabel(o: OpoEntry) {
-  return `${o.name}, ${o.horizon}, ${o.area}`;
+  const parts = [o.name, o.horizon, o.area].filter(Boolean);
+  return parts.join(", ");
 }
 
 export function uid() {
   return Math.random().toString(36).slice(2, 9);
+}
+
+/** Возвращает ФИО первого сотрудника с указанной ролью */
+export function getPersonByRole(personnel: PersonEntry[], role: PersonRole): string {
+  return personnel.find(p => p.role === role)?.name ?? "";
 }

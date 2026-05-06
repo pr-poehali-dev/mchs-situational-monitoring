@@ -19,12 +19,15 @@ import {
 import {
   type Directory,
   type PersonEntry,
+  type PersonRole,
   type OpoEntry,
   type DivisionEntry,
   type DispositionRow,
+  PERSON_ROLES,
   loadDirectory,
   saveDirectory,
   subscribeDirectory,
+  getPersonByRole,
   opoLabel,
   uid,
 } from "@/lib/directoryStore";
@@ -544,18 +547,23 @@ function AccidentPanel() {
   useEffect(() => subscribeAccident(setAcc), []);
   useEffect(() => subscribeDirectory(setDir), []);
 
-  // При загрузке справочника — подставляем первые значения если поля пустые
+  // При изменении справочника — подставляем значения по ролям
   useEffect(() => {
-    if (dir.personnel.length === 0 && dir.opo.length === 0) return;
-    const personNames = dir.personnel.map(p => p.name);
-    const opoLabels   = dir.opo.map(opoLabel);
+    const sorted = [...dir.opo].sort((a, b) => a.sortOrder - b.sortOrder);
+    const opoLabels = sorted.map(opoLabel);
     const stored = loadAccident();
     const patch: Partial<AccidentState> = {};
-    if (!stored.opo && opoLabels[0])             patch.opo              = opoLabels[0];
-    if (!stored.commanderSquad && personNames[0]) patch.commanderSquad  = personNames[0];
-    if (!stored.commanderPlatoon && personNames[1]) patch.commanderPlatoon = personNames[1] ?? personNames[0] ?? "";
-    if (!stored.commanderUnit && personNames[2])  patch.commanderUnit   = personNames[2] ?? personNames[0] ?? "";
-    if (!stored.commDuty && personNames[3])       patch.commDuty        = personNames[3] ?? personNames[0] ?? "";
+    if (!stored.opo && opoLabels[0]) patch.opo = opoLabels[0];
+    const roleMap: { field: keyof AccidentState; role: PersonRole }[] = [
+      { field: "commanderSquad",   role: "commanderSquad"   },
+      { field: "commanderPlatoon", role: "commanderPlatoon" },
+      { field: "commanderUnit",    role: "commanderUnit"    },
+      { field: "commDuty",         role: "commDuty"         },
+    ];
+    for (const { field, role } of roleMap) {
+      const fromRole = getPersonByRole(dir.personnel, role);
+      if (fromRole && !stored[field]) (patch as Record<string, string>)[field] = fromRole;
+    }
     if (Object.keys(patch).length > 0) {
       const next = { ...stored, ...patch };
       setAcc(next);
@@ -605,7 +613,8 @@ function AccidentPanel() {
   };
 
   const personNames = dir.personnel.map(p => p.name);
-  const opoLabels   = dir.opo.map(opoLabel);
+  const sortedOpo   = [...dir.opo].sort((a, b) => a.sortOrder - b.sortOrder);
+  const opoLabels   = sortedOpo.map(opoLabel);
 
   return (
     <div className="panel-card">
@@ -709,8 +718,8 @@ function AccidentPanel() {
           <div className="pt-1">
             {!acc.active ? (
               <button onClick={declare}
-                className="w-full py-3 rounded font-bold uppercase tracking-widest transition-all hover:opacity-90"
-                style={{ background: "hsl(var(--status-critical))", color: "white", fontFamily: "Oswald", fontSize: 15, letterSpacing: "0.1em" }}>
+                className="w-full py-3 rounded font-bold uppercase tracking-widest transition-all hover:brightness-110 active:scale-95"
+                style={{ background: "hsl(0 90% 48%)", color: "white", fontFamily: "Oswald", fontSize: 16, letterSpacing: "0.12em", boxShadow: "0 0 20px hsl(0 90% 48% / 0.5), 0 2px 8px rgba(0,0,0,0.3)" }}>
                 🚨 ТРЕВОГА
               </button>
             ) : (
@@ -725,7 +734,29 @@ function AccidentPanel() {
 
         {/* Ответственные из справочника */}
         <div className="space-y-3">
-          <div className="text-xs uppercase tracking-widest mb-1" style={{ color: "hsl(var(--muted-foreground))" }}>Ответственные лица</div>
+          <div className="flex items-center justify-between mb-1">
+            <div className="text-xs uppercase tracking-widest" style={{ color: "hsl(var(--muted-foreground))" }}>Ответственные лица</div>
+            {dir.personnel.some(p => p.role) && (
+              <button
+                className="text-xs px-2 py-0.5 rounded border border-border hover:bg-secondary transition-colors"
+                style={{ color: "hsl(var(--primary))", fontSize: 10 }}
+                onClick={() => {
+                  const patch: Partial<AccidentState> = {};
+                  const roleMap: { field: keyof AccidentState; role: PersonRole }[] = [
+                    { field: "commanderSquad",   role: "commanderSquad"   },
+                    { field: "commanderPlatoon", role: "commanderPlatoon" },
+                    { field: "commanderUnit",    role: "commanderUnit"    },
+                    { field: "commDuty",         role: "commDuty"         },
+                  ];
+                  for (const { field, role } of roleMap) {
+                    const fromRole = getPersonByRole(dir.personnel, role);
+                    if (fromRole) (patch as Record<string, string>)[field] = fromRole;
+                  }
+                  update(patch);
+                }}
+              >↺ Из справочника</button>
+            )}
+          </div>
           {([
             { label: "По отряду",              field: "commanderSquad"   as const },
             { label: "По взводу / пункту",     field: "commanderPlatoon" as const },
@@ -735,11 +766,12 @@ function AccidentPanel() {
             <div key={field}>
               <label className="text-xs block mb-1" style={{ color: "hsl(var(--muted-foreground))" }}>{label}</label>
               <select style={sel}
-                value={personNames.includes(acc[field]) ? acc[field] : (personNames[0] ?? "")}
+                value={acc[field] || ""}
                 onChange={e => update({ [field]: e.target.value })}>
-                {personNames.length > 0
-                  ? personNames.map(p => <option key={p} value={p}>{p}</option>)
-                  : <option value="">— справочник пуст —</option>}
+                <option value="">— не выбран —</option>
+                {dir.personnel.map(p => (
+                  <option key={p.id} value={p.name}>{p.name}{p.rank ? ` (${p.rank})` : ""}</option>
+                ))}
               </select>
             </div>
           ))}
@@ -1305,12 +1337,13 @@ function DirectorySection() {
   const [tab, setTab] = useState<"personnel" | "opo" | "divisions" | "disposition">("personnel");
 
   // Форма персонала
-  const [pForm, setPForm] = useState<Omit<PersonEntry, "id">>({ name: "", rank: "", phone: "" });
+  const [pForm, setPForm] = useState<Omit<PersonEntry, "id">>({ name: "", rank: "", phone: "", role: "" });
   const [pEdit, setPEdit] = useState<string | null>(null);
 
   // Форма ОПО
-  const [oForm, setOForm] = useState<Omit<OpoEntry, "id">>({ name: "", horizon: "", area: "" });
+  const [oForm, setOForm] = useState<Omit<OpoEntry, "id">>({ name: "", horizon: "", area: "", sortOrder: 0 });
   const [oEdit, setOEdit] = useState<string | null>(null);
+  const [oDragIdx, setODragIdx] = useState<number | null>(null);
 
   // Форма Подразделений
   const [dForm, setDForm] = useState<DivisionEntry>({ id: "", name: "", location: "", lastContact: "" });
@@ -1327,26 +1360,35 @@ function DirectorySection() {
     } else {
       persist({ ...dir, personnel: [...dir.personnel, { id: uid(), ...pForm }] });
     }
-    setPForm({ name: "", rank: "", phone: "" });
+    setPForm({ name: "", rank: "", phone: "", role: "" });
   };
-  const editP = (p: PersonEntry) => { setPEdit(p.id); setPForm({ name: p.name, rank: p.rank, phone: p.phone }); };
+  const editP = (p: PersonEntry) => { setPEdit(p.id); setPForm({ name: p.name, rank: p.rank, phone: p.phone, role: p.role ?? "" }); };
   const delP  = (id: string) => persist({ ...dir, personnel: dir.personnel.filter(p => p.id !== id) });
-  const cancelP = () => { setPEdit(null); setPForm({ name: "", rank: "", phone: "" }); };
+  const cancelP = () => { setPEdit(null); setPForm({ name: "", rank: "", phone: "", role: "" }); };
 
   // ── ОПО CRUD ──
+  const sortedOpoDir = [...dir.opo].sort((a, b) => a.sortOrder - b.sortOrder);
   const saveO = () => {
     if (!oForm.name.trim()) return;
     if (oEdit) {
       persist({ ...dir, opo: dir.opo.map(o => o.id === oEdit ? { id: oEdit, ...oForm } : o) });
       setOEdit(null);
     } else {
-      persist({ ...dir, opo: [...dir.opo, { id: uid(), ...oForm }] });
+      const maxOrder = dir.opo.length > 0 ? Math.max(...dir.opo.map(o => o.sortOrder)) : -1;
+      persist({ ...dir, opo: [...dir.opo, { id: uid(), ...oForm, sortOrder: maxOrder + 1 }] });
     }
-    setOForm({ name: "", horizon: "", area: "" });
+    setOForm({ name: "", horizon: "", area: "", sortOrder: 0 });
   };
-  const editO = (o: OpoEntry) => { setOEdit(o.id); setOForm({ name: o.name, horizon: o.horizon, area: o.area }); };
+  const editO = (o: OpoEntry) => { setOEdit(o.id); setOForm({ name: o.name, horizon: o.horizon, area: o.area, sortOrder: o.sortOrder }); };
   const delO  = (id: string) => persist({ ...dir, opo: dir.opo.filter(o => o.id !== id) });
-  const cancelO = () => { setOEdit(null); setOForm({ name: "", horizon: "", area: "" }); };
+  const cancelO = () => { setOEdit(null); setOForm({ name: "", horizon: "", area: "", sortOrder: 0 }); };
+  const moveOpo = (fromIdx: number, toIdx: number) => {
+    const arr = [...sortedOpoDir];
+    const [moved] = arr.splice(fromIdx, 1);
+    arr.splice(toIdx, 0, moved);
+    const reindexed = arr.map((o, i) => ({ ...o, sortOrder: i }));
+    persist({ ...dir, opo: reindexed });
+  };
 
   // ── Подразделения CRUD ──
   const saveD = () => {
@@ -1426,6 +1468,12 @@ function DirectorySection() {
                   value={pForm[f.key]} onChange={e => setPForm(p => ({ ...p, [f.key]: e.target.value }))} />
               </div>
             ))}
+            <div>
+              <label className="text-xs block mb-1" style={{ color: "hsl(var(--muted-foreground))" }}>Роль в дежурстве</label>
+              <select style={inputCls} value={pForm.role ?? ""} onChange={e => setPForm(p => ({ ...p, role: e.target.value as PersonRole }))}>
+                {PERSON_ROLES.map(r => <option key={r.id} value={r.id}>{r.label}</option>)}
+              </select>
+            </div>
             <div className="flex gap-2 pt-1">
               <button onClick={saveP}
                 className="flex-1 py-2 rounded text-sm font-medium transition-all hover:opacity-90"
@@ -1454,23 +1502,33 @@ function DirectorySection() {
               <div className="p-8 text-center text-sm" style={{ color: "hsl(var(--muted-foreground))" }}>Список пуст — добавьте сотрудников</div>
             ) : (
               <div className="divide-y divide-border">
-                {dir.personnel.map(p => (
-                  <div key={p.id} className="flex items-center gap-3 px-4 py-2.5 hover:bg-secondary/30 transition-colors">
-                    <div className="flex-1 min-w-0">
-                      <div className="font-medium text-sm">{p.name}</div>
-                      <div className="text-xs" style={{ color: "hsl(var(--muted-foreground))" }}>
-                        {p.rank}{p.phone ? ` · ${p.phone}` : ""}
+                {dir.personnel.map(p => {
+                  const roleLabel = PERSON_ROLES.find(r => r.id === p.role && r.id !== "")?.label;
+                  return (
+                    <div key={p.id} className="flex items-center gap-3 px-4 py-2.5 hover:bg-secondary/30 transition-colors">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium text-sm">{p.name}</span>
+                          {roleLabel && (
+                            <span className="tag text-xs" style={{ background: "hsl(var(--primary) / 0.15)", color: "hsl(var(--primary))", fontSize: 9 }}>
+                              {roleLabel}
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-xs" style={{ color: "hsl(var(--muted-foreground))" }}>
+                          {p.rank}{p.phone ? ` · ${p.phone}` : ""}
+                        </div>
                       </div>
+                      <button onClick={() => editP(p)} className="text-xs px-2 py-1 rounded border border-border hover:bg-secondary transition-colors flex-shrink-0">
+                        Изменить
+                      </button>
+                      <button onClick={() => delP(p.id)} className="text-xs px-2 py-1 rounded border transition-colors flex-shrink-0"
+                        style={{ borderColor: "hsl(var(--status-critical) / 0.3)", color: "hsl(var(--status-critical))" }}>
+                        Удалить
+                      </button>
                     </div>
-                    <button onClick={() => editP(p)} className="text-xs px-2 py-1 rounded border border-border hover:bg-secondary transition-colors flex-shrink-0">
-                      Изменить
-                    </button>
-                    <button onClick={() => delP(p.id)} className="text-xs px-2 py-1 rounded border transition-colors flex-shrink-0"
-                      style={{ borderColor: "hsl(var(--status-critical) / 0.3)", color: "hsl(var(--status-critical))" }}>
-                      Удалить
-                    </button>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
@@ -1512,10 +1570,13 @@ function DirectorySection() {
             </div>
           </div>
 
-          {/* Список */}
+          {/* Список с drag-and-drop */}
           <div className="panel-card col-span-2">
             <div className="px-4 py-3 border-b border-border flex items-center justify-between">
-              <h3 className="text-sm font-semibold uppercase tracking-widest" style={{ fontFamily: "Oswald" }}>Список объектов</h3>
+              <div>
+                <h3 className="text-sm font-semibold uppercase tracking-widest" style={{ fontFamily: "Oswald" }}>Список объектов</h3>
+                <p className="text-xs mt-0.5" style={{ color: "hsl(var(--muted-foreground))" }}>Перетащите строки для изменения порядка</p>
+              </div>
               <span className="tag" style={{ background: "hsl(var(--muted))", color: "hsl(var(--muted-foreground))" }}>
                 {dir.opo.length} записей
               </span>
@@ -1524,8 +1585,19 @@ function DirectorySection() {
               <div className="p-8 text-center text-sm" style={{ color: "hsl(var(--muted-foreground))" }}>Список пуст — добавьте объекты ОПО</div>
             ) : (
               <div className="divide-y divide-border">
-                {dir.opo.map(o => (
-                  <div key={o.id} className="flex items-center gap-3 px-4 py-2.5 hover:bg-secondary/30 transition-colors">
+                {sortedOpoDir.map((o, idx) => (
+                  <div
+                    key={o.id}
+                    draggable
+                    onDragStart={() => setODragIdx(idx)}
+                    onDragOver={e => { e.preventDefault(); }}
+                    onDrop={() => { if (oDragIdx !== null && oDragIdx !== idx) { moveOpo(oDragIdx, idx); setODragIdx(null); } }}
+                    onDragEnd={() => setODragIdx(null)}
+                    className="flex items-center gap-3 px-4 py-2.5 hover:bg-secondary/30 transition-colors cursor-grab active:cursor-grabbing"
+                    style={{ opacity: oDragIdx === idx ? 0.4 : 1 }}
+                  >
+                    <span className="mono text-xs flex-shrink-0 w-6 text-center" style={{ color: "hsl(var(--muted-foreground))" }}>{idx + 1}</span>
+                    <Icon name="GripVertical" size={14} style={{ color: "hsl(var(--muted-foreground))", flexShrink: 0 }} />
                     <div className="flex-1 min-w-0">
                       <div className="font-medium text-sm">{o.name}</div>
                       <div className="text-xs mono" style={{ color: "hsl(var(--muted-foreground))" }}>

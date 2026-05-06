@@ -14,18 +14,18 @@
     --popover: 213 50% 23%;
     --popover-foreground: 45 90% 95%;
 
-    /* Акцент — золотой МЧС */
-    --primary: 45 96% 54%;
-    --primary-foreground: 213 60% 12%;
+    /* Акцент — оранжевый МЧС */
+    --primary: 24 95% 52%;
+    --primary-foreground: 0 0% 100%;
 
     --secondary: 213 45% 30%;
-    --secondary-foreground: 45 70% 88%;
+    --secondary-foreground: 210 20% 88%;
 
     --muted: 213 45% 26%;
-    --muted-foreground: 213 25% 68%;
+    --muted-foreground: 213 25% 72%;
 
-    --accent: 45 96% 54%;
-    --accent-foreground: 213 60% 12%;
+    --accent: 24 95% 52%;
+    --accent-foreground: 0 0% 100%;
 
     --destructive: 0 80% 55%;
     --destructive-foreground: 0 0% 100%;
@@ -38,13 +38,13 @@
 
     /* Сайдбар */
     --sidebar-background: 213 58% 14%;
-    --sidebar-foreground: 45 80% 92%;
-    --sidebar-primary: 45 96% 54%;
-    --sidebar-primary-foreground: 213 60% 12%;
+    --sidebar-foreground: 210 20% 92%;
+    --sidebar-primary: 24 95% 52%;
+    --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 213 50% 22%;
-    --sidebar-accent-foreground: 45 70% 88%;
+    --sidebar-accent-foreground: 210 20% 88%;
     --sidebar-border: 213 45% 26%;
-    --sidebar-ring: 45 96% 54%;
+    --sidebar-ring: 24 95% 52%;
 
     /* Статусы */
     --status-active: 142 65% 48%;

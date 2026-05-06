@@ -120,6 +120,8 @@ export default function TabloPage() {
   const [acc, setAcc] = useState<AccidentState>(loadAccident);
   useEffect(() => subscribeAccident(setAcc), []);
 
+  const [showPersonnel, setShowPersonnel] = useState(false);
+
   const [flashRed, setFlashRed] = useState(false);
   useEffect(() => {
     if (!acc.active) { setFlashRed(false); return; }
@@ -138,7 +140,7 @@ export default function TabloPage() {
   const C = {
     bg:      acc.active ? (flashRed ? "hsl(0 65% 14%)" : "hsl(0 55% 10%)") : "hsl(213 55% 15%)",
     border:  acc.active ? (flashRed ? "#ff4400" : "#aa1100") : "hsl(213 45% 30%)",
-    accent:  acc.active ? "#ff5533" : "hsl(45 96% 54%)",
+    accent:  acc.active ? "#ff5533" : "hsl(24 95% 52%)",
   };
 
   // Стиль метки-заголовка
@@ -161,68 +163,113 @@ export default function TabloPage() {
     >
 
       {/* ══ ШАПКА: лого + время + погода ════════════════════════════════════════ */}
-      <header className="flex items-center justify-between px-8 py-4 flex-shrink-0 border-b"
+      <header className="flex-shrink-0 border-b"
         style={{ borderColor: C.border, background: "hsl(213 58% 12% / 0.97)", transition: "border-color 0.4s" }}>
 
-        {/* Лого */}
-        <div className="flex items-center gap-4">
-          <img src="https://cdn.poehali.dev/projects/e8b93a3a-e9ed-40ee-8196-78090d463984/bucket/cdb862bf-f0a2-4d2b-899b-eb676c919290.png" alt="ВГСЧ"
-            style={{ width: 48, height: 48, flexShrink: 0,
-              boxShadow: `0 0 12px ${C.accent}55`, transition: "box-shadow 0.4s" }} />
-          <div>
-            <div style={{ fontSize: 10, color: "hsl(210 10% 45%)", textTransform: "uppercase", letterSpacing: "0.12em" }}>ФГУП ВГСЧ МЧС России</div>
-            <div style={{ fontFamily: "Oswald, sans-serif", fontSize: 20, fontWeight: 700, color: C.accent, textTransform: "uppercase", letterSpacing: "0.06em", lineHeight: 1.1, transition: "color 0.4s" }}>
-              Оперативное табло
-            </div>
-          </div>
-        </div>
-
-        {/* Время местное */}
-        <div className="flex items-center gap-8">
-          <div className="text-center">
-            <div style={lbl()}>Местное время</div>
-            <div style={{ fontFamily: "IBM Plex Mono, monospace", fontSize: 38, fontWeight: 700, lineHeight: 1, color: "hsl(210 20% 95%)" }}>
-              {localTimeStr}
-            </div>
-            <div style={{ fontSize: 11, color: "hsl(210 10% 50%)", marginTop: 2, textTransform: "capitalize" }}>{localDateStr}</div>
-          </div>
-
-          {!isSameTz && (
-            <>
-              <div style={{ width: 1, height: 50, background: "hsl(220 12% 18%)" }} />
-              <div className="text-center">
-                <div style={lbl()}>Москва (МСК)</div>
-                <div style={{ fontFamily: "IBM Plex Mono, monospace", fontSize: 38, fontWeight: 700, lineHeight: 1, color: C.accent }}>
-                  {mskTime}
-                </div>
-                <div style={{ fontSize: 11, color: "hsl(210 10% 50%)", marginTop: 2 }}>UTC+3</div>
+        <div className="flex items-center justify-between px-8 py-4">
+          {/* Лого */}
+          <div className="flex items-center gap-4">
+            <img src="https://cdn.poehali.dev/projects/e8b93a3a-e9ed-40ee-8196-78090d463984/bucket/cdb862bf-f0a2-4d2b-899b-eb676c919290.png" alt="ВГСЧ"
+              style={{ width: 56, height: 56, flexShrink: 0,
+                boxShadow: `0 0 14px ${C.accent}66`, transition: "box-shadow 0.4s" }} />
+            <div>
+              <div style={{ fontSize: 11, color: "hsl(213 15% 50%)", textTransform: "uppercase", letterSpacing: "0.12em" }}>ФГУП ВГСЧ МЧС России</div>
+              <div style={{ fontFamily: "Oswald, sans-serif", fontSize: 26, fontWeight: 700, color: C.accent, textTransform: "uppercase", letterSpacing: "0.06em", lineHeight: 1.1, transition: "color 0.4s" }}>
+                Оперативное табло
               </div>
-            </>
-          )}
+            </div>
+          </div>
 
-          {/* Погода */}
-          {weather && (
-            <>
-              <div style={{ width: 1, height: 50, background: "hsl(220 12% 18%)" }} />
-              <div>
-                <div style={lbl()}>Погода (обн. {weather.updated})</div>
-                <div className="flex items-center gap-3">
-                  <span style={{ fontSize: 32 }}>{weather.icon}</span>
-                  <div>
-                    <div style={{ fontFamily: "Oswald, sans-serif", fontSize: 28, fontWeight: 700, lineHeight: 1 }}>
-                      {weather.temp > 0 ? "+" : ""}{weather.temp}°C
-                    </div>
-                    <div style={{ fontSize: 12, color: "hsl(210 10% 55%)", marginTop: 2 }}>
-                      💨 {weather.windSpeed} м/с {WIND_DIRS[Math.round(weather.windDir / 45) % 8]}
-                      &nbsp;·&nbsp; 💧 {weather.humidity}%
-                      &nbsp;·&nbsp; {weather.pressure} мм
+          {/* Ответственные — бургер-кнопка */}
+          <button
+            onClick={() => setShowPersonnel(p => !p)}
+            className="flex items-center gap-3 px-5 py-3 rounded-xl transition-all"
+            style={{
+              background: showPersonnel ? "hsl(213 45% 26%)" : "hsl(213 45% 20%)",
+              border: `1px solid ${showPersonnel ? C.accent : "hsl(213 40% 32%)"}`,
+              color: showPersonnel ? C.accent : "hsl(213 15% 65%)",
+            }}
+          >
+            <div className="flex flex-col gap-1" style={{ width: 18 }}>
+              <div style={{ height: 2, background: "currentColor", borderRadius: 1 }} />
+              <div style={{ height: 2, background: "currentColor", borderRadius: 1 }} />
+              <div style={{ height: 2, background: "currentColor", borderRadius: 1 }} />
+            </div>
+            <span style={{ fontFamily: "Oswald, sans-serif", fontSize: 14, letterSpacing: "0.08em", textTransform: "uppercase" }}>
+              Ответственные лица
+            </span>
+          </button>
+
+          {/* Время местное */}
+          <div className="flex items-center gap-8">
+            <div className="text-center">
+              <div style={lbl()}>Местное время</div>
+              <div style={{ fontFamily: "IBM Plex Mono, monospace", fontSize: 42, fontWeight: 700, lineHeight: 1, color: "hsl(210 20% 95%)" }}>
+                {localTimeStr}
+              </div>
+              <div style={{ fontSize: 12, color: "hsl(210 10% 50%)", marginTop: 2, textTransform: "capitalize" }}>{localDateStr}</div>
+            </div>
+
+            {!isSameTz && (
+              <>
+                <div style={{ width: 1, height: 54, background: "hsl(213 30% 26%)" }} />
+                <div className="text-center">
+                  <div style={lbl()}>Москва (МСК)</div>
+                  <div style={{ fontFamily: "IBM Plex Mono, monospace", fontSize: 42, fontWeight: 700, lineHeight: 1, color: C.accent }}>
+                    {mskTime}
+                  </div>
+                  <div style={{ fontSize: 11, color: "hsl(210 10% 50%)", marginTop: 2 }}>UTC+3</div>
+                </div>
+              </>
+            )}
+
+            {/* Погода */}
+            {weather && (
+              <>
+                <div style={{ width: 1, height: 54, background: "hsl(213 30% 26%)" }} />
+                <div>
+                  <div style={lbl()}>Погода · {weather.updated}</div>
+                  <div className="flex items-center gap-3">
+                    <span style={{ fontSize: 36 }}>{weather.icon}</span>
+                    <div>
+                      <div style={{ fontFamily: "Oswald, sans-serif", fontSize: 32, fontWeight: 700, lineHeight: 1 }}>
+                        {weather.temp > 0 ? "+" : ""}{weather.temp}°C
+                      </div>
+                      <div style={{ fontSize: 12, color: "hsl(213 15% 55%)", marginTop: 2 }}>
+                        💨 {weather.windSpeed} м/с {WIND_DIRS[Math.round(weather.windDir / 45) % 8]}
+                        &nbsp;·&nbsp; 💧 {weather.humidity}%
+                        &nbsp;·&nbsp; {weather.pressure} мм
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            </>
-          )}
+              </>
+            )}
+          </div>
         </div>
+
+        {/* Панель ответственных — выпадает под шапкой */}
+        {showPersonnel && (
+          <div className="px-8 py-4 border-t flex items-center gap-8 flex-wrap"
+            style={{ borderColor: "hsl(213 40% 26%)", background: "hsl(213 55% 10% / 0.97)" }}>
+            {[
+              { label: "По отряду",            value: acc.commanderSquad   },
+              { label: "По взводу / пункту",   value: acc.commanderPlatoon },
+              { label: "Командир отделения",   value: acc.commanderUnit    },
+              { label: "Деж. у средств связи", value: acc.commDuty         },
+            ].map(r => (
+              <div key={r.label} className="flex items-center gap-3">
+                <div style={{ width: 1, height: 36, background: "hsl(213 40% 28%)" }} />
+                <div>
+                  <div style={{ fontSize: 10, color: "hsl(213 15% 48%)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 2 }}>{r.label}</div>
+                  <div style={{ fontFamily: "Oswald, sans-serif", fontSize: 22, fontWeight: 700, color: r.value ? C.accent : "hsl(213 15% 38%)", lineHeight: 1 }}>
+                    {r.value || "—"}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </header>
 
       {/* ══ БЛОК АВАРИИ ══════════════════════════════════════════════════════════ */}
@@ -282,34 +329,9 @@ export default function TabloPage() {
             </div>
           </div>
 
-          {/* Строка 2: Ответственные + Погода */}
-          <div className="grid grid-cols-2 gap-5 flex-1 min-h-0">
-
-            {/* Ответственные лица */}
-            <div className="rounded-xl p-5 flex flex-col"
-              style={{ background: "hsl(213 50% 20%)", border: "1px solid hsl(213 45% 32%)" }}>
-              <div style={lbl("hsl(45 60% 55%)")}>Ответственные лица</div>
-              <div className="grid grid-cols-2 gap-4 mt-3 flex-1">
-                {[
-                  { label: "По отряду",            value: acc.commanderSquad },
-                  { label: "По взводу / пункту",   value: acc.commanderPlatoon },
-                  { label: "Командир отделения",   value: acc.commanderUnit },
-                  { label: "Деж. у средств связи", value: acc.commDuty },
-                ].map(r => (
-                  <div key={r.label}>
-                    <div style={{ fontSize: 11, color: "hsl(213 20% 48%)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 3 }}>
-                      {r.label}
-                    </div>
-                    <div style={{ fontFamily: "Oswald, sans-serif", fontSize: 24, fontWeight: 700, color: "hsl(45 80% 72%)", lineHeight: 1.1 }}>
-                      {r.value || "—"}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Погода + кнопки */}
-            <div className="flex flex-col gap-3 min-h-0">
+          {/* Строка 2: Погода */}
+          <div className="flex-1 min-h-0">
+            <div className="flex flex-col gap-3 h-full min-h-0">
               <div className="rounded-xl p-5 flex-1 min-h-0"
                 style={{ background: "hsl(213 50% 20%)", border: "1px solid hsl(213 45% 32%)" }}>
                 <div style={lbl("hsl(45 60% 55%)")}>Погодные условия</div>
@@ -388,79 +410,52 @@ export default function TabloPage() {
             </div>
           </div>
 
-          {/* Главный блок: ответственные + погода */}
-          <div className="grid grid-cols-2 gap-5 flex-1 min-h-0">
-
-            {/* Ответственные лица — всегда */}
-            <div className="rounded-2xl p-8"
+          {/* Главный блок: погода на всю ширину */}
+          <div className="flex-1 min-h-0">
+            <div className="rounded-2xl p-8 h-full"
               style={{ background: "hsl(213 50% 20%)", border: "1px solid hsl(213 45% 32%)" }}>
-              <div style={{ fontSize: 11, color: "hsl(45 60% 48%)", textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: 20 }}>
-                Ответственные лица
-              </div>
-              <div className="grid grid-cols-2 gap-x-8 gap-y-6">
-                {[
-                  { label: "По отряду",            value: acc.commanderSquad },
-                  { label: "По взводу / пункту",   value: acc.commanderPlatoon },
-                  { label: "Командир отделения",   value: acc.commanderUnit },
-                  { label: "Деж. у средств связи", value: acc.commDuty },
-                ].map(r => (
-                  <div key={r.label}>
-                    <div style={{ fontSize: 11, color: "hsl(213 18% 42%)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>
-                      {r.label}
-                    </div>
-                    <div style={{ fontFamily: "Oswald, sans-serif", fontSize: 30, fontWeight: 700, color: r.value ? "hsl(45 80% 72%)" : "hsl(213 15% 28%)", lineHeight: 1.1 }}>
-                      {r.value || "—"}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Погода в штатном режиме */}
-            <div className="rounded-2xl p-8"
-              style={{ background: "hsl(213 50% 20%)", border: "1px solid hsl(213 45% 32%)" }}>
-              <div style={{ fontSize: 11, color: "hsl(45 60% 48%)", textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: 20 }}>
+              <div style={{ fontSize: 13, color: "hsl(24 80% 55%)", textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: 24, fontWeight: 600 }}>
                 Погодные условия{weather ? ` · ${weather.updated}` : ""}
               </div>
-              <div className="flex items-center gap-5 mb-6 flex-wrap">
+              <div className="flex items-center gap-8 mb-8 flex-wrap">
                 {weather && (
                   <>
-                    <span style={{ fontSize: 56 }}>{weather.icon}</span>
+                    <span style={{ fontSize: 72 }}>{weather.icon}</span>
                     <div>
-                      <div style={{ fontFamily: "Oswald, sans-serif", fontSize: 56, fontWeight: 700, lineHeight: 1 }}>
+                      <div style={{ fontFamily: "Oswald, sans-serif", fontSize: 72, fontWeight: 700, lineHeight: 1 }}>
                         {weather.temp > 0 ? "+" : ""}{weather.temp}°C
                       </div>
-                      <div style={{ fontSize: 18, color: "hsl(213 15% 55%)", marginTop: 6 }}>{weather.desc}</div>
+                      <div style={{ fontSize: 22, color: "hsl(213 15% 60%)", marginTop: 8 }}>{weather.desc}</div>
                     </div>
                   </>
                 )}
                 {acc.weatherCondition && (() => {
                   const wc = WEATHER_CONDITIONS.find(w => w.id === acc.weatherCondition);
                   return wc ? (
-                    <div className="rounded-xl px-6 py-4 flex items-center gap-3"
-                      style={{ background: "hsl(45 70% 18%)", border: "2px solid hsl(45 80% 40%)" }}>
-                      <span style={{ fontSize: 40 }}>{wc.icon}</span>
-                      <div style={{ fontFamily: "Oswald, sans-serif", fontSize: 30, fontWeight: 700, color: "hsl(45 90% 68%)", textTransform: "uppercase" }}>
+                    <div className="rounded-xl px-8 py-5 flex items-center gap-4"
+                      style={{ background: "hsl(24 70% 18%)", border: "2px solid hsl(24 80% 40%)" }}>
+                      <span style={{ fontSize: 52 }}>{wc.icon}</span>
+                      <div style={{ fontFamily: "Oswald, sans-serif", fontSize: 38, fontWeight: 700, color: "hsl(24 90% 62%)", textTransform: "uppercase" }}>
                         {wc.label}
                       </div>
                     </div>
                   ) : null;
                 })()}
                 {!weather && !acc.weatherCondition && (
-                  <div style={{ color: "hsl(213 15% 35%)", fontSize: 16 }}>Нет данных</div>
+                  <div style={{ color: "hsl(213 15% 35%)", fontSize: 18 }}>Нет данных</div>
                 )}
               </div>
               {weather && (
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-3 gap-6">
                   {[
                     { l: "Ветер", v: `${weather.windSpeed} м/с ${WIND_DIRS[Math.round(weather.windDir / 45) % 8]}` },
                     { l: "Влажность", v: `${weather.humidity}%` },
                     { l: "Давление", v: `${weather.pressure} мм` },
                   ].map(r => (
-                    <div key={r.l} className="rounded-xl p-4 text-center"
+                    <div key={r.l} className="rounded-xl p-5 text-center"
                       style={{ background: "hsl(213 45% 26%)" }}>
-                      <div style={{ fontSize: 11, color: "hsl(213 15% 45%)", textTransform: "uppercase", letterSpacing: "0.06em" }}>{r.l}</div>
-                      <div style={{ fontFamily: "Oswald, sans-serif", fontSize: 24, fontWeight: 700, marginTop: 4 }}>{r.v}</div>
+                      <div style={{ fontSize: 12, color: "hsl(213 15% 48%)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 4 }}>{r.l}</div>
+                      <div style={{ fontFamily: "Oswald, sans-serif", fontSize: 32, fontWeight: 700 }}>{r.v}</div>
                     </div>
                   ))}
                 </div>
