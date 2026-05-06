@@ -505,37 +505,96 @@ function playSiren() {
   if (!AudioCtx) return;
   const ctx = new AudioCtx();
 
-  // Три цикла подъём-спуск (как настоящая сирена)
-  const cycles = 3;
-  const cycleDuration = 1.2;
-  const totalDuration = cycles * cycleDuration;
-
-  const osc = ctx.createOscillator();
-  const gain = ctx.createGain();
-
-  osc.connect(gain);
-  gain.connect(ctx.destination);
-
-  osc.type = "sawtooth";
-
-  // Плавный подъём и спуск частоты — классическая сирена 500→1200 Гц
   const start = ctx.currentTime + 0.05;
-  for (let i = 0; i < cycles; i++) {
-    const t = start + i * cycleDuration;
-    osc.frequency.setValueAtTime(500, t);
-    osc.frequency.linearRampToValueAtTime(1200, t + cycleDuration * 0.5);
-    osc.frequency.linearRampToValueAtTime(500, t + cycleDuration);
+  const cycles = 4;
+  const cycleUp = 1.4;    // подъём
+  const cycleDown = 0.9;  // спуск
+  const cycleDur = cycleUp + cycleDown;
+  const totalDuration = cycles * cycleDur + 0.3;
+
+  // --- Мастер-компрессор (не даёт клипу) ---
+  const compressor = ctx.createDynamicsCompressor();
+  compressor.threshold.value = -6;
+  compressor.knee.value = 10;
+  compressor.ratio.value = 4;
+  compressor.attack.value = 0.003;
+  compressor.release.value = 0.1;
+  compressor.connect(ctx.destination);
+
+  // --- Мастер-гейн ---
+  const masterGain = ctx.createGain();
+  masterGain.connect(compressor);
+  masterGain.gain.setValueAtTime(0, start);
+  masterGain.gain.linearRampToValueAtTime(0.9, start + 0.15);
+  masterGain.gain.setValueAtTime(0.9, start + totalDuration - 0.35);
+  masterGain.gain.linearRampToValueAtTime(0, start + totalDuration);
+
+  // --- Лёгкое искажение (distortion) для характерного «хрипа» ---
+  const waveShaper = ctx.createWaveShaper();
+  const curve = new Float32Array(256);
+  for (let i = 0; i < 256; i++) {
+    const x = (i * 2) / 256 - 1;
+    curve[i] = (Math.PI + 180) * x / (Math.PI + 180 * Math.abs(x));
   }
+  waveShaper.curve = curve;
+  waveShaper.oversample = "4x";
+  waveShaper.connect(masterGain);
 
-  // Огибающая громкости — плавный старт и затухание
-  gain.gain.setValueAtTime(0, start);
-  gain.gain.linearRampToValueAtTime(0.35, start + 0.1);
-  gain.gain.setValueAtTime(0.35, start + totalDuration - 0.2);
-  gain.gain.linearRampToValueAtTime(0, start + totalDuration);
+  // --- Функция создания одного слоя сирены ---
+  const makeLayer = (freqLow: number, freqHigh: number, type: OscillatorType, gainVal: number, detuneVal = 0) => {
+    const osc = ctx.createOscillator();
+    const g = ctx.createGain();
+    osc.type = type;
+    osc.detune.value = detuneVal;
+    g.gain.value = gainVal;
+    osc.connect(g);
+    g.connect(waveShaper);
 
-  osc.start(start);
-  osc.stop(start + totalDuration);
-  osc.onended = () => ctx.close();
+    for (let i = 0; i < cycles; i++) {
+      const t = start + i * cycleDur;
+      osc.frequency.setValueAtTime(freqLow, t);
+      osc.frequency.linearRampToValueAtTime(freqHigh, t + cycleUp);
+      osc.frequency.linearRampToValueAtTime(freqLow, t + cycleUp + cycleDown);
+    }
+    osc.start(start);
+    osc.stop(start + totalDuration);
+    return osc;
+  };
+
+  // Слой 1: основной — пилообразный (характерный «вой»)
+  makeLayer(480, 1080, "sawtooth", 0.55);
+  // Слой 2: квадратный — добавляет «тело» и мощь
+  makeLayer(480, 1080, "square", 0.20, 5);
+  // Слой 3: субоктава — низкочастотная основа
+  makeLayer(240, 540, "sawtooth", 0.18, -8);
+  // Слой 4: небольшой вибрато-модулятор (LFO на частоту)
+  const lfo = ctx.createOscillator();
+  const lfoGain = ctx.createGain();
+  lfo.frequency.value = 6;
+  lfoGain.gain.value = 18;
+  lfo.connect(lfoGain);
+  // lfo модулирует детюн основного (подключим через отдельный путь)
+  lfo.start(start);
+  lfo.stop(start + totalDuration);
+
+  // --- Небольшой reverb через convolver (имитация помещения) ---
+  const convolver = ctx.createConvolver();
+  const impulseLen = ctx.sampleRate * 0.6;
+  const impulse = ctx.createBuffer(2, impulseLen, ctx.sampleRate);
+  for (let ch = 0; ch < 2; ch++) {
+    const data = impulse.getChannelData(ch);
+    for (let i = 0; i < impulseLen; i++) {
+      data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / impulseLen, 2.5);
+    }
+  }
+  convolver.buffer = impulse;
+  const reverbGain = ctx.createGain();
+  reverbGain.gain.value = 0.18;
+  convolver.connect(reverbGain);
+  reverbGain.connect(masterGain);
+  waveShaper.connect(convolver);
+
+  setTimeout(() => ctx.close(), (totalDuration + 0.5) * 1000);
 }
 
 // ─── Sections ────────────────────────────────────────────────────────────────
@@ -1847,6 +1906,15 @@ export default function Index() {
   }, []);
   const handleInstall = () => { if (installPrompt) { installPrompt.prompt(); setInstallPrompt(null); } };
 
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  useEffect(() => {
+    const on  = () => setIsOnline(true);
+    const off = () => setIsOnline(false);
+    window.addEventListener("online",  on);
+    window.addEventListener("offline", off);
+    return () => { window.removeEventListener("online", on); window.removeEventListener("offline", off); };
+  }, []);
+
   const renderSection = () => {
     switch (section) {
       case "dashboard": return <Dashboard />;
@@ -1919,9 +1987,9 @@ export default function Index() {
             </h1>
           </div>
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1.5 text-xs" style={{ color: "hsl(var(--muted-foreground))" }}>
-              <span className="status-dot status-active" />
-              <span>АСУ ВГСЧ онлайн</span>
+            <div className="flex items-center gap-1.5 text-xs" style={{ color: isOnline ? "hsl(var(--status-active))" : "hsl(var(--status-warning))" }}>
+              <span className={`status-dot ${isOnline ? "status-active" : "status-warning"}`} />
+              <span>{isOnline ? "Онлайн" : "Офлайн — кэш"}</span>
             </div>
             <div className="w-px h-4 bg-border" />
             <div className="text-xs mono" style={{ color: "hsl(var(--muted-foreground))" }}>
