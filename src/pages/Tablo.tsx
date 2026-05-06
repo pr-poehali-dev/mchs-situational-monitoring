@@ -479,7 +479,7 @@ export default function TabloPage() {
         style={{ borderColor: "hsl(213 40% 28%)", background: "hsl(213 58% 13% / 0.97)" }}>
         <div style={{ fontSize: 11, color: "hsl(213 15% 30%)", letterSpacing: "0.04em" }}>
           Разработчик:&nbsp;
-          <span style={{ color: "hsl(45 70% 40%)", fontWeight: 600 }}>
+          <span style={{ color: "hsl(24 95% 52%)", fontWeight: 600 }}>
             СДС филиала «Копейский ВГСО»&nbsp;С.Г.&nbsp;Ипатов
           </span>
         </div>
