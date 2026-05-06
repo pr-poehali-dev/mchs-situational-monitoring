@@ -120,7 +120,7 @@ export default function TabloPage() {
   const [acc, setAcc] = useState<AccidentState>(loadAccident);
   useEffect(() => subscribeAccident(setAcc), []);
 
-  const [showPersonnel, setShowPersonnel] = useState(false);
+
 
   const [flashRed, setFlashRed] = useState(false);
   useEffect(() => {
@@ -143,10 +143,10 @@ export default function TabloPage() {
     accent:  acc.active ? "#ff5533" : "hsl(24 95% 52%)",
   };
 
-  // Стиль метки-заголовка
-  const lbl = (color = "hsl(210 10% 45%)"): React.CSSProperties => ({
-    fontSize: 11, color, textTransform: "uppercase", letterSpacing: "0.1em", fontWeight: 600,
-    marginBottom: 4, fontFamily: "IBM Plex Sans, sans-serif",
+  // Стиль метки-заголовка (подпись над значением)
+  const lbl = (color = "hsl(210 10% 52%)"): React.CSSProperties => ({
+    fontSize: 12, color, textTransform: "uppercase", letterSpacing: "0.1em", fontWeight: 700,
+    marginBottom: 6, fontFamily: "IBM Plex Sans, sans-serif",
   });
 
   return (
@@ -162,83 +162,91 @@ export default function TabloPage() {
       }}
     >
 
-      {/* ══ ШАПКА: лого + время + погода ════════════════════════════════════════ */}
+      {/* ══ ШАПКА ════════════════════════════════════════════════════════════════ */}
       <header className="flex-shrink-0 border-b"
         style={{ borderColor: C.border, background: "hsl(213 58% 12% / 0.97)", transition: "border-color 0.4s" }}>
 
-        <div className="flex items-center justify-between px-8 py-4">
+        {/* Строка 1: лого + ответственные + время + погода */}
+        <div className="flex items-center gap-0 px-6 py-3" style={{ minHeight: 72 }}>
+
           {/* Лого */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3 flex-shrink-0 pr-6"
+            style={{ borderRight: `1px solid hsl(213 30% 26%)` }}>
             <img src="https://cdn.poehali.dev/projects/e8b93a3a-e9ed-40ee-8196-78090d463984/bucket/cdb862bf-f0a2-4d2b-899b-eb676c919290.png" alt="ВГСЧ"
-              style={{ width: 56, height: 56, flexShrink: 0,
-                boxShadow: `0 0 14px ${C.accent}66`, transition: "box-shadow 0.4s" }} />
+              style={{ width: 48, height: 48, flexShrink: 0, boxShadow: `0 0 12px ${C.accent}55`, transition: "box-shadow 0.4s" }} />
             <div>
-              <div style={{ fontSize: 11, color: "hsl(213 15% 50%)", textTransform: "uppercase", letterSpacing: "0.12em" }}>ФГУП ВГСЧ МЧС России</div>
-              <div style={{ fontFamily: "Oswald, sans-serif", fontSize: 26, fontWeight: 700, color: C.accent, textTransform: "uppercase", letterSpacing: "0.06em", lineHeight: 1.1, transition: "color 0.4s" }}>
+              <div style={{ fontSize: 9, color: "hsl(213 15% 48%)", textTransform: "uppercase", letterSpacing: "0.1em" }}>ФГУП ВГСЧ МЧС России</div>
+              <div style={{ fontFamily: "Oswald, sans-serif", fontSize: 18, fontWeight: 700, color: C.accent, textTransform: "uppercase", letterSpacing: "0.05em", lineHeight: 1.1, transition: "color 0.4s" }}>
                 Оперативное табло
               </div>
             </div>
           </div>
 
-          {/* Ответственные — бургер-кнопка */}
-          <button
-            onClick={() => setShowPersonnel(p => !p)}
-            className="flex items-center gap-3 px-5 py-3 rounded-xl transition-all"
-            style={{
-              background: showPersonnel ? "hsl(213 45% 26%)" : "hsl(213 45% 20%)",
-              border: `1px solid ${showPersonnel ? C.accent : "hsl(213 40% 32%)"}`,
-              color: showPersonnel ? C.accent : "hsl(213 15% 65%)",
-            }}
-          >
-            <div className="flex flex-col gap-1" style={{ width: 18 }}>
-              <div style={{ height: 2, background: "currentColor", borderRadius: 1 }} />
-              <div style={{ height: 2, background: "currentColor", borderRadius: 1 }} />
-              <div style={{ height: 2, background: "currentColor", borderRadius: 1 }} />
+          {/* Ответственные лица — всегда в одну строку */}
+          <div className="flex items-center flex-1 px-6 gap-0" style={{ minWidth: 0 }}>
+            <div style={{ fontSize: 9, color: "hsl(213 15% 46%)", textTransform: "uppercase", letterSpacing: "0.1em", writingMode: "vertical-rl", transform: "rotate(180deg)", flexShrink: 0, marginRight: 12 }}>
+              Ответственные
             </div>
-            <span style={{ fontFamily: "Oswald, sans-serif", fontSize: 14, letterSpacing: "0.08em", textTransform: "uppercase" }}>
-              Ответственные лица
-            </span>
-          </button>
+            {[
+              { label: "По отряду",          value: acc.commanderSquad   },
+              { label: "Взвод / пункт",       value: acc.commanderPlatoon },
+              { label: "Ком. отделения",      value: acc.commanderUnit    },
+              { label: "Деж. связи",          value: acc.commDuty         },
+            ].map((r, i) => (
+              <div key={r.label} className="flex items-center min-w-0" style={{ flex: 1 }}>
+                {i > 0 && <div style={{ width: 1, height: 40, background: "hsl(213 30% 28%)", flexShrink: 0, marginRight: 12 }} />}
+                <div className="min-w-0">
+                  <div style={{ fontSize: 9, color: "hsl(213 15% 48%)", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 2, whiteSpace: "nowrap" }}>{r.label}</div>
+                  <div style={{ fontFamily: "Oswald, sans-serif", fontSize: 20, fontWeight: 700, color: r.value ? "hsl(210 20% 95%)" : "hsl(213 15% 36%)", lineHeight: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {r.value || "—"}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
 
-          {/* Время местное */}
-          <div className="flex items-center gap-8">
+          {/* Правый блок: время + погода */}
+          <div className="flex items-center gap-5 flex-shrink-0 pl-6"
+            style={{ borderLeft: `1px solid hsl(213 30% 26%)` }}>
+
             <div className="text-center">
-              <div style={lbl()}>Местное время</div>
-              <div style={{ fontFamily: "IBM Plex Mono, monospace", fontSize: 42, fontWeight: 700, lineHeight: 1, color: "hsl(210 20% 95%)" }}>
+              <div style={{ fontSize: 9, color: "hsl(213 15% 48%)", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 2 }}>
+                {isSameTz ? "Время" : "Местное"}
+              </div>
+              <div style={{ fontFamily: "IBM Plex Mono, monospace", fontSize: 36, fontWeight: 700, lineHeight: 1, color: "hsl(210 20% 95%)" }}>
                 {localTimeStr}
               </div>
-              <div style={{ fontSize: 12, color: "hsl(210 10% 50%)", marginTop: 2, textTransform: "capitalize" }}>{localDateStr}</div>
+              <div style={{ fontSize: 10, color: "hsl(210 10% 48%)", marginTop: 2, textTransform: "capitalize", whiteSpace: "nowrap" }}>{localDateStr}</div>
             </div>
 
             {!isSameTz && (
               <>
-                <div style={{ width: 1, height: 54, background: "hsl(213 30% 26%)" }} />
+                <div style={{ width: 1, height: 48, background: "hsl(213 30% 26%)" }} />
                 <div className="text-center">
-                  <div style={lbl()}>Москва (МСК)</div>
-                  <div style={{ fontFamily: "IBM Plex Mono, monospace", fontSize: 42, fontWeight: 700, lineHeight: 1, color: C.accent }}>
+                  <div style={{ fontSize: 9, color: "hsl(213 15% 48%)", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 2 }}>МСК</div>
+                  <div style={{ fontFamily: "IBM Plex Mono, monospace", fontSize: 36, fontWeight: 700, lineHeight: 1, color: C.accent }}>
                     {mskTime}
                   </div>
-                  <div style={{ fontSize: 11, color: "hsl(210 10% 50%)", marginTop: 2 }}>UTC+3</div>
+                  <div style={{ fontSize: 10, color: "hsl(210 10% 48%)", marginTop: 2 }}>UTC+3</div>
                 </div>
               </>
             )}
 
-            {/* Погода */}
             {weather && (
               <>
-                <div style={{ width: 1, height: 54, background: "hsl(213 30% 26%)" }} />
+                <div style={{ width: 1, height: 48, background: "hsl(213 30% 26%)" }} />
                 <div>
-                  <div style={lbl()}>Погода · {weather.updated}</div>
-                  <div className="flex items-center gap-3">
-                    <span style={{ fontSize: 36 }}>{weather.icon}</span>
+                  <div style={{ fontSize: 9, color: "hsl(213 15% 48%)", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 2 }}>
+                    Погода · {weather.updated}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span style={{ fontSize: 28 }}>{weather.icon}</span>
                     <div>
-                      <div style={{ fontFamily: "Oswald, sans-serif", fontSize: 32, fontWeight: 700, lineHeight: 1 }}>
+                      <div style={{ fontFamily: "Oswald, sans-serif", fontSize: 28, fontWeight: 700, lineHeight: 1 }}>
                         {weather.temp > 0 ? "+" : ""}{weather.temp}°C
                       </div>
-                      <div style={{ fontSize: 12, color: "hsl(213 15% 55%)", marginTop: 2 }}>
-                        💨 {weather.windSpeed} м/с {WIND_DIRS[Math.round(weather.windDir / 45) % 8]}
-                        &nbsp;·&nbsp; 💧 {weather.humidity}%
-                        &nbsp;·&nbsp; {weather.pressure} мм
+                      <div style={{ fontSize: 11, color: "hsl(213 15% 52%)", marginTop: 1, whiteSpace: "nowrap" }}>
+                        💨 {weather.windSpeed} м/с · 💧 {weather.humidity}% · {weather.pressure} мм
                       </div>
                     </div>
                   </div>
@@ -247,29 +255,6 @@ export default function TabloPage() {
             )}
           </div>
         </div>
-
-        {/* Панель ответственных — выпадает под шапкой */}
-        {showPersonnel && (
-          <div className="px-8 py-4 border-t flex items-center gap-8 flex-wrap"
-            style={{ borderColor: "hsl(213 40% 26%)", background: "hsl(213 55% 10% / 0.97)" }}>
-            {[
-              { label: "По отряду",            value: acc.commanderSquad   },
-              { label: "По взводу / пункту",   value: acc.commanderPlatoon },
-              { label: "Командир отделения",   value: acc.commanderUnit    },
-              { label: "Деж. у средств связи", value: acc.commDuty         },
-            ].map(r => (
-              <div key={r.label} className="flex items-center gap-3">
-                <div style={{ width: 1, height: 36, background: "hsl(213 40% 28%)" }} />
-                <div>
-                  <div style={{ fontSize: 10, color: "hsl(213 15% 48%)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 2 }}>{r.label}</div>
-                  <div style={{ fontFamily: "Oswald, sans-serif", fontSize: 22, fontWeight: 700, color: r.value ? C.accent : "hsl(213 15% 38%)", lineHeight: 1 }}>
-                    {r.value || "—"}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
       </header>
 
       {/* ══ БЛОК АВАРИИ ══════════════════════════════════════════════════════════ */}
@@ -306,13 +291,13 @@ export default function TabloPage() {
 
             {/* Место аварии */}
             <div className="flex-1 min-w-0">
-              <div style={lbl("hsl(0 30% 55%)")}>ОПО / Место аварии</div>
-              <div style={{ fontFamily: "Oswald, sans-serif", fontSize: 26, fontWeight: 700,
-                color: "hsl(0 10% 92%)", lineHeight: 1.2 }}>
+              <div style={lbl("hsl(0 30% 60%)")}>ОПО / Место аварии</div>
+              <div style={{ fontFamily: "Oswald, sans-serif", fontSize: 30, fontWeight: 700,
+                color: "hsl(0 10% 95%)", lineHeight: 1.15 }}>
                 {acc.opo}
               </div>
               {acc.location && (
-                <div style={{ fontSize: 16, color: "hsl(0 20% 70%)", marginTop: 4 }}>
+                <div style={{ fontSize: 18, color: "hsl(0 20% 72%)", marginTop: 5 }}>
                   📍 {acc.location}
                 </div>
               )}
@@ -334,7 +319,7 @@ export default function TabloPage() {
             <div className="flex flex-col gap-3 h-full min-h-0">
               <div className="rounded-xl p-5 flex-1 min-h-0"
                 style={{ background: "hsl(213 50% 20%)", border: "1px solid hsl(213 45% 32%)" }}>
-                <div style={lbl("hsl(45 60% 55%)")}>Погодные условия</div>
+                <div style={{ fontSize: 13, color: "hsl(24 80% 55%)", textTransform: "uppercase", letterSpacing: "0.1em", fontWeight: 700, marginBottom: 8 }}>Погодные условия</div>
                 <div className="flex items-center gap-4 mt-3 flex-wrap">
                   {weather && (
                     <>
@@ -398,14 +383,14 @@ export default function TabloPage() {
           {/* Статус — штатный */}
           <div className="rounded-2xl px-10 py-5 flex items-center justify-between flex-shrink-0"
             style={{ background: "hsl(213 50% 20%)", border: "1px solid hsl(213 45% 32%)" }}>
-            <div className="flex items-center gap-3">
-              <div className="w-3 h-3 rounded-full" style={{ background: "hsl(142 70% 45%)" }} />
-              <span style={{ fontFamily: "Oswald, sans-serif", fontSize: 26, color: "hsl(142 70% 45%)",
+            <div className="flex items-center gap-4">
+              <div className="w-4 h-4 rounded-full" style={{ background: "hsl(142 70% 45%)", boxShadow: "0 0 10px hsl(142 70% 45% / 0.6)" }} />
+              <span style={{ fontFamily: "Oswald, sans-serif", fontSize: 32, color: "hsl(142 70% 50%)",
                 textTransform: "uppercase", letterSpacing: "0.1em" }}>
                 Штатный режим — аварий нет
               </span>
             </div>
-            <div style={{ fontSize: 13, color: "hsl(213 15% 40%)" }}>
+            <div style={{ fontSize: 15, color: "hsl(213 15% 48%)" }}>
               Управление аварией — в АРМ дежурного
             </div>
           </div>
@@ -414,7 +399,7 @@ export default function TabloPage() {
           <div className="flex-1 min-h-0">
             <div className="rounded-2xl p-8 h-full"
               style={{ background: "hsl(213 50% 20%)", border: "1px solid hsl(213 45% 32%)" }}>
-              <div style={{ fontSize: 13, color: "hsl(24 80% 55%)", textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: 24, fontWeight: 600 }}>
+              <div style={{ fontSize: 15, color: "hsl(24 80% 58%)", textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: 24, fontWeight: 700 }}>
                 Погодные условия{weather ? ` · ${weather.updated}` : ""}
               </div>
               <div className="flex items-center gap-8 mb-8 flex-wrap">
