@@ -13,22 +13,26 @@ const WIND_DIRS = ["С","СВ","В","ЮВ","Ю","ЮЗ","З","СЗ"];
 
 const CITY_STORAGE_KEY = "vgsch_weather_city";
 const CITIES_GEO: { name: string; lat: number; lon: number; tz: string }[] = [
-  { name: "Москва",           lat: 55.7558, lon: 37.6173, tz: "Europe/Moscow" },
-  { name: "Санкт-Петербург", lat: 59.9343, lon: 30.3351, tz: "Europe/Moscow" },
-  { name: "Новосибирск",      lat: 54.9833, lon: 82.8964, tz: "Asia/Novosibirsk" },
-  { name: "Екатеринбург",     lat: 56.8431, lon: 60.6454, tz: "Asia/Yekaterinburg" },
-  { name: "Кемерово",         lat: 55.3908, lon: 86.0847, tz: "Asia/Krasnoyarsk" },
-  { name: "Ростов-на-Дону",  lat: 47.2224, lon: 39.7187, tz: "Europe/Moscow" },
-  { name: "Воркута",          lat: 67.4992, lon: 64.0552, tz: "Europe/Moscow" },
-  { name: "Инта",             lat: 66.0339, lon: 60.1203, tz: "Europe/Moscow" },
-  { name: "Шахты",            lat: 47.7083, lon: 40.2167, tz: "Europe/Moscow" },
-  { name: "Прокопьевск",      lat: 53.8872, lon: 86.7355, tz: "Asia/Krasnoyarsk" },
-  { name: "Сибай",            lat: 52.7167, lon: 58.6667, tz: "Asia/Yekaterinburg" },
-  { name: "Соль-Илецк",       lat: 51.1614, lon: 54.9986, tz: "Asia/Yekaterinburg" },
-  { name: "Гай",              lat: 51.4667, lon: 58.4500, tz: "Asia/Yekaterinburg" },
-  { name: "Пласт",            lat: 54.3667, lon: 60.8167, tz: "Asia/Yekaterinburg" },
-  { name: "пос. Межозерный",  lat: 54.0600, lon: 59.8700, tz: "Asia/Yekaterinburg" },
-  { name: "Копейск",          lat: 55.1167, lon: 61.6167, tz: "Asia/Yekaterinburg" },
+  // Копейский ВГСО
+  { name: "Москва",          lat: 55.7558, lon: 37.6173, tz: "Europe/Moscow" },
+  { name: "Челябинск",       lat: 55.1644, lon: 61.4368, tz: "Asia/Yekaterinburg" },
+  { name: "Копейск",         lat: 55.1167, lon: 61.6167, tz: "Asia/Yekaterinburg" },
+  { name: "Учалы",           lat: 54.3167, lon: 59.3833, tz: "Asia/Yekaterinburg" },
+  { name: "пос. Межозерный", lat: 54.0600, lon: 59.8700, tz: "Asia/Yekaterinburg" },
+  { name: "Пласт",           lat: 54.3667, lon: 60.8167, tz: "Asia/Yekaterinburg" },
+  { name: "Магнитогорск",    lat: 53.4069, lon: 59.0517, tz: "Asia/Yekaterinburg" },
+  { name: "Кизил",           lat: 53.7167, lon: 58.8833, tz: "Asia/Yekaterinburg" },
+  { name: "Сибай",           lat: 52.7167, lon: 58.6667, tz: "Asia/Yekaterinburg" },
+  { name: "Бурибай",         lat: 51.9500, lon: 58.1833, tz: "Asia/Yekaterinburg" },
+  { name: "Стерлитамак",     lat: 53.6333, lon: 55.9500, tz: "Asia/Yekaterinburg" },
+  { name: "Гай",             lat: 51.4667, lon: 58.4500, tz: "Asia/Yekaterinburg" },
+  { name: "Оренбург",        lat: 51.7727, lon: 55.0988, tz: "Asia/Yekaterinburg" },
+  { name: "Соль-Илецк",      lat: 51.1614, lon: 54.9986, tz: "Asia/Yekaterinburg" },
+  // ВГСО Урала
+  { name: "Москва (Урал)",   lat: 55.7558, lon: 37.6173, tz: "Europe/Moscow" },
+  { name: "Екатеринбург",    lat: 56.8431, lon: 60.6454, tz: "Asia/Yekaterinburg" },
+  { name: "Сатка",           lat: 55.0417, lon: 58.9833, tz: "Asia/Yekaterinburg" },
+  { name: "Верхняя Пышма",   lat: 56.9667, lon: 60.5833, tz: "Asia/Yekaterinburg" },
 ];
 
 interface Weather {

@@ -856,23 +856,29 @@ const WMO_LABELS: Record<number, [string, string]> = {
 
 const WIND_DIRS_W = ["С","СВ","В","ЮВ","Ю","ЮЗ","З","СЗ"];
 
-const CITIES: { name: string; lat: number; lon: number; tz: string }[] = [
-  { name: "Москва",              lat: 55.7558, lon: 37.6173, tz: "Europe/Moscow" },
-  { name: "Санкт-Петербург",    lat: 59.9343, lon: 30.3351, tz: "Europe/Moscow" },
-  { name: "Новосибирск",         lat: 54.9833, lon: 82.8964, tz: "Asia/Novosibirsk" },
-  { name: "Екатеринбург",        lat: 56.8431, lon: 60.6454, tz: "Asia/Yekaterinburg" },
-  { name: "Кемерово",            lat: 55.3908, lon: 86.0847, tz: "Asia/Krasnoyarsk" },
-  { name: "Ростов-на-Дону",     lat: 47.2224, lon: 39.7187, tz: "Europe/Moscow" },
-  { name: "Воркута",             lat: 67.4992, lon: 64.0552, tz: "Europe/Moscow" },
-  { name: "Инта",                lat: 66.0339, lon: 60.1203, tz: "Europe/Moscow" },
-  { name: "Шахты",               lat: 47.7083, lon: 40.2167, tz: "Europe/Moscow" },
-  { name: "Прокопьевск",         lat: 53.8872, lon: 86.7355, tz: "Asia/Krasnoyarsk" },
-  { name: "Сибай",               lat: 52.7167, lon: 58.6667, tz: "Asia/Yekaterinburg" },
-  { name: "Соль-Илецк",          lat: 51.1614, lon: 54.9986, tz: "Asia/Yekaterinburg" },
-  { name: "Гай",                 lat: 51.4667, lon: 58.4500, tz: "Asia/Yekaterinburg" },
-  { name: "Пласт",               lat: 54.3667, lon: 60.8167, tz: "Asia/Yekaterinburg" },
-  { name: "пос. Межозерный",     lat: 54.0600, lon: 59.8700, tz: "Asia/Yekaterinburg" },
-  { name: "Копейск",             lat: 55.1167, lon: 61.6167, tz: "Asia/Yekaterinburg" },
+interface CityEntry { name: string; lat: number; lon: number; tz: string; group: string; }
+
+const CITIES: CityEntry[] = [
+  // Копейский ВГСО
+  { name: "Москва",              lat: 55.7558, lon: 37.6173,  tz: "Europe/Moscow",         group: "Копейский ВГСО" },
+  { name: "Челябинск",           lat: 55.1644, lon: 61.4368,  tz: "Asia/Yekaterinburg",    group: "Копейский ВГСО" },
+  { name: "Копейск",             lat: 55.1167, lon: 61.6167,  tz: "Asia/Yekaterinburg",    group: "Копейский ВГСО" },
+  { name: "Учалы",               lat: 54.3167, lon: 59.3833,  tz: "Asia/Yekaterinburg",    group: "Копейский ВГСО" },
+  { name: "пос. Межозерный",     lat: 54.0600, lon: 59.8700,  tz: "Asia/Yekaterinburg",    group: "Копейский ВГСО" },
+  { name: "Пласт",               lat: 54.3667, lon: 60.8167,  tz: "Asia/Yekaterinburg",    group: "Копейский ВГСО" },
+  { name: "Магнитогорск",        lat: 53.4069, lon: 59.0517,  tz: "Asia/Yekaterinburg",    group: "Копейский ВГСО" },
+  { name: "Кизил",               lat: 53.7167, lon: 58.8833,  tz: "Asia/Yekaterinburg",    group: "Копейский ВГСО" },
+  { name: "Сибай",               lat: 52.7167, lon: 58.6667,  tz: "Asia/Yekaterinburg",    group: "Копейский ВГСО" },
+  { name: "Бурибай",             lat: 51.9500, lon: 58.1833,  tz: "Asia/Yekaterinburg",    group: "Копейский ВГСО" },
+  { name: "Стерлитамак",         lat: 53.6333, lon: 55.9500,  tz: "Asia/Yekaterinburg",    group: "Копейский ВГСО" },
+  { name: "Гай",                 lat: 51.4667, lon: 58.4500,  tz: "Asia/Yekaterinburg",    group: "Копейский ВГСО" },
+  { name: "Оренбург",            lat: 51.7727, lon: 55.0988,  tz: "Asia/Yekaterinburg",    group: "Копейский ВГСО" },
+  { name: "Соль-Илецк",          lat: 51.1614, lon: 54.9986,  tz: "Asia/Yekaterinburg",    group: "Копейский ВГСО" },
+  // ВГСО Урала
+  { name: "Москва (Урал)",       lat: 55.7558, lon: 37.6173,  tz: "Europe/Moscow",         group: "ВГСО Урала" },
+  { name: "Екатеринбург",        lat: 56.8431, lon: 60.6454,  tz: "Asia/Yekaterinburg",    group: "ВГСО Урала" },
+  { name: "Сатка",               lat: 55.0417, lon: 58.9833,  tz: "Asia/Yekaterinburg",    group: "ВГСО Урала" },
+  { name: "Верхняя Пышма",       lat: 56.9667, lon: 60.5833,  tz: "Asia/Yekaterinburg",    group: "ВГСО Урала" },
 ];
 
 const CITY_STORAGE_KEY = "vgsch_weather_city";
@@ -952,7 +958,13 @@ function WeatherWidget() {
       <div className="px-4 pt-3">
         <label className="text-xs block mb-1 uppercase tracking-widest" style={{ color: "hsl(var(--muted-foreground))" }}>Город</label>
         <select style={sel} value={cityName} onChange={e => handleCity(e.target.value)}>
-          {CITIES.map(c => <option key={c.name} value={c.name}>{c.name}</option>)}
+          {["Копейский ВГСО", "ВГСО Урала"].map(group => (
+            <optgroup key={group} label={`── ${group} ──`}>
+              {CITIES.filter(c => c.group === group).map(c => (
+                <option key={c.name} value={c.name}>{c.name}</option>
+              ))}
+            </optgroup>
+          ))}
         </select>
       </div>
 
