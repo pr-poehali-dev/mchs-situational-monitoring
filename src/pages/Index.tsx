@@ -894,14 +894,20 @@ interface WeatherData {
   updated: string;
 }
 
+const GROUPS = ["Копейский ВГСО", "ВГСО Урала"] as const;
+
 function WeatherWidget() {
   const savedCity = localStorage.getItem(CITY_STORAGE_KEY) ?? CITIES[0].name;
+  const savedGroup = CITIES.find(c => c.name === savedCity)?.group ?? GROUPS[0];
+
+  const [groupName, setGroupName] = useState(savedGroup);
   const [cityName, setCityName] = useState(savedCity);
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
-  const city = CITIES.find(c => c.name === cityName) ?? CITIES[0];
+  const citiesInGroup = CITIES.filter(c => c.group === groupName);
+  const city = CITIES.find(c => c.name === cityName) ?? citiesInGroup[0];
 
   const fetchWeather = async (c: typeof CITIES[0]) => {
     setLoading(true);
@@ -934,6 +940,12 @@ function WeatherWidget() {
     return () => clearInterval(t);
   }, [cityName]);
 
+  const handleGroup = (g: string) => {
+    setGroupName(g);
+    const first = CITIES.find(c => c.group === g);
+    if (first) { setCityName(first.name); localStorage.setItem(CITY_STORAGE_KEY, first.name); }
+  };
+
   const handleCity = (name: string) => {
     setCityName(name);
     localStorage.setItem(CITY_STORAGE_KEY, name);
@@ -954,18 +966,20 @@ function WeatherWidget() {
         )}
       </div>
 
-      {/* Выбор города */}
-      <div className="px-4 pt-3">
-        <label className="text-xs block mb-1 uppercase tracking-widest" style={{ color: "hsl(var(--muted-foreground))" }}>Город</label>
-        <select style={sel} value={cityName} onChange={e => handleCity(e.target.value)}>
-          {["Копейский ВГСО", "ВГСО Урала"].map(group => (
-            <optgroup key={group} label={`── ${group} ──`}>
-              {CITIES.filter(c => c.group === group).map(c => (
-                <option key={c.name} value={c.name}>{c.name}</option>
-              ))}
-            </optgroup>
-          ))}
-        </select>
+      {/* Выбор отряда и города */}
+      <div className="px-4 pt-3 space-y-2">
+        <div>
+          <label className="text-xs block mb-1 uppercase tracking-widest" style={{ color: "hsl(var(--muted-foreground))" }}>Отряд</label>
+          <select style={sel} value={groupName} onChange={e => handleGroup(e.target.value)}>
+            {GROUPS.map(g => <option key={g} value={g}>{g}</option>)}
+          </select>
+        </div>
+        <div>
+          <label className="text-xs block mb-1 uppercase tracking-widest" style={{ color: "hsl(var(--muted-foreground))" }}>Город</label>
+          <select style={sel} value={cityName} onChange={e => handleCity(e.target.value)}>
+            {citiesInGroup.map(c => <option key={c.name} value={c.name}>{c.name}</option>)}
+          </select>
+        </div>
       </div>
 
       {/* Данные */}
