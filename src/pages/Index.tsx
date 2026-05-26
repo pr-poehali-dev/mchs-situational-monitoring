@@ -1447,7 +1447,7 @@ function DirectorySection() {
   const [oDragIdx, setODragIdx] = useState<number | null>(null);
 
   // Форма Подразделений
-  const [dForm, setDForm] = useState<DivisionEntry>({ id: "", name: "", location: "", lastContact: "" });
+  const [dForm, setDForm] = useState<Omit<DivisionEntry, "id">>({ name: "", location: "", lastContact: "" });
   const [dEdit, setDEdit] = useState<string | null>(null);
 
   const persist = (next: Directory) => { setDir(next); saveDirectory(next); };
@@ -1493,20 +1493,18 @@ function DirectorySection() {
 
   // ── Подразделения CRUD ──
   const saveD = () => {
-    if (!dForm.id.trim() || !dForm.name.trim()) return;
+    if (!dForm.name.trim()) return;
     if (dEdit) {
       persist({ ...dir, divisions: dir.divisions.map(d => d.id === dEdit ? { ...dForm, id: dEdit } : d) });
       setDEdit(null);
     } else {
-      // проверка уникальности ID
-      if (dir.divisions.some(d => d.id === dForm.id.trim())) return;
-      persist({ ...dir, divisions: [...dir.divisions, { ...dForm, id: dForm.id.trim() }] });
+      persist({ ...dir, divisions: [...dir.divisions, { id: uid(), ...dForm }] });
     }
-    setDForm({ id: "", name: "", location: "", lastContact: "" });
+    setDForm({ name: "", location: "", lastContact: "" });
   };
-  const editD = (d: DivisionEntry) => { setDEdit(d.id); setDForm({ ...d }); };
+  const editD = (d: DivisionEntry) => { setDEdit(d.id); setDForm({ name: d.name, location: d.location, lastContact: d.lastContact }); };
   const delD  = (id: string) => persist({ ...dir, divisions: dir.divisions.filter(d => d.id !== id) });
-  const cancelD = () => { setDEdit(null); setDForm({ id: "", name: "", location: "", lastContact: "" }); };
+  const cancelD = () => { setDEdit(null); setDForm({ name: "", location: "", lastContact: "" }); };
 
   // ── Диспозиция CRUD ──
   const emptyDisp = (): Omit<DispositionRow, "id"> => ({ opoName: "", explosion: "", fire: "", collapse: "", flood: "", phone: "", callsign: "" });
@@ -1729,7 +1727,6 @@ function DirectorySection() {
               {dEdit ? "Редактировать" : "Добавить подразделение"}
             </h3>
             {([
-              { label: "ID *", key: "id", placeholder: "ВГСО-1", disabled: !!dEdit },
               { label: "Подразделение *", key: "name", placeholder: "ВГСО-1 Центральный" },
               { label: "Адрес", key: "location", placeholder: "г. Копейск, ул. Ленина, 1" },
               { label: "Телефон", key: "lastContact", placeholder: "+7 (351) 123-45-67" },
@@ -1737,9 +1734,8 @@ function DirectorySection() {
               <div key={f.key}>
                 <label className="text-xs block mb-1" style={{ color: "hsl(var(--muted-foreground))" }}>{f.label}</label>
                 <input
-                  style={{ ...inputCls, opacity: f.disabled ? 0.5 : 1 }}
+                  style={inputCls}
                   placeholder={f.placeholder}
-                  disabled={f.disabled}
                   value={dForm[f.key]}
                   onChange={e => setDForm(d => ({ ...d, [f.key]: e.target.value }))}
                 />
