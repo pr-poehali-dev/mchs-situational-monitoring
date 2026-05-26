@@ -30,6 +30,8 @@ import {
   getPersonByRole,
   opoLabel,
   uid,
+  exportDirectory,
+  importDirectory,
 } from "@/lib/directoryStore";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -1531,10 +1533,27 @@ function DirectorySection() {
     fontSize: 12, fontFamily: "IBM Plex Sans, sans-serif", outline: "none", width: "100%",
   };
 
+  const handleImport = () => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".json";
+    input.onchange = async (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+      try {
+        const next = await importDirectory(file, dir);
+        persist(next);
+      } catch (err) {
+        alert(err instanceof Error ? err.message : "Ошибка импорта");
+      }
+    };
+    input.click();
+  };
+
   return (
     <div className="fade-in space-y-4">
-      {/* Вкладки */}
-      <div className="flex gap-2">
+      {/* Вкладки + кнопки экспорт/импорт */}
+      <div className="flex gap-2 items-center flex-wrap">
         {([["personnel", "Личный состав", "Users"], ["opo", "Объекты ОПО", "Building2"], ["divisions", "Подразделения", "Shield"], ["disposition", "Диспозиция", "BookOpen"]] as const).map(([id, label, icon]) => (
           <button key={id} onClick={() => setTab(id)}
             className="flex items-center gap-2 px-4 py-2 rounded text-sm transition-all"
@@ -1546,6 +1565,18 @@ function DirectorySection() {
             <Icon name={icon} fallback="Circle" size={14} />{label}
           </button>
         ))}
+        <div className="ml-auto flex gap-2">
+          <button onClick={() => exportDirectory(dir)}
+            className="flex items-center gap-1.5 px-3 py-2 rounded text-sm border border-border hover:bg-secondary transition-colors"
+            style={{ color: "hsl(var(--muted-foreground))", fontFamily: "Oswald, sans-serif", letterSpacing: "0.04em" }}>
+            <Icon name="Download" size={14} />Экспорт
+          </button>
+          <button onClick={handleImport}
+            className="flex items-center gap-1.5 px-3 py-2 rounded text-sm border border-border hover:bg-secondary transition-colors"
+            style={{ color: "hsl(var(--muted-foreground))", fontFamily: "Oswald, sans-serif", letterSpacing: "0.04em" }}>
+            <Icon name="Upload" size={14} />Импорт
+          </button>
+        </div>
       </div>
 
       {/* ── Личный состав ── */}

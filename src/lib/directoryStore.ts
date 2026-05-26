@@ -72,7 +72,7 @@ const DEFAULT: Directory = {
   dispositionMeta: { commanderName: "", vgsoName: "", year: String(new Date().getFullYear()) },
 };
 
-function migratePerson(p: Partial<PersonEntry>): PersonEntry {
+export function migratePerson(p: Partial<PersonEntry>): PersonEntry {
   return {
     id: p.id ?? uid(),
     name: p.name ?? "",
@@ -82,7 +82,7 @@ function migratePerson(p: Partial<PersonEntry>): PersonEntry {
   };
 }
 
-function migrateOpo(o: Partial<OpoEntry>, idx: number): OpoEntry {
+export function migrateOpo(o: Partial<OpoEntry>, idx: number): OpoEntry {
   return {
     id: o.id ?? uid(),
     name: o.name ?? "",
@@ -151,4 +151,53 @@ export function uid() {
 /** Возвращает ФИО первого сотрудника с указанной ролью */
 export function getPersonByRole(personnel: PersonEntry[], role: PersonRole): string {
   return personnel.find(p => p.role === role)?.name ?? "";
+}
+
+/** Экспорт personnel + opo в JSON-файл */
+export function exportDirectory(dir: Directory) {
+  const data = { personnel: dir.personnel, opo: dir.opo };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `справочник_${new Date().toLocaleDateString("ru-RU").replace(/\./g, "-")}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+/** Импорт из JSON-файла — merge: новые записи добавляются, существующие (по id) обновляются */
+export function importDirectory(file: File, currentDir: Directory): Promise<Directory> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const parsed = JSON.parse(e.target?.result as string) as { personnel?: Partial<PersonEntry>[]; opo?: Partial<OpoEntry>[] };
+        const incomingPersonnel: PersonEntry[] = (parsed.personnel ?? []).map(migratePerson);
+        const incomingOpo: OpoEntry[] = (parsed.opo ?? []).map((o, i) => migrateOpo(o, i));
+
+        // Merge personnel: обновляем по id, добавляем новых
+        const personnelMap = new Map(currentDir.personnel.map(p => [p.id, p]));
+        for (const p of incomingPersonnel) personnelMap.set(p.id, p);
+
+        // Merge opo: обновляем по id, добавляем новых
+        const opoMap = new Map(currentDir.opo.map(o => [o.id, o]));
+        const maxOrder = currentDir.opo.length > 0 ? Math.max(...currentDir.opo.map(o => o.sortOrder)) : -1;
+        let orderOffset = maxOrder + 1;
+        for (const o of incomingOpo) {
+          if (!opoMap.has(o.id)) { opoMap.set(o.id, { ...o, sortOrder: orderOffset++ }); }
+          else { opoMap.set(o.id, o); }
+        }
+
+        resolve({
+          ...currentDir,
+          personnel: Array.from(personnelMap.values()),
+          opo: Array.from(opoMap.values()),
+        });
+      } catch {
+        reject(new Error("Неверный формат файла"));
+      }
+    };
+    reader.onerror = () => reject(new Error("Ошибка чтения файла"));
+    reader.readAsText(file);
+  });
 }
