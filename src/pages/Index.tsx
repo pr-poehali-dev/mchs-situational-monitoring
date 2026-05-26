@@ -660,8 +660,24 @@ function AccidentPanel() {
       operator: prev.commDuty || "Дежурный",
       message: `✅ ОТБОЙ АВАРИИ: ${atype?.label ?? prev.type}${prev.opo ? ` — ${prev.opo}` : ""}${prev.location ? `, ${prev.location}` : ""}. Авария объявлялась в ${prev.startedAt}`,
     });
-    clearAccident();
-    setAcc({ ...DEFAULT_STATE });
+    const currentDir = loadDirectory();
+    const roleMap: { field: keyof AccidentState; role: PersonRole }[] = [
+      { field: "commanderSquad",   role: "commanderSquad"   },
+      { field: "commanderPlatoon", role: "commanderPlatoon" },
+      { field: "commanderUnit",    role: "commanderUnit"    },
+      { field: "commDuty",         role: "commDuty"         },
+    ];
+    const restored: Partial<AccidentState> = {};
+    for (const { field, role } of roleMap) {
+      const fromRole = getPersonByRole(currentDir.personnel, role);
+      if (fromRole) (restored as Record<string, string>)[field] = fromRole;
+    }
+    const sorted = [...currentDir.opo].sort((a, b) => a.sortOrder - b.sortOrder);
+    const opoLabels = sorted.map(opoLabel);
+    const next = { ...DEFAULT_STATE, ...restored, opo: opoLabels[0] ?? "", updatedAt: Date.now() };
+    localStorage.setItem("vgsch_accident_state", JSON.stringify(next));
+    window.dispatchEvent(new StorageEvent("storage", { key: "vgsch_accident_state", newValue: JSON.stringify(next) }));
+    setAcc(next);
   };
   const atype = ACCIDENT_TYPES.find(t => t.id === acc.type)!;
 
