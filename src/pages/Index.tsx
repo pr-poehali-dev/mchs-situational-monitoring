@@ -829,22 +829,6 @@ function AccidentPanel() {
             >↺ Из справочника</button>
           </div>
 
-          {/* Диспетчер ОПО */}
-          <div>
-            <label className="text-xs block mb-1" style={{ color: "hsl(var(--muted-foreground))" }}>Диспетчер ОПО</label>
-            <select style={sel}
-              value={acc.opoDispatcher || ""}
-              onChange={e => update({ opoDispatcher: e.target.value })}>
-              <option value="">— не выбран —</option>
-              {dir.opoDispatchers.map(d => (
-                <option key={d.id} value={d.name}>{d.name}{d.rank ? ` (${d.rank})` : ""}</option>
-              ))}
-              {dispatcherNames.length === 0 && dir.personnel.map(p => (
-                <option key={p.id} value={p.name}>{p.name}{p.rank ? ` (${p.rank})` : ""}</option>
-              ))}
-            </select>
-          </div>
-
           {([
             { label: "По отряду",              field: "commanderSquad"   as const },
             { label: "По взводу / пункту",     field: "commanderPlatoon" as const },
@@ -863,6 +847,21 @@ function AccidentPanel() {
               </select>
             </div>
           ))}
+          {/* Диспетчер ОПО — в конце */}
+          <div>
+            <label className="text-xs block mb-1" style={{ color: "hsl(var(--muted-foreground))" }}>Диспетчер ОПО</label>
+            <select style={sel}
+              value={acc.opoDispatcher || ""}
+              onChange={e => update({ opoDispatcher: e.target.value })}>
+              <option value="">— не выбран —</option>
+              {dir.opoDispatchers.map(d => (
+                <option key={d.id} value={d.name}>{d.name}{d.rank ? ` (${d.rank})` : ""}</option>
+              ))}
+              {dispatcherNames.length === 0 && dir.personnel.map(p => (
+                <option key={p.id} value={p.name}>{p.name}{p.rank ? ` (${p.rank})` : ""}</option>
+              ))}
+            </select>
+          </div>
           {dir.personnel.length === 0 && dir.opoDispatchers.length === 0 && (
             <p className="text-xs" style={{ color: "hsl(var(--muted-foreground))" }}>
               Добавьте сотрудников в разделе <b>Справочники</b>

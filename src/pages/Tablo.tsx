@@ -381,11 +381,11 @@ export default function TabloPage() {
               </div>
               <div className="flex flex-col flex-1" style={{ gap: 0 }}>
                 {[
-                  { label: "Диспетчер ОПО",                    value: acc.opoDispatcher },
                   { label: "Ответственный по отряду",          value: acc.commanderSquad },
                   { label: "Ответственный по взводу / пункту", value: acc.commanderPlatoon },
                   { label: "Командир дежурного отделения",     value: acc.commanderUnit },
                   { label: "Дежурный у средств связи",         value: acc.commDuty },
+                  { label: "Диспетчер ОПО",                    value: acc.opoDispatcher },
                 ].map((r, i) => (
                   <div key={r.label} className="flex items-center gap-2 py-2"
                     style={{ borderBottom: i < 4 ? "1px solid hsl(213 40% 26%)" : "none", flex: 1 }}>
@@ -489,11 +489,11 @@ export default function TabloPage() {
               </div>
               <div className="flex flex-col flex-1" style={{ gap: 0 }}>
                 {[
-                  { label: "Диспетчер ОПО",                    value: acc.opoDispatcher },
                   { label: "Ответственный по отряду",          value: acc.commanderSquad },
                   { label: "Ответственный по взводу / пункту", value: acc.commanderPlatoon },
                   { label: "Командир дежурного отделения",     value: acc.commanderUnit },
                   { label: "Дежурный у средств связи",         value: acc.commDuty },
+                  { label: "Диспетчер ОПО",                    value: acc.opoDispatcher },
                 ].map((r, i) => (
                   <div key={r.label} className="flex items-center gap-3 py-3"
                     style={{ borderBottom: i < 4 ? `1px solid ${T.border}` : "none", flex: 1 }}>
