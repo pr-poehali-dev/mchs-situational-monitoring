@@ -421,19 +421,6 @@ function printPutevka(acc: AccidentState) {
     </tr>
   </table>
 
-  <div class="sig-row">
-    <div class="sig-item">
-      <div class="sig-role">Дежурный у средств связи</div>
-      <div class="sig-line"></div>
-      <div class="sig-hint">подпись &nbsp;&nbsp;&nbsp; Фамилия И.О.</div>
-    </div>
-    <div class="sig-item">
-      <div class="sig-role">Командир дежурного отделения</div>
-      <div class="sig-line"></div>
-      <div class="sig-hint">подпись &nbsp;&nbsp;&nbsp; Фамилия И.О.</div>
-    </div>
-  </div>
-
   <div class="dest-note">${dest}</div>
 </div>`;
 
