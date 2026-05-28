@@ -21,6 +21,7 @@ import {
   type PersonEntry,
   type PersonRole,
   type OpoEntry,
+  type OpoDispatcherEntry,
   type DivisionEntry,
   type DispositionRow,
   PERSON_ROLES,
@@ -413,11 +414,11 @@ function printPutevka(acc: AccidentState) {
     </tr>
     <tr>
       <td class="fl">Фамилия И.О. вызвавшего</td>
-      <td class="fv filled" colspan="5">${acc.commanderSquad || ""}</td>
+      <td class="fv filled" colspan="5">${acc.opoDispatcher || ""}</td>
     </tr>
     <tr>
       <td class="fl">Фамилия И.О. принявшего вызов</td>
-      <td class="fv filled" colspan="5">${acc.commanderPlatoon || ""}</td>
+      <td class="fv filled" colspan="5">${acc.commDuty || ""}</td>
     </tr>
   </table>
 
@@ -612,6 +613,9 @@ function AccidentPanel() {
       const fromRole = getPersonByRole(dir.personnel, role);
       if (fromRole && !stored[field]) (patch as Record<string, string>)[field] = fromRole;
     }
+    if (!stored.opoDispatcher && dir.opoDispatchers.length > 0) {
+      patch.opoDispatcher = dir.opoDispatchers[0].name;
+    }
     if (Object.keys(patch).length > 0) {
       const next = { ...stored, ...patch };
       setAcc(next);
@@ -661,6 +665,9 @@ function AccidentPanel() {
       const fromRole = getPersonByRole(currentDir.personnel, role);
       if (fromRole) (restored as Record<string, string>)[field] = fromRole;
     }
+    if (currentDir.opoDispatchers.length > 0) {
+      restored.opoDispatcher = currentDir.opoDispatchers[0].name;
+    }
     const sorted = [...currentDir.opo].sort((a, b) => a.sortOrder - b.sortOrder);
     const opoLabels = sorted.map(opoLabel);
     const next = { ...DEFAULT_STATE, ...restored, opo: opoLabels[0] ?? "", updatedAt: Date.now() };
@@ -676,9 +683,10 @@ function AccidentPanel() {
     fontSize: 12, fontFamily: "IBM Plex Sans, sans-serif", width: "100%", outline: "none",
   };
 
-  const personNames = dir.personnel.map(p => p.name);
-  const sortedOpo   = [...dir.opo].sort((a, b) => a.sortOrder - b.sortOrder);
-  const opoLabels   = sortedOpo.map(opoLabel);
+  const personNames      = dir.personnel.map(p => p.name);
+  const dispatcherNames  = dir.opoDispatchers.map(d => d.name);
+  const sortedOpo        = [...dir.opo].sort((a, b) => a.sortOrder - b.sortOrder);
+  const opoLabels        = sortedOpo.map(opoLabel);
 
   return (
     <div className="panel-card">
@@ -800,27 +808,43 @@ function AccidentPanel() {
         <div className="space-y-3">
           <div className="flex items-center justify-between mb-1">
             <div className="text-xs uppercase tracking-widest" style={{ color: "hsl(var(--muted-foreground))" }}>Ответственные лица</div>
-            {dir.personnel.some(p => p.role) && (
-              <button
-                className="text-xs px-2 py-0.5 rounded border border-border hover:bg-secondary transition-colors"
-                style={{ color: "hsl(var(--primary))", fontSize: 10 }}
-                onClick={() => {
-                  const patch: Partial<AccidentState> = {};
-                  const roleMap: { field: keyof AccidentState; role: PersonRole }[] = [
-                    { field: "commanderSquad",   role: "commanderSquad"   },
-                    { field: "commanderPlatoon", role: "commanderPlatoon" },
-                    { field: "commanderUnit",    role: "commanderUnit"    },
-                    { field: "commDuty",         role: "commDuty"         },
-                  ];
-                  for (const { field, role } of roleMap) {
-                    const fromRole = getPersonByRole(dir.personnel, role);
-                    if (fromRole) (patch as Record<string, string>)[field] = fromRole;
-                  }
-                  update(patch);
-                }}
-              >↺ Из справочника</button>
-            )}
+            <button
+              className="text-xs px-2 py-0.5 rounded border border-border hover:bg-secondary transition-colors"
+              style={{ color: "hsl(var(--primary))", fontSize: 10 }}
+              onClick={() => {
+                const patch: Partial<AccidentState> = {};
+                const roleMap: { field: keyof AccidentState; role: PersonRole }[] = [
+                  { field: "commanderSquad",   role: "commanderSquad"   },
+                  { field: "commanderPlatoon", role: "commanderPlatoon" },
+                  { field: "commanderUnit",    role: "commanderUnit"    },
+                  { field: "commDuty",         role: "commDuty"         },
+                ];
+                for (const { field, role } of roleMap) {
+                  const fromRole = getPersonByRole(dir.personnel, role);
+                  if (fromRole) (patch as Record<string, string>)[field] = fromRole;
+                }
+                if (dir.opoDispatchers.length > 0) patch.opoDispatcher = dir.opoDispatchers[0].name;
+                update(patch);
+              }}
+            >↺ Из справочника</button>
           </div>
+
+          {/* Диспетчер ОПО */}
+          <div>
+            <label className="text-xs block mb-1" style={{ color: "hsl(var(--muted-foreground))" }}>Диспетчер ОПО</label>
+            <select style={sel}
+              value={acc.opoDispatcher || ""}
+              onChange={e => update({ opoDispatcher: e.target.value })}>
+              <option value="">— не выбран —</option>
+              {dir.opoDispatchers.map(d => (
+                <option key={d.id} value={d.name}>{d.name}{d.rank ? ` (${d.rank})` : ""}</option>
+              ))}
+              {dispatcherNames.length === 0 && dir.personnel.map(p => (
+                <option key={p.id} value={p.name}>{p.name}{p.rank ? ` (${p.rank})` : ""}</option>
+              ))}
+            </select>
+          </div>
+
           {([
             { label: "По отряду",              field: "commanderSquad"   as const },
             { label: "По взводу / пункту",     field: "commanderPlatoon" as const },
@@ -839,7 +863,7 @@ function AccidentPanel() {
               </select>
             </div>
           ))}
-          {dir.personnel.length === 0 && (
+          {dir.personnel.length === 0 && dir.opoDispatchers.length === 0 && (
             <p className="text-xs" style={{ color: "hsl(var(--muted-foreground))" }}>
               Добавьте сотрудников в разделе <b>Справочники</b>
             </p>
@@ -1424,7 +1448,7 @@ function Journal() {
 
 function DirectorySection() {
   const [dir, setDir] = useState<Directory>(loadDirectory);
-  const [tab, setTab] = useState<"personnel" | "opo" | "divisions" | "disposition">("personnel");
+  const [tab, setTab] = useState<"personnel" | "opo" | "dispatchers" | "divisions" | "disposition">("personnel");
 
   // Форма персонала
   const [pForm, setPForm] = useState<Omit<PersonEntry, "id">>({ name: "", rank: "", phone: "", role: "" });
@@ -1434,6 +1458,10 @@ function DirectorySection() {
   const [oForm, setOForm] = useState<Omit<OpoEntry, "id">>({ name: "", horizon: "", area: "", sortOrder: 0 });
   const [oEdit, setOEdit] = useState<string | null>(null);
   const [oDragIdx, setODragIdx] = useState<number | null>(null);
+
+  // Форма Диспетчеров ОПО
+  const [dispOpoForm, setDispOpoForm] = useState<Omit<OpoDispatcherEntry, "id">>({ name: "", rank: "", phone: "", shift: "" });
+  const [dispOpoEdit, setDispOpoEdit] = useState<string | null>(null);
 
   // Форма Подразделений
   const [dForm, setDForm] = useState<Omit<DivisionEntry, "id">>({ name: "", location: "", lastContact: "" });
@@ -1495,6 +1523,21 @@ function DirectorySection() {
   const delD  = (id: string) => persist({ ...dir, divisions: dir.divisions.filter(d => d.id !== id) });
   const cancelD = () => { setDEdit(null); setDForm({ name: "", location: "", lastContact: "" }); };
 
+  // ── Диспетчеры ОПО CRUD ──
+  const saveDispOpo = () => {
+    if (!dispOpoForm.name.trim()) return;
+    if (dispOpoEdit) {
+      persist({ ...dir, opoDispatchers: dir.opoDispatchers.map(d => d.id === dispOpoEdit ? { id: dispOpoEdit, ...dispOpoForm } : d) });
+      setDispOpoEdit(null);
+    } else {
+      persist({ ...dir, opoDispatchers: [...dir.opoDispatchers, { id: uid(), ...dispOpoForm }] });
+    }
+    setDispOpoForm({ name: "", rank: "", phone: "", shift: "" });
+  };
+  const editDispOpo   = (d: OpoDispatcherEntry) => { setDispOpoEdit(d.id); setDispOpoForm({ name: d.name, rank: d.rank, phone: d.phone, shift: d.shift }); };
+  const delDispOpo    = (id: string) => persist({ ...dir, opoDispatchers: dir.opoDispatchers.filter(d => d.id !== id) });
+  const cancelDispOpo = () => { setDispOpoEdit(null); setDispOpoForm({ name: "", rank: "", phone: "", shift: "" }); };
+
   // ── Диспозиция CRUD ──
   const emptyDisp = (): Omit<DispositionRow, "id"> => ({ opoName: "", explosion: "", fire: "", collapse: "", flood: "", phone: "", callsign: "" });
   const [dispForm, setDispForm] = useState<Omit<DispositionRow, "id">>(emptyDisp());
@@ -1541,7 +1584,7 @@ function DirectorySection() {
     <div className="fade-in space-y-4">
       {/* Вкладки + кнопки экспорт/импорт */}
       <div className="flex gap-2 items-center flex-wrap">
-        {([["personnel", "Личный состав", "Users"], ["opo", "Объекты ОПО", "Building2"], ["divisions", "Подразделения", "Shield"], ["disposition", "Диспозиция", "BookOpen"]] as const).map(([id, label, icon]) => (
+        {([["personnel", "Личный состав", "Users"], ["opo", "Объекты ОПО", "Building2"], ["dispatchers", "Диспетчер ОПО", "Headset"], ["divisions", "Подразделения", "Shield"], ["disposition", "Диспозиция", "BookOpen"]] as const).map(([id, label, icon]) => (
           <button key={id} onClick={() => setTab(id)}
             className="flex items-center gap-2 px-4 py-2 rounded text-sm transition-all"
             style={{
@@ -1802,6 +1845,82 @@ function DirectorySection() {
                       Изменить
                     </button>
                     <button onClick={() => delD(d.id)} className="text-xs px-2 py-1 rounded border transition-colors flex-shrink-0"
+                      style={{ borderColor: "hsl(var(--status-critical) / 0.3)", color: "hsl(var(--status-critical))" }}>
+                      Удалить
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ── Диспетчеры ОПО ── */}
+      {tab === "dispatchers" && (
+        <div className="grid grid-cols-3 gap-4">
+          {/* Форма */}
+          <div className="panel-card p-4 space-y-3">
+            <h3 className="text-sm font-semibold uppercase tracking-widest" style={{ fontFamily: "Oswald" }}>
+              {dispOpoEdit ? "Редактировать" : "Добавить диспетчера"}
+            </h3>
+            {([
+              { label: "ФИО *", key: "name", placeholder: "Иванов А.С." },
+              { label: "Должность", key: "rank", placeholder: "Диспетчер ОПО" },
+              { label: "Телефон", key: "phone", placeholder: "+7 (351) 123-45-67" },
+              { label: "Смена / примечание", key: "shift", placeholder: "Дневная смена" },
+            ] as const).map(f => (
+              <div key={f.key}>
+                <label className="text-xs block mb-1" style={{ color: "hsl(var(--muted-foreground))" }}>{f.label}</label>
+                <input style={inputCls} placeholder={f.placeholder}
+                  value={dispOpoForm[f.key]}
+                  onChange={e => setDispOpoForm(d => ({ ...d, [f.key]: e.target.value }))} />
+              </div>
+            ))}
+            <div className="flex gap-2 pt-1">
+              <button onClick={saveDispOpo}
+                className="flex-1 py-2 rounded text-sm font-medium transition-all hover:opacity-90"
+                style={{ background: "hsl(var(--primary))", color: "hsl(var(--primary-foreground))", fontFamily: "Oswald" }}>
+                {dispOpoEdit ? "Сохранить" : "Добавить"}
+              </button>
+              {dispOpoEdit && (
+                <button onClick={cancelDispOpo}
+                  className="px-3 py-2 rounded border border-border text-sm hover:bg-secondary transition-colors"
+                  style={{ color: "hsl(var(--muted-foreground))" }}>
+                  Отмена
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Список */}
+          <div className="panel-card col-span-2">
+            <div className="px-4 py-3 border-b border-border flex items-center justify-between">
+              <h3 className="text-sm font-semibold uppercase tracking-widest" style={{ fontFamily: "Oswald" }}>Список диспетчеров ОПО</h3>
+              <span className="tag" style={{ background: "hsl(var(--muted))", color: "hsl(var(--muted-foreground))" }}>
+                {dir.opoDispatchers.length} записей
+              </span>
+            </div>
+            {dir.opoDispatchers.length === 0 ? (
+              <div className="p-8 text-center text-sm" style={{ color: "hsl(var(--muted-foreground))" }}>Список пуст — добавьте диспетчеров ОПО</div>
+            ) : (
+              <div className="divide-y divide-border">
+                {dir.opoDispatchers.map(d => (
+                  <div key={d.id} className="flex items-center gap-3 px-4 py-2.5 hover:bg-secondary/30 transition-colors">
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium text-sm">{d.name}</div>
+                      <div className="text-xs" style={{ color: "hsl(var(--muted-foreground))" }}>
+                        {d.rank && <span>{d.rank}</span>}
+                        {d.rank && (d.phone || d.shift) && <span> · </span>}
+                        {d.phone && <span className="mono">📞 {d.phone}</span>}
+                        {d.phone && d.shift && <span> · </span>}
+                        {d.shift && <span>{d.shift}</span>}
+                      </div>
+                    </div>
+                    <button onClick={() => editDispOpo(d)} className="text-xs px-2 py-1 rounded border border-border hover:bg-secondary transition-colors flex-shrink-0">
+                      Изменить
+                    </button>
+                    <button onClick={() => delDispOpo(d.id)} className="text-xs px-2 py-1 rounded border transition-colors flex-shrink-0"
                       style={{ borderColor: "hsl(var(--status-critical) / 0.3)", color: "hsl(var(--status-critical))" }}>
                       Удалить
                     </button>

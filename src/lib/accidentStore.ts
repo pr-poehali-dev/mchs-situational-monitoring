@@ -12,6 +12,7 @@ export interface AccidentState {
   commanderPlatoon: string;
   commanderUnit: string;
   commDuty: string;
+  opoDispatcher: string;
   startedAt: string;
   startedAtMsk: string;
   weatherCondition: WeatherCondition;
@@ -46,6 +47,7 @@ export const DEFAULT_STATE: AccidentState = {
   commanderPlatoon: "",
   commanderUnit: "",
   commDuty: "",
+  opoDispatcher: "",
   startedAt: "",
   startedAtMsk: "",
   weatherCondition: "",
@@ -63,6 +65,7 @@ function safeMerge(parsed: unknown): AccidentState {
     commanderPlatoon: p.commanderPlatoon ?? "",
     commanderUnit:    p.commanderUnit ?? "",
     commDuty:         p.commDuty ?? "",
+    opoDispatcher:    p.opoDispatcher ?? "",
     startedAt:        p.startedAt ?? "",
     startedAtMsk:     p.startedAtMsk ?? "",
     weatherCondition: p.weatherCondition ?? "",

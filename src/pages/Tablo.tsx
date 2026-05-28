@@ -381,13 +381,14 @@ export default function TabloPage() {
               </div>
               <div className="flex flex-col flex-1" style={{ gap: 0 }}>
                 {[
+                  { label: "Диспетчер ОПО",                    value: acc.opoDispatcher },
                   { label: "Ответственный по отряду",          value: acc.commanderSquad },
                   { label: "Ответственный по взводу / пункту", value: acc.commanderPlatoon },
                   { label: "Командир дежурного отделения",     value: acc.commanderUnit },
                   { label: "Дежурный у средств связи",         value: acc.commDuty },
                 ].map((r, i) => (
                   <div key={r.label} className="flex items-center gap-2 py-2"
-                    style={{ borderBottom: i < 3 ? "1px solid hsl(213 40% 26%)" : "none", flex: 1 }}>
+                    style={{ borderBottom: i < 4 ? "1px solid hsl(213 40% 26%)" : "none", flex: 1 }}>
                     <div style={{ fontFamily: "Oswald, sans-serif", fontSize: 24, fontWeight: 900, color: "hsl(24 70% 45%)", lineHeight: 1, flexShrink: 0, width: 26, textAlign: "center" }}>{i + 1}</div>
                     <div className="flex-1 min-w-0">
                       <div style={{ fontSize: 10, color: "hsl(213 15% 55%)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 2, fontWeight: 600 }}>{r.label}</div>
@@ -488,13 +489,14 @@ export default function TabloPage() {
               </div>
               <div className="flex flex-col flex-1" style={{ gap: 0 }}>
                 {[
+                  { label: "Диспетчер ОПО",                    value: acc.opoDispatcher },
                   { label: "Ответственный по отряду",          value: acc.commanderSquad },
                   { label: "Ответственный по взводу / пункту", value: acc.commanderPlatoon },
                   { label: "Командир дежурного отделения",     value: acc.commanderUnit },
                   { label: "Дежурный у средств связи",         value: acc.commDuty },
                 ].map((r, i) => (
                   <div key={r.label} className="flex items-center gap-3 py-3"
-                    style={{ borderBottom: i < 3 ? `1px solid ${T.border}` : "none", flex: 1 }}>
+                    style={{ borderBottom: i < 4 ? `1px solid ${T.border}` : "none", flex: 1 }}>
                     <div style={{
                       fontFamily: "Oswald, sans-serif", fontSize: 28, fontWeight: 900,
                       color: T.orange, lineHeight: 1, flexShrink: 0, width: 30, textAlign: "center",

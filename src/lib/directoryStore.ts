@@ -26,6 +26,14 @@ export interface OpoEntry {
   sortOrder: number;  // Порядок отображения
 }
 
+export interface OpoDispatcherEntry {
+  id: string;
+  name: string;       // ФИО
+  rank: string;       // Должность
+  phone: string;      // Телефон
+  shift: string;      // Смена / примечание
+}
+
 export interface DivisionEntry {
   id: string;
   name: string;
@@ -53,6 +61,7 @@ export interface DispositionMeta {
 export interface Directory {
   personnel: PersonEntry[];
   opo: OpoEntry[];
+  opoDispatchers: OpoDispatcherEntry[];
   divisions: DivisionEntry[];
   dispositionRows: DispositionRow[];
   dispositionMeta: DispositionMeta;
@@ -60,13 +69,14 @@ export interface Directory {
 
 const KEY = "vgsch_directory";
 const VERSION_KEY = "vgsch_directory_version";
-const CURRENT_VERSION = "5";
+const CURRENT_VERSION = "6";
 
 const DEFAULT: Directory = {
   personnel: [],
   opo: [
     { id: "o1", name: "Шахта «Учебная»", horizon: "", area: "", sortOrder: 0 },
   ],
+  opoDispatchers: [],
   divisions: [],
   dispositionRows: [],
   dispositionMeta: { commanderName: "", vgsoName: "", year: String(new Date().getFullYear()) },
@@ -92,15 +102,25 @@ export function migrateOpo(o: Partial<OpoEntry>, idx: number): OpoEntry {
   };
 }
 
+function migrateOpoDispatcher(d: Partial<OpoDispatcherEntry>): OpoDispatcherEntry {
+  return {
+    id: d.id ?? uid(),
+    name: d.name ?? "",
+    rank: d.rank ?? "",
+    phone: d.phone ?? "",
+    shift: d.shift ?? "",
+  };
+}
+
 export function loadDirectory(): Directory {
   try {
+    const raw = localStorage.getItem(KEY);
+    const parsed = raw ? JSON.parse(raw) as Partial<Directory> : null;
     if (localStorage.getItem(VERSION_KEY) !== CURRENT_VERSION) {
-      // Миграция без сброса данных
-      const raw = localStorage.getItem(KEY);
-      const parsed = raw ? JSON.parse(raw) as Partial<Directory> : null;
       const migrated: Directory = {
         personnel: (parsed?.personnel ?? DEFAULT.personnel).map(migratePerson),
         opo: (parsed?.opo ?? DEFAULT.opo).map(migrateOpo),
+        opoDispatchers: (parsed?.opoDispatchers ?? DEFAULT.opoDispatchers).map(migrateOpoDispatcher),
         divisions: parsed?.divisions ?? DEFAULT.divisions,
         dispositionRows: parsed?.dispositionRows ?? DEFAULT.dispositionRows,
         dispositionMeta: parsed?.dispositionMeta ?? DEFAULT.dispositionMeta,
@@ -109,12 +129,11 @@ export function loadDirectory(): Directory {
       localStorage.setItem(KEY, JSON.stringify(migrated));
       return migrated;
     }
-    const raw = localStorage.getItem(KEY);
-    if (!raw) return structuredClone(DEFAULT);
-    const parsed = JSON.parse(raw) as Partial<Directory>;
+    if (!parsed) return structuredClone(DEFAULT);
     return {
       personnel: (parsed.personnel ?? DEFAULT.personnel).map(migratePerson),
       opo: (parsed.opo ?? DEFAULT.opo).map(migrateOpo),
+      opoDispatchers: (parsed.opoDispatchers ?? DEFAULT.opoDispatchers).map(migrateOpoDispatcher),
       divisions: parsed.divisions ?? DEFAULT.divisions,
       dispositionRows: parsed.dispositionRows ?? DEFAULT.dispositionRows,
       dispositionMeta: parsed.dispositionMeta ?? DEFAULT.dispositionMeta,
@@ -153,9 +172,9 @@ export function getPersonByRole(personnel: PersonEntry[], role: PersonRole): str
   return personnel.find(p => p.role === role)?.name ?? "";
 }
 
-/** Экспорт personnel + opo в JSON-файл */
+/** Экспорт personnel + opo + opoDispatchers в JSON-файл */
 export function exportDirectory(dir: Directory) {
-  const data = { personnel: dir.personnel, opo: dir.opo };
+  const data = { personnel: dir.personnel, opo: dir.opo, opoDispatchers: dir.opoDispatchers };
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
@@ -165,21 +184,24 @@ export function exportDirectory(dir: Directory) {
   URL.revokeObjectURL(url);
 }
 
-/** Импорт из JSON-файла — merge: новые записи добавляются, существующие (по id) обновляются */
+/** Импорт из JSON-файла — merge */
 export function importDirectory(file: File, currentDir: Directory): Promise<Directory> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = (e) => {
       try {
-        const parsed = JSON.parse(e.target?.result as string) as { personnel?: Partial<PersonEntry>[]; opo?: Partial<OpoEntry>[] };
-        const incomingPersonnel: PersonEntry[] = (parsed.personnel ?? []).map(migratePerson);
-        const incomingOpo: OpoEntry[] = (parsed.opo ?? []).map((o, i) => migrateOpo(o, i));
+        const parsed = JSON.parse(e.target?.result as string) as {
+          personnel?: Partial<PersonEntry>[];
+          opo?: Partial<OpoEntry>[];
+          opoDispatchers?: Partial<OpoDispatcherEntry>[];
+        };
+        const incomingPersonnel = (parsed.personnel ?? []).map(migratePerson);
+        const incomingOpo = (parsed.opo ?? []).map(migrateOpo);
+        const incomingDispatchers = (parsed.opoDispatchers ?? []).map(migrateOpoDispatcher);
 
-        // Merge personnel: обновляем по id, добавляем новых
         const personnelMap = new Map(currentDir.personnel.map(p => [p.id, p]));
         for (const p of incomingPersonnel) personnelMap.set(p.id, p);
 
-        // Merge opo: обновляем по id, добавляем новых
         const opoMap = new Map(currentDir.opo.map(o => [o.id, o]));
         const maxOrder = currentDir.opo.length > 0 ? Math.max(...currentDir.opo.map(o => o.sortOrder)) : -1;
         let orderOffset = maxOrder + 1;
@@ -188,10 +210,14 @@ export function importDirectory(file: File, currentDir: Directory): Promise<Dire
           else { opoMap.set(o.id, o); }
         }
 
+        const dispMap = new Map(currentDir.opoDispatchers.map(d => [d.id, d]));
+        for (const d of incomingDispatchers) dispMap.set(d.id, d);
+
         resolve({
           ...currentDir,
           personnel: Array.from(personnelMap.values()),
           opo: Array.from(opoMap.values()),
+          opoDispatchers: Array.from(dispMap.values()),
         });
       } catch {
         reject(new Error("Неверный формат файла"));
