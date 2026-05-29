@@ -608,13 +608,11 @@ function AccidentPanel() {
       { field: "commanderPlatoon", role: "commanderPlatoon" },
       { field: "commanderUnit",    role: "commanderUnit"    },
       { field: "commDuty",         role: "commDuty"         },
+      { field: "opoDispatcher",    role: "opoDispatcher"    },
     ];
     for (const { field, role } of roleMap) {
       const fromRole = getPersonByRole(dir.personnel, role);
       if (fromRole && !stored[field]) (patch as Record<string, string>)[field] = fromRole;
-    }
-    if (!stored.opoDispatcher && dir.opoDispatchers.length > 0) {
-      patch.opoDispatcher = dir.opoDispatchers[0].name;
     }
     if (Object.keys(patch).length > 0) {
       const next = { ...stored, ...patch };
@@ -659,14 +657,12 @@ function AccidentPanel() {
       { field: "commanderPlatoon", role: "commanderPlatoon" },
       { field: "commanderUnit",    role: "commanderUnit"    },
       { field: "commDuty",         role: "commDuty"         },
+      { field: "opoDispatcher",    role: "opoDispatcher"    },
     ];
     const restored: Partial<AccidentState> = {};
     for (const { field, role } of roleMap) {
       const fromRole = getPersonByRole(currentDir.personnel, role);
       if (fromRole) (restored as Record<string, string>)[field] = fromRole;
-    }
-    if (currentDir.opoDispatchers.length > 0) {
-      restored.opoDispatcher = currentDir.opoDispatchers[0].name;
     }
     const sorted = [...currentDir.opo].sort((a, b) => a.sortOrder - b.sortOrder);
     const opoLabels = sorted.map(opoLabel);
@@ -818,51 +814,47 @@ function AccidentPanel() {
                   { field: "commanderPlatoon", role: "commanderPlatoon" },
                   { field: "commanderUnit",    role: "commanderUnit"    },
                   { field: "commDuty",         role: "commDuty"         },
+                  { field: "opoDispatcher",    role: "opoDispatcher"    },
                 ];
                 for (const { field, role } of roleMap) {
                   const fromRole = getPersonByRole(dir.personnel, role);
                   if (fromRole) (patch as Record<string, string>)[field] = fromRole;
                 }
-                if (dir.opoDispatchers.length > 0) patch.opoDispatcher = dir.opoDispatchers[0].name;
                 update(patch);
               }}
             >↺ Из справочника</button>
           </div>
 
           {([
-            { label: "По отряду",              field: "commanderSquad"   as const },
-            { label: "По взводу / пункту",     field: "commanderPlatoon" as const },
-            { label: "Командир отделения",     field: "commanderUnit"    as const },
-            { label: "Деж. у средств связи",   field: "commDuty"         as const },
-          ]).map(({ label, field }) => (
-            <div key={field}>
-              <label className="text-xs block mb-1" style={{ color: "hsl(var(--muted-foreground))" }}>{label}</label>
-              <select style={sel}
-                value={acc[field] || ""}
-                onChange={e => update({ [field]: e.target.value })}>
-                <option value="">— не выбран —</option>
-                {dir.personnel.map(p => (
-                  <option key={p.id} value={p.name}>{p.name}{p.rank ? ` (${p.rank})` : ""}</option>
-                ))}
-              </select>
-            </div>
-          ))}
-          {/* Диспетчер ОПО — в конце */}
-          <div>
-            <label className="text-xs block mb-1" style={{ color: "hsl(var(--muted-foreground))" }}>Диспетчер ОПО</label>
-            <select style={sel}
-              value={acc.opoDispatcher || ""}
-              onChange={e => update({ opoDispatcher: e.target.value })}>
-              <option value="">— не выбран —</option>
-              {dir.opoDispatchers.map(d => (
-                <option key={d.id} value={d.name}>{d.name}{d.rank ? ` (${d.rank})` : ""}</option>
-              ))}
-              {dispatcherNames.length === 0 && dir.personnel.map(p => (
-                <option key={p.id} value={p.name}>{p.name}{p.rank ? ` (${p.rank})` : ""}</option>
-              ))}
-            </select>
-          </div>
-          {dir.personnel.length === 0 && dir.opoDispatchers.length === 0 && (
+            { label: "По отряду",            field: "commanderSquad"   as const, role: "commanderSquad"   as PersonRole },
+            { label: "По взводу / пункту",   field: "commanderPlatoon" as const, role: "commanderPlatoon" as PersonRole },
+            { label: "Командир отделения",   field: "commanderUnit"    as const, role: "commanderUnit"    as PersonRole },
+            { label: "Деж. у средств связи", field: "commDuty"         as const, role: "commDuty"         as PersonRole },
+            { label: "Диспетчер ОПО",        field: "opoDispatcher"    as const, role: "opoDispatcher"    as PersonRole },
+          ]).map(({ label, field, role }) => {
+            const filtered = dir.personnel.filter(p => p.role === role);
+            const all      = dir.personnel;
+            const opts     = filtered.length > 0 ? filtered : all;
+            return (
+              <div key={field}>
+                <label className="text-xs block mb-1" style={{ color: "hsl(var(--muted-foreground))" }}>
+                  {label}
+                  {filtered.length === 0 && all.length > 0 && (
+                    <span style={{ color: "hsl(var(--status-warning))", marginLeft: 4 }}>(нет назначенных)</span>
+                  )}
+                </label>
+                <select style={sel}
+                  value={acc[field] || ""}
+                  onChange={e => update({ [field]: e.target.value })}>
+                  <option value="">— не выбран —</option>
+                  {opts.map(p => (
+                    <option key={p.id} value={p.name}>{p.name}{p.rank ? ` (${p.rank})` : ""}</option>
+                  ))}
+                </select>
+              </div>
+            );
+          })}
+          {dir.personnel.length === 0 && (
             <p className="text-xs" style={{ color: "hsl(var(--muted-foreground))" }}>
               Добавьте сотрудников в разделе <b>Справочники</b>
             </p>
@@ -1471,6 +1463,7 @@ function DirectorySection() {
   // ── Персонал CRUD ──
   const saveP = () => {
     if (!pForm.name.trim()) return;
+    if (!pForm.role) return;
     if (pEdit) {
       persist({ ...dir, personnel: dir.personnel.map(p => p.id === pEdit ? { id: pEdit, ...pForm } : p) });
       setPEdit(null);
@@ -1628,10 +1621,16 @@ function DirectorySection() {
               </div>
             ))}
             <div>
-              <label className="text-xs block mb-1" style={{ color: "hsl(var(--muted-foreground))" }}>Роль в дежурстве</label>
-              <select style={inputCls} value={pForm.role ?? ""} onChange={e => setPForm(p => ({ ...p, role: e.target.value as PersonRole }))}>
+              <label className="text-xs block mb-1" style={{ color: !pForm.role ? "hsl(var(--status-critical))" : "hsl(var(--muted-foreground))" }}>
+                Роль в дежурстве *
+              </label>
+              <select
+                style={{ ...inputCls, borderColor: !pForm.role ? "hsl(var(--status-critical) / 0.6)" : undefined }}
+                value={pForm.role ?? ""}
+                onChange={e => setPForm(p => ({ ...p, role: e.target.value as PersonRole }))}>
                 {PERSON_ROLES.map(r => <option key={r.id} value={r.id}>{r.label}</option>)}
               </select>
+              {!pForm.role && <p className="text-xs mt-1" style={{ color: "hsl(var(--status-critical))" }}>Обязательно для автоподстановки</p>}
             </div>
             <div className="flex gap-2 pt-1">
               <button onClick={saveP}

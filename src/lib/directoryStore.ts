@@ -1,13 +1,14 @@
 // Справочник ОПО, личного состава и подразделений — хранится в localStorage
 
-export type PersonRole = "commanderSquad" | "commanderPlatoon" | "commanderUnit" | "commDuty" | "";
+export type PersonRole = "commanderSquad" | "commanderPlatoon" | "commanderUnit" | "commDuty" | "opoDispatcher" | "";
 
 export const PERSON_ROLES: { id: PersonRole; label: string }[] = [
-  { id: "",                label: "— не назначена —"        },
-  { id: "commanderSquad",  label: "Ответственный по отряду" },
+  { id: "",                label: "— не назначена —"               },
+  { id: "commanderSquad",  label: "Ответственный по отряду"        },
   { id: "commanderPlatoon",label: "Ответственный по взводу/пункту" },
-  { id: "commanderUnit",   label: "Командир отделения"      },
-  { id: "commDuty",        label: "Дежурный у средств связи"},
+  { id: "commanderUnit",   label: "Командир отделения"             },
+  { id: "commDuty",        label: "Дежурный у средств связи"       },
+  { id: "opoDispatcher",   label: "Диспетчер ОПО"                  },
 ];
 
 export interface PersonEntry {
