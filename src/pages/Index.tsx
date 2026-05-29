@@ -1057,10 +1057,8 @@ function WeatherWidget() {
 
 function Dashboard() {
   const [dir, setDir] = useState<Directory>(loadDirectory);
-  const [recentLogs, setRecentLogs] = useState<LogEntry[]>(() => loadLog().slice(0, 5));
 
   useEffect(() => subscribeDirectory(setDir), []);
-  useEffect(() => subscribeLog(logs => setRecentLogs(logs.slice(0, 5))), []);
 
   const divisions = dir.divisions;
 
@@ -1106,31 +1104,6 @@ function Dashboard() {
       </div>
 
       <AccidentPanel />
-
-      <div className="panel-card">
-        <div className="flex items-center justify-between px-4 py-3 border-b border-border">
-          <h2 className="text-sm font-semibold uppercase tracking-widest" style={{ fontFamily: "Oswald" }}>Последние события</h2>
-          <span className="tag" style={{ background: "hsl(var(--muted))", color: "hsl(var(--muted-foreground))" }}>{recentLogs.length} записей</span>
-        </div>
-        {recentLogs.length === 0 ? (
-          <div className="p-6 text-center text-sm" style={{ color: "hsl(var(--muted-foreground))" }}>
-            Событий пока нет — они появятся при объявлении аварии
-          </div>
-        ) : (
-          <div className="divide-y divide-border">
-            {recentLogs.map(l => (
-              <div key={l.id} className="flex items-start gap-3 px-4 py-2.5 hover:bg-secondary/30 transition-colors">
-                <span className="mono text-xs pt-0.5 flex-shrink-0 w-16" style={{ color: "hsl(var(--muted-foreground))" }}>{l.time}</span>
-                <span className="tag text-xs flex-shrink-0" style={{ background: `${LOG_COLORS[l.type]}20`, color: LOG_COLORS[l.type] }}>{LOG_LABELS[l.type]}</span>
-                <span className="text-xs flex-1">{l.message}</span>
-                <span className="text-xs flex-shrink-0" style={{ color: "hsl(var(--muted-foreground))" }}>{l.operator}</span>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-
     </div>
   );
 }
@@ -2195,7 +2168,7 @@ export default function Index() {
           </div>
         </header>
 
-        <div className="flex-1 overflow-y-auto scrollbar-thin p-6">
+        <div className={`flex-1 p-6 ${section === "dashboard" ? "overflow-hidden" : "overflow-y-auto scrollbar-thin"}`}>
           {renderSection()}
         </div>
       </main>
