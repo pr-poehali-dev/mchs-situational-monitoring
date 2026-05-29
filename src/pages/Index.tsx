@@ -372,7 +372,7 @@ function printPutevka(acc: AccidentState) {
   const mon  = now.toLocaleDateString("ru-RU", { month: "long" });
   const year = String(now.getFullYear());
 
-  const putevka = (num: number, dest: string) => `
+  const putevka = (num: number) => `
 <div class="putevka">
   <div class="copy-badge">Экземпляр ${num}</div>
   <div class="title">Путёвка на выезд подразделения ВГСЧ<br>на ликвидацию аварии</div>
@@ -421,8 +421,6 @@ function printPutevka(acc: AccidentState) {
       <td class="fv filled" colspan="5">${acc.commDuty || ""}</td>
     </tr>
   </table>
-
-  <div class="dest-note">${dest}</div>
 </div>`;
 
   const html = `<!DOCTYPE html><html lang="ru"><head><meta charset="UTF-8"/>
@@ -430,13 +428,12 @@ function printPutevka(acc: AccidentState) {
 <style>
   @page { size: A4 portrait; margin: 20mm 10mm 15mm 30mm; }
   * { box-sizing: border-box; }
-  body { font-family: Arial, sans-serif; font-size: 13px; color: #000; margin: 0; padding: 0; height: 100%; }
+  body { font-family: Arial, sans-serif; font-size: 13px; color: #000; margin: 0; padding: 0; }
 
   .putevka {
-    height: calc(50vh - 10mm);
-    min-height: 120mm;
+    height: 50vh;
     display: flex; flex-direction: column;
-    padding: 8mm 0 6mm 0;
+    padding: 10mm 0 8mm 0;
     border-bottom: 2px dashed #999;
     page-break-inside: avoid;
     position: relative;
@@ -444,7 +441,7 @@ function printPutevka(acc: AccidentState) {
   .putevka:last-child { border-bottom: none; }
 
   .copy-badge {
-    position: absolute; top: 8mm; right: 0;
+    position: absolute; top: 10mm; right: 0;
     font-size: 10px; font-style: italic; color: #888;
     border: 1px solid #ccc; padding: 2px 8px; border-radius: 3px;
   }
@@ -452,11 +449,11 @@ function printPutevka(acc: AccidentState) {
   .title {
     font-size: 15px; font-weight: bold; text-align: center;
     text-decoration: underline; line-height: 1.4;
-    margin-bottom: 10mm; letter-spacing: 0.02em;
+    margin-bottom: 12mm; letter-spacing: 0.02em;
   }
 
-  .form-table { width: 100%; border-collapse: collapse; margin-bottom: 8mm; }
-  .form-table tr td { padding: 0 2px 6px 2px; vertical-align: bottom; white-space: nowrap; }
+  .form-table { width: 100%; border-collapse: collapse; }
+  .form-table tr td { padding: 0 2px 8px 2px; vertical-align: bottom; white-space: nowrap; }
   .fl { font-size: 13px; width: 1%; white-space: nowrap; padding-right: 4px; }
   .fv {
     border-bottom: 1px solid #000; width: auto;
@@ -464,20 +461,9 @@ function printPutevka(acc: AccidentState) {
   }
   .fv.filled { color: #000; }
   .bold { font-weight: bold; }
-
-  .sig-row { display: flex; gap: 16mm; margin-bottom: 6mm; }
-  .sig-item { flex: 1; }
-  .sig-role { font-size: 11px; font-weight: bold; margin-bottom: 10mm; }
-  .sig-line { border-top: 1px solid #333; margin-bottom: 3px; }
-  .sig-hint { font-size: 10px; color: #666; text-align: center; }
-
-  .dest-note {
-    margin-top: auto; font-size: 11px; font-style: italic;
-    color: #444; border-top: 1px dotted #bbb; padding-top: 4px;
-  }
 </style></head><body>
-${putevka(1, "Экземпляр 1 передаётся командиру дежурного отделения.")}
-${putevka(2, "Экземпляр 2 остаётся у дежурного у средств связи до окончания выполнения горноспасательных работ.")}
+${putevka(1)}
+${putevka(2)}
 </body></html>`;
 
   const win = window.open("", "_blank", "width=820,height=1060");
