@@ -680,9 +680,9 @@ function AccidentPanel() {
   };
 
   const personNames      = dir.personnel.map(p => p.name);
-  const dispatcherNames  = dir.opoDispatchers.map(d => d.name);
   const sortedOpo        = [...dir.opo].sort((a, b) => a.sortOrder - b.sortOrder);
   const opoLabels        = sortedOpo.map(opoLabel);
+  const sortedDispatchers = [...dir.opoDispatchers].sort((a, b) => a.name.localeCompare(b.name, "ru"));
 
   return (
     <div className="panel-card">
@@ -830,10 +830,9 @@ function AccidentPanel() {
             { label: "По взводу / пункту",   field: "commanderPlatoon" as const, role: "commanderPlatoon" as PersonRole },
             { label: "Командир отделения",   field: "commanderUnit"    as const, role: "commanderUnit"    as PersonRole },
             { label: "Деж. у средств связи", field: "commDuty"         as const, role: "commDuty"         as PersonRole },
-            { label: "Диспетчер ОПО",        field: "opoDispatcher"    as const, role: "opoDispatcher"    as PersonRole },
           ]).map(({ label, field, role }) => {
-            const filtered = dir.personnel.filter(p => p.role === role);
-            const all      = dir.personnel;
+            const filtered = [...dir.personnel.filter(p => p.role === role)].sort((a, b) => a.name.localeCompare(b.name, "ru"));
+            const all      = [...dir.personnel].sort((a, b) => a.name.localeCompare(b.name, "ru"));
             const opts     = filtered.length > 0 ? filtered : all;
             return (
               <div key={field}>
@@ -854,6 +853,25 @@ function AccidentPanel() {
               </div>
             );
           })}
+
+          {/* Диспетчер ОПО — строго из справочника диспетчеров */}
+          <div>
+            <label className="text-xs block mb-1" style={{ color: "hsl(var(--muted-foreground))" }}>
+              Диспетчер ОПО
+              {sortedDispatchers.length === 0 && (
+                <span style={{ color: "hsl(var(--status-warning))", marginLeft: 4 }}>(нет в справочнике)</span>
+              )}
+            </label>
+            <select style={sel}
+              value={acc.opoDispatcher || ""}
+              onChange={e => update({ opoDispatcher: e.target.value })}>
+              <option value="">— не выбран —</option>
+              {sortedDispatchers.map(d => (
+                <option key={d.id} value={d.name}>{d.name}{d.rank ? ` (${d.rank})` : ""}</option>
+              ))}
+            </select>
+          </div>
+
           {dir.personnel.length === 0 && (
             <p className="text-xs" style={{ color: "hsl(var(--muted-foreground))" }}>
               Добавьте сотрудников в разделе <b>Справочники</b>
@@ -1660,7 +1678,7 @@ function DirectorySection() {
               <div className="p-8 text-center text-sm" style={{ color: "hsl(var(--muted-foreground))" }}>Список пуст — добавьте сотрудников</div>
             ) : (
               <div className="divide-y divide-border">
-                {dir.personnel.map(p => {
+                {[...dir.personnel].sort((a, b) => a.name.localeCompare(b.name, "ru")).map(p => {
                   const roleLabel = PERSON_ROLES.find(r => r.id === p.role && r.id !== "")?.label;
                   return (
                     <div key={p.id} className="flex items-center gap-3 px-4 py-2.5 hover:bg-secondary/30 transition-colors">
@@ -1903,7 +1921,7 @@ function DirectorySection() {
               <div className="p-8 text-center text-sm" style={{ color: "hsl(var(--muted-foreground))" }}>Список пуст — добавьте диспетчеров ОПО</div>
             ) : (
               <div className="divide-y divide-border">
-                {dir.opoDispatchers.map(d => (
+                {[...dir.opoDispatchers].sort((a, b) => a.name.localeCompare(b.name, "ru")).map(d => (
                   <div key={d.id} className="flex items-center gap-3 px-4 py-2.5 hover:bg-secondary/30 transition-colors">
                     <div className="flex-1 min-w-0">
                       <div className="font-medium text-sm">{d.name}</div>
