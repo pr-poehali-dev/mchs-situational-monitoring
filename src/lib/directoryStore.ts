@@ -8,7 +8,6 @@ export const PERSON_ROLES: { id: PersonRole; label: string }[] = [
   { id: "commanderPlatoon",label: "Ответственный по взводу/пункту" },
   { id: "commanderUnit",   label: "Командир отделения"             },
   { id: "commDuty",        label: "Дежурный у средств связи"       },
-  { id: "opoDispatcher",   label: "Диспетчер ОПО"                  },
 ];
 
 export interface PersonEntry {
