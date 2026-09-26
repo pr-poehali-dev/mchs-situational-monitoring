@@ -46,13 +46,43 @@ public sealed class LocalServer : IDisposable
         _root = Path.GetFullPath(webRoot);
     }
 
+    // Порт ОБЯЗАН быть постоянным. Браузерный движок считает адрес с другим
+    // портом другим сайтом, а значит и хранилище даёт другое: справочники,
+    // журнал событий и настройки дежурного пропадут при перезапуске.
+    // Поэтому берём фиксированный порт, а случайный — только как аварийный
+    // запасной вариант, если этот кем-то занят.
+    private const int PreferredPort = 47180;
+
     public void Start()
     {
-        Port = FindFreePort();
-        _listener.Prefixes.Add($"http://127.0.0.1:{Port}/");
-        _listener.Start();
-        _cts = new CancellationTokenSource();
-        _ = Task.Run(() => LoopAsync(_cts.Token));
+        foreach (int port in CandidatePorts())
+        {
+            try
+            {
+                _listener.Prefixes.Clear();
+                _listener.Prefixes.Add($"http://127.0.0.1:{port}/");
+                _listener.Start();
+                Port = port;
+                _cts = new CancellationTokenSource();
+                _ = Task.Run(() => LoopAsync(_cts.Token));
+                return;
+            }
+            catch (HttpListenerException)
+            {
+                // Порт занят — пробуем следующий
+            }
+        }
+
+        throw new InvalidOperationException(
+            "Не удалось занять ни один порт для внутреннего сервера интерфейса.");
+    }
+
+    private static IEnumerable<int> CandidatePorts()
+    {
+        // Сначала постоянный порт, затем соседние — чтобы данные
+        // сохранялись даже если основной порт кем-то занят
+        for (int i = 0; i < 10; i++) yield return PreferredPort + i;
+        yield return FindFreePort();
     }
 
     private static int FindFreePort()
@@ -105,6 +135,13 @@ public sealed class LocalServer : IDisposable
             string ext = Path.GetExtension(full);
             ctx.Response.ContentType = Mime.TryGetValue(ext, out var m) ? m : "application/octet-stream";
             ctx.Response.Headers["Cache-Control"] = "no-store";
+
+            // Страница живёт на http://127.0.0.1, а погода и оповещение —
+            // на внешних https-адресах. Без этих заголовков браузерный
+            // движок считает запрос небезопасным и молча его режет:
+            // в АРМ это выглядит как вечное «Нет связи» у погоды.
+            ctx.Response.Headers["Cross-Origin-Opener-Policy"] = "same-origin-allow-popups";
+            ctx.Response.Headers["Cross-Origin-Embedder-Policy"] = "unsafe-none";
 
             byte[] data = File.ReadAllBytes(full);
             ctx.Response.ContentLength64 = data.Length;

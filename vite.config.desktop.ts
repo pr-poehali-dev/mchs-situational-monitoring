@@ -17,6 +17,13 @@ const stripOnlineScripts = {
       .replace(/<link rel="manifest"[^>]*>/g, "")
       .replace(/<script[^>]*>[\s\S]*?serviceWorker[\s\S]*?<\/script>/g, "");
   },
+  // Офлайн-кэш в десктопной программе только вредит: он перехватывает
+  // запросы к погоде и оповещению. Не кладём его в сборку вовсе.
+  generateBundle(_opts: unknown, bundle: Record<string, unknown>) {
+    for (const name of Object.keys(bundle)) {
+      if (name === "sw.js" || name === "manifest.webmanifest") delete bundle[name];
+    }
+  },
 };
 
 export default defineConfig({

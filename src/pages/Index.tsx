@@ -1062,7 +1062,23 @@ function WeatherWidget() {
           <div className="text-xs text-center py-4" style={{ color: "hsl(var(--muted-foreground))" }}>Загрузка…</div>
         )}
         {error && !loading && (
-          <div className="text-xs text-center py-4" style={{ color: "hsl(var(--status-critical))" }}>Нет соединения с сервером погоды</div>
+          <div className="text-center py-4">
+            <div className="text-xs mb-1.5" style={{ color: "hsl(var(--status-critical))" }}>
+              {navigator.onLine ? "Сервер погоды не отвечает" : "Нет интернета"}
+            </div>
+            <div className="text-xs leading-relaxed" style={{ color: "hsl(var(--muted-foreground))" }}>
+              {navigator.onLine
+                ? "Данные появятся, когда служба погоды заработает"
+                : "Погода обновится, когда появится связь"}
+            </div>
+            <button
+              onClick={() => fetchWeather(city)}
+              className="mt-3 text-xs px-3 py-1.5 rounded border border-border hover:bg-secondary transition-colors"
+              style={{ color: "hsl(var(--primary))" }}
+            >
+              Повторить
+            </button>
+          </div>
         )}
         {weather && !loading && (
           <div className="space-y-3">
@@ -2090,7 +2106,6 @@ const NAV: { id: SectionId; label: string; icon: string }[] = [
   { id: "dashboard",  label: "Главная панель",   icon: "LayoutDashboard" },
   { id: "journal",    label: "Журнал событий",    icon: "ScrollText" },
   { id: "directory",  label: "Справочники",       icon: "BookOpen" },
-  { id: "releases",   label: "Сборка",            icon: "PackageCheck" },
 ];
 
 // ─── Main ─────────────────────────────────────────────────────────────────────

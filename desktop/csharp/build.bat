@@ -241,6 +241,12 @@ if not exist "%DIST%\web\index.html" (
     echo ERROR: interface files were not copied
     goto :fail
 )
+
+REM The offline cache (sw.js) belongs to the browser version only. Inside
+REM the desktop program it intercepts requests and serves stale answers -
+REM the weather widget then stays stuck on "no connection" forever.
+if exist "%DIST%\web\sw.js" del /Q "%DIST%\web\sw.js" >nul 2>nul
+if exist "%DIST%\web\manifest.webmanifest" del /Q "%DIST%\web\manifest.webmanifest" >nul 2>nul
 powershell -NoProfile -Command "Set-Content -NoNewline -Path '%DIST%\app_version.txt' -Value '%APP_VERSION%'" || goto :fail
 if exist "%APP_DIR%\vgsch.ico" copy /Y "%APP_DIR%\vgsch.ico" "%DIST%\vgsch.ico" >nul
 
