@@ -80,6 +80,16 @@ if errorlevel 1 (
 for /f "delims=" %%v in ('node --version 2^>nul') do set "NODE_VER=%%v"
 echo     Node.js: %NODE_VER%
 
+REM Odd-numbered Node releases (21, 23, 25...) are short-lived and often
+REM break build tools. Warn, but do not stop - it usually still works.
+for /f "tokens=1 delims=." %%m in ("%NODE_VER:v=%") do set "NODE_MAJOR=%%m"
+set /a NODE_ODD=%NODE_MAJOR% %% 2 >nul 2>nul
+if "%NODE_ODD%"=="1" (
+    echo     NOTE: Node %NODE_VER% is a development release.
+    echo           If the build fails here, install Node.js LTS
+    echo           ^(even version: 20, 22, 24^) from https://nodejs.org
+)
+
 where dotnet >nul 2>nul
 if errorlevel 1 (
     echo ERROR: .NET SDK not found - install .NET 8 SDK from
@@ -130,7 +140,22 @@ echo.
 REM ---------- [1/5] Frontend ----------
 echo [1/5] Building frontend (desktop mode)...
 cd /d "%ROOT%"
-call npm install || goto :fail
+
+REM A lock file made by another package manager (bun) or by a different
+REM Node version makes "npm install" fail on a fresh PC. Drop it: the
+REM exact versions we need are pinned in package.json anyway.
+if exist "%ROOT%\bun.lock"  del /Q "%ROOT%\bun.lock"
+if exist "%ROOT%\bun.lockb" del /Q "%ROOT%\bun.lockb"
+
+echo     Installing dependencies ^(may take a few minutes^)...
+call npm install --no-audit --no-fund
+if errorlevel 1 (
+    echo     First attempt failed - retrying with a clean node_modules...
+    if exist "%ROOT%\node_modules"      rmdir /S /Q "%ROOT%\node_modules"
+    if exist "%ROOT%\package-lock.json" del /Q "%ROOT%\package-lock.json"
+    call npm install --no-audit --no-fund --legacy-peer-deps || goto :fail
+)
+
 call npx --no-install vite build --config "%VITE_CFG%" || goto :fail
 
 if not exist "%ROOT%\dist-desktop\index.html" (
