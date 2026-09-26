@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import TabloPage from "./pages/Tablo";
 import DownloadPage from "./pages/Download";
+import AlertConfirm from "./pages/AlertConfirm";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -21,6 +22,8 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/tablo" element={<TabloPage />} />
           <Route path="/download" element={<DownloadPage />} />
+          <Route path="/a/:token" element={<AlertConfirm />} />
+          <Route path="/alert" element={<AlertConfirm />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

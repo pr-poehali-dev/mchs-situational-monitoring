@@ -1,6 +1,9 @@
 import { useState, useEffect } from "react";
 import Icon from "@/components/ui/icon";
 import ReleasesSection from "@/components/ReleasesSection";
+import AlertDispatchDialog from "@/components/AlertDispatchDialog";
+import AlertStatusPanel from "@/components/AlertStatusPanel";
+import { closeAlert, forgetAlertId, recallAlertId } from "@/lib/alertsApi";
 import {
   type AccidentState,
   ACCIDENT_TYPES,
@@ -579,6 +582,8 @@ function playSiren() {
 function AccidentPanel() {
   const [acc, setAcc] = useState<AccidentState>(loadAccident);
   const [dir, setDir] = useState<Directory>(loadDirectory);
+  const [dispatchOpen, setDispatchOpen] = useState(false);
+  const [alertId, setAlertId] = useState<number | undefined>(recallAlertId);
 
   useEffect(() => subscribeAccident(setAcc), []);
   useEffect(() => subscribeDirectory(setDir), []);
@@ -628,6 +633,18 @@ function AccidentPanel() {
       operator: next.commDuty || "Дежурный",
       message: `🚨 АВАРИЯ ОБЪЯВЛЕНА: ${atype?.label ?? next.type}${next.opo ? ` — ${next.opo}` : ""}${next.location ? `, ${next.location}` : ""}. Время объявления: ${localNow} (МСК: ${mskNow})`,
     });
+    // Сразу предлагаем вызвать личный состав — дежурному не нужно искать кнопку
+    setDispatchOpen(true);
+  };
+
+  const onAlertSent = (id: number, count: number) => {
+    setAlertId(id);
+    setDispatchOpen(false);
+    addLogEntry({
+      type: "action",
+      operator: acc.commDuty || "Дежурный",
+      message: `📢 ОПОВЕЩЕНИЕ РАЗОСЛАНО: вызвано ${count} чел. личного состава`,
+    });
   };
 
   const cancel = () => {
@@ -657,6 +674,10 @@ function AccidentPanel() {
     localStorage.setItem("vgsch_accident_state", JSON.stringify(next));
     window.dispatchEvent(new StorageEvent("storage", { key: "vgsch_accident_state", newValue: JSON.stringify(next) }));
     setAcc(next);
+    // Личному составу уходит сигнал отбоя, табло явки убирается
+    closeAlert(alertId);
+    forgetAlertId();
+    setAlertId(undefined);
   };
   const atype = ACCIDENT_TYPES.find(t => t.id === acc.type)!;
 
@@ -778,11 +799,19 @@ function AccidentPanel() {
                 🚨 ТРЕВОГА
               </button>
             ) : (
-              <button onClick={cancel}
-                className="w-full py-2 rounded border border-border hover:bg-secondary transition-colors text-sm"
-                style={{ color: "hsl(var(--muted-foreground))" }}>
-                Отбой аварии
-              </button>
+              <div className="space-y-2">
+                <button onClick={() => setDispatchOpen(true)}
+                  className="w-full py-2 rounded font-semibold uppercase tracking-wide transition-all flex items-center justify-center gap-1.5"
+                  style={{ fontFamily: "Oswald", fontSize: 12, background: "hsl(var(--primary) / 0.15)", color: "hsl(var(--primary))", border: "1px solid hsl(var(--primary) / 0.3)" }}>
+                  <Icon name="Siren" size={14} />
+                  {alertId ? "Дозвать ещё" : "Вызвать личный состав"}
+                </button>
+                <button onClick={cancel}
+                  className="w-full py-2 rounded border border-border hover:bg-secondary transition-colors text-sm"
+                  style={{ color: "hsl(var(--muted-foreground))" }}>
+                  Отбой аварии
+                </button>
+              </div>
             )}
           </div>
         </div>
@@ -866,6 +895,26 @@ function AccidentPanel() {
           )}
         </div>
       </div>
+
+      {/* Явка по вызову — видно только пока авария активна */}
+      {acc.active && alertId && (
+        <div className="mt-3">
+          <AlertStatusPanel alertId={alertId} compact />
+        </div>
+      )}
+
+      <AlertDispatchDialog
+        open={dispatchOpen}
+        personnel={dir.personnel}
+        accidentType={acc.type}
+        accidentLabel={atype.label}
+        opo={acc.opo}
+        location={acc.location}
+        startedAt={acc.startedAt}
+        declaredBy={acc.commDuty || "Дежурный"}
+        onClose={() => setDispatchOpen(false)}
+        onSent={onAlertSent}
+      />
     </div>
   );
 }

@@ -1,0 +1,23 @@
+{
+  "tests": [
+    {
+      "name": "Активная тревога",
+      "method": "GET",
+      "path": "/",
+      "expectedStatus": 200
+    },
+    {
+      "name": "Настроенные каналы",
+      "method": "GET",
+      "path": "/?action=channels",
+      "expectedStatus": 200
+    },
+    {
+      "name": "Объявление без получателей отклоняется",
+      "method": "POST",
+      "path": "/?action=declare",
+      "body": { "accidentLabel": "ПОЖАР", "recipients": [] },
+      "expectedStatus": 400
+    }
+  ]
+}
