@@ -1,0 +1,16 @@
+{
+  "tests": [
+    {
+      "name": "Список релизов",
+      "method": "GET",
+      "path": "/",
+      "expectedStatus": 200
+    },
+    {
+      "name": "Проверка обновления",
+      "method": "GET",
+      "path": "/?action=check&version=1.0.0",
+      "expectedStatus": 200
+    }
+  ]
+}

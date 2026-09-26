@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import Icon from "@/components/ui/icon";
+import ReleasesSection from "@/components/ReleasesSection";
 import {
   type AccidentState,
   ACCIDENT_TYPES,
@@ -37,7 +38,7 @@ import {
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-type SectionId = "dashboard" | "journal" | "directory";
+type SectionId = "dashboard" | "journal" | "directory" | "releases";
 
 interface Unit {
   id: string;
@@ -2040,6 +2041,7 @@ const NAV: { id: SectionId; label: string; icon: string }[] = [
   { id: "dashboard",  label: "Главная панель",   icon: "LayoutDashboard" },
   { id: "journal",    label: "Журнал событий",    icon: "ScrollText" },
   { id: "directory",  label: "Справочники",       icon: "BookOpen" },
+  { id: "releases",   label: "Сборка",            icon: "PackageCheck" },
 ];
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
@@ -2070,6 +2072,7 @@ export default function Index() {
       case "dashboard": return <Dashboard />;
       case "journal": return <Journal />;
       case "directory":  return <DirectorySection />;
+      case "releases":   return <ReleasesSection />;
     }
   };
 

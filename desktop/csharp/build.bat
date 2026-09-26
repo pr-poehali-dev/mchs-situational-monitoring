@@ -215,6 +215,17 @@ if not exist "%DIST%\web\index.html" (
 powershell -NoProfile -Command "Set-Content -NoNewline -Path '%DIST%\app_version.txt' -Value '%APP_VERSION%'" || goto :fail
 if exist "%APP_DIR%\vgsch.ico" copy /Y "%APP_DIR%\vgsch.ico" "%DIST%\vgsch.ico" >nul
 
+REM Address of the update service. The program asks it whether a newer
+REM version exists. Taken from desktop\update_url.txt; if the file is
+REM missing the program simply never checks for updates.
+set "UPDATE_URL_FILE=%ROOT%\desktop\update_url.txt"
+if exist "%UPDATE_URL_FILE%" (
+    copy /Y "%UPDATE_URL_FILE%" "%DIST%\update_url.txt" >nul
+    echo     Auto-update: ON
+) else (
+    echo     Auto-update: OFF ^(desktop\update_url.txt not found^)
+)
+
 REM Clean up debug files from dist
 del /Q "%DIST%\*.pdb" >nul 2>nul
 echo     OK
@@ -296,6 +307,7 @@ echo   Output folder: %DIST%
 echo     VGSCH-ARM.exe     (version %APP_VERSION%)
 echo     web\              (interface files)
 echo     app_version.txt
+echo     update_url.txt    (auto-update service address)
 echo   Run: VGSCH-ARM.exe
 echo ------------------------------------------------------------
 if "%DO_SETUP%"=="1" (

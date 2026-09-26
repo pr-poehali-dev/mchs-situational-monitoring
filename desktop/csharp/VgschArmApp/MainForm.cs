@@ -8,12 +8,14 @@ public sealed class MainForm : Form
     private readonly WebView2 _web = new();
     private readonly LocalServer _server;
     private readonly string _startUrl;
+    private readonly string _version;
     private CoreWebView2Environment? _env;
 
     public MainForm(LocalServer server, string version)
     {
         _server = server;
         _startUrl = server.BaseUrl;
+        _version = version;
 
         Text = $"АРМ Дежурного ВГСЧ  —  v{version}";
         WindowState = FormWindowState.Maximized;
@@ -72,6 +74,68 @@ public sealed class MainForm : Form
         core.NewWindowRequested += OnNewWindowRequested;
 
         core.Navigate(_startUrl);
+
+        // Проверяем обновление в фоне — интерфейс уже работает,
+        // дежурный не ждёт ответа сервера при запуске
+        _ = CheckUpdateAsync();
+    }
+
+    private async Task CheckUpdateAsync()
+    {
+        await Task.Delay(3000);
+
+        var info = await Updater.CheckAsync(_version);
+        if (info == null || IsDisposed) return;
+
+        // Необязательное обновление показываем не чаще раза в сутки
+        if (!info.Mandatory && WasSkippedToday(info.Version)) return;
+
+        if (InvokeRequired)
+        {
+            BeginInvoke(new Action(() => ShowUpdateDialog(info)));
+        }
+        else
+        {
+            ShowUpdateDialog(info);
+        }
+    }
+
+    private void ShowUpdateDialog(Updater.UpdateInfo info)
+    {
+        using var dlg = new UpdateDialog(info, _version, Icon);
+        var res = dlg.ShowDialog(this);
+
+        if (res == DialogResult.OK || res == DialogResult.Abort)
+        {
+            Close();
+            return;
+        }
+        RememberSkip(info.Version);
+    }
+
+    private static string SkipFile => Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+        "VGSCH-ARM", "update-skip.txt");
+
+    private static bool WasSkippedToday(string version)
+    {
+        try
+        {
+            if (!File.Exists(SkipFile)) return false;
+            string[] p = File.ReadAllText(SkipFile).Trim().Split('|');
+            return p.Length == 2 && p[0] == version && p[1] == DateTime.Today.ToString("yyyy-MM-dd");
+        }
+        catch { return false; }
+    }
+
+    private static void RememberSkip(string version)
+    {
+        try
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(SkipFile)!);
+            File.WriteAllText(SkipFile, $"{version}|{DateTime.Today:yyyy-MM-dd}");
+        }
+        catch { }
     }
 
     private async void OnNewWindowRequested(object? sender, CoreWebView2NewWindowRequestedEventArgs e)
@@ -111,7 +175,29 @@ public sealed class MainForm : Form
             WindowState = FormWindowState.Maximized;
             return true;
         }
+        if (keyData == Keys.F9)
+        {
+            _ = CheckUpdateManualAsync();
+            return true;
+        }
         return base.ProcessCmdKey(ref msg, keyData);
+    }
+
+    /// <summary>Ручная проверка обновления по F9 — когда дежурного просят обновиться.</summary>
+    private async Task CheckUpdateManualAsync()
+    {
+        Cursor = Cursors.WaitCursor;
+        var info = await Updater.CheckAsync(_version);
+        Cursor = Cursors.Default;
+
+        if (info == null)
+        {
+            MessageBox.Show(
+                $"Установлена последняя версия {_version}.",
+                "АРМ Дежурного ВГСЧ", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            return;
+        }
+        ShowUpdateDialog(info);
     }
 }
 
