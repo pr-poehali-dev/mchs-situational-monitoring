@@ -22,6 +22,7 @@ REM      desktop\csharp\build.bat
 REM  Optional: build.bat noobf     - build without obfuscation
 REM            build.bat install   - build and install to C:\VGSCH-ARM
 REM            build.bat installer - build and make VGSCH-ARM-Setup.exe
+REM            build.bat notest    - skip the start-up self check
 REM  Script finds project root by itself.
 REM ============================================================
 
@@ -41,10 +42,12 @@ REM ---------- Build mode ----------
 set "OBFUSCATE=1"
 set "DO_INSTALL=0"
 set "DO_SETUP=0"
+set "SKIP_TEST=0"
 for %%a in (%*) do (
     if /i "%%~a"=="noobf" set "OBFUSCATE=0"
     if /i "%%~a"=="install" set "DO_INSTALL=1"
     if /i "%%~a"=="installer" set "DO_SETUP=1"
+    if /i "%%~a"=="notest" set "SKIP_TEST=1"
 )
 
 REM ---------- Read app version (MANUAL) ----------
@@ -67,10 +70,11 @@ echo ============================================================
 echo.
 
 REM ---------- [0/5] Environment ----------
-echo [0/5] Checking environment...
+echo [0/6] Checking environment...
 if "%OBFUSCATE%"=="0" echo     MODE: build WITHOUT obfuscation ^(noobf^)
 if "%DO_INSTALL%"=="1" echo     MODE: will install to %INSTALL_DIR% after build
 if "%DO_SETUP%"=="1" echo     MODE: will build VGSCH-ARM-Setup.exe
+if "%SKIP_TEST%"=="1" echo     MODE: start-up self check DISABLED ^(notest^)
 
 where node >nul 2>nul
 if errorlevel 1 (
@@ -119,7 +123,7 @@ if defined ISCC echo     Inno Setup 6: OK
 echo.
 
 REM ---------- [0/5] Project files ----------
-echo [0/5] Checking project files...
+echo [0/6] Checking project files...
 set "VITE_CFG=%ROOT%\vite.config.desktop.ts"
 if not exist "%ROOT%\package.json" (
     echo ERROR: package.json not found at %ROOT%
@@ -138,7 +142,7 @@ echo     OK
 echo.
 
 REM ---------- [1/5] Frontend ----------
-echo [1/5] Building frontend (desktop mode)...
+echo [1/6] Building frontend (desktop mode)...
 cd /d "%ROOT%"
 
 REM A lock file made by another package manager (bun) or by a different
@@ -166,7 +170,7 @@ echo     OK
 echo.
 
 REM ---------- [2/5] Icon ----------
-echo [2/5] Application icon (vgsch.ico)...
+echo [2/6] Application icon (vgsch.ico)...
 if not exist "%APP_DIR%\vgsch.ico" (
     if exist "%ROOT%\public\favicon.ico" (
         copy /Y "%ROOT%\public\favicon.ico" "%APP_DIR%\vgsch.ico" >nul
@@ -181,9 +185,9 @@ echo.
 
 REM ---------- [3/5] VGSCH-ARM.exe ----------
 if "%OBFUSCATE%"=="1" (
-    echo [3/5] Building VGSCH-ARM.exe ^(C#^) with obfuscation...
+    echo [3/6] Building VGSCH-ARM.exe ^(C#^) with obfuscation...
 ) else (
-    echo [3/5] Building VGSCH-ARM.exe ^(C#^) WITHOUT obfuscation ^(noobf mode^)...
+    echo [3/6] Building VGSCH-ARM.exe ^(C#^) WITHOUT obfuscation ^(noobf mode^)...
 )
 cd /d "%APP_DIR%"
 
@@ -230,7 +234,7 @@ if "%OBFUSCATE%"=="1" ( echo     OK ^(obfuscated^) ) else ( echo     OK ^(NOT ob
 echo.
 
 REM ---------- [4/5] Pack frontend next to exe ----------
-echo [4/5] Packing interface files...
+echo [4/6] Packing interface files...
 if exist "%DIST%\web" rmdir /S /Q "%DIST%\web"
 xcopy /E /I /Y /Q "%ROOT%\dist-desktop" "%DIST%\web" >nul || goto :fail
 if not exist "%DIST%\web\index.html" (
@@ -256,10 +260,21 @@ del /Q "%DIST%\*.pdb" >nul 2>nul
 echo     OK
 echo.
 
+REM ---------- Smoke test: does the program actually start? ----------
+REM A build that compiles is not the same as a build that RUNS: a missing
+REM web\ file, a broken WebView2 or a crash on startup all slip through
+REM the compiler. So we launch the real exe, give it time to open its
+REM window, and check it is still alive. Better to catch it here than
+REM to hand a dead installer to a duty officer.
+echo [5/6] Smoke test - starting VGSCH-ARM.exe...
+call :smoke_test
+if errorlevel 1 goto :fail
+echo.
+
 REM ---------- [5/5] Installer (VGSCH-ARM-Setup.exe) ----------
 if "%DO_SETUP%"=="0" goto :installstep
 
-echo [5/5] Building installer VGSCH-ARM-Setup.exe...
+echo [6/6] Building installer VGSCH-ARM-Setup.exe...
 
 REM Bundle the WebView2 bootstrapper so the installer works on a clean PC.
 if not exist "%ISS_DIR%\MicrosoftEdgeWebview2Setup.exe" (
@@ -285,7 +300,7 @@ echo.
 
 :installstep
 REM ---------- Install to C:\VGSCH-ARM ----------
-echo [5/5] Install step...
+echo [6/6] Install step...
 if "%DO_INSTALL%"=="0" (
     echo     Skipped ^(run "build.bat install" to copy into %INSTALL_DIR%^)
     goto :done
@@ -335,6 +350,13 @@ echo     app_version.txt
 echo     update_url.txt    (auto-update service address)
 echo   Run: VGSCH-ARM.exe
 echo ------------------------------------------------------------
+if "%SKIP_TEST%"=="1" (
+    echo   WARNING: start-up self check was SKIPPED ^(notest^).
+    echo            Run the program by hand before giving it to users.
+) else (
+    echo   SELF CHECK PASSED - the program starts and opens its window.
+)
+echo ------------------------------------------------------------
 if "%DO_SETUP%"=="1" (
     echo   INSTALLER READY - give this ONE file to users:
     echo     %SETUP_OUT%\VGSCH-ARM-Setup-%APP_VERSION%.exe
@@ -357,6 +379,88 @@ echo ============================================================
 echo.
 pause
 exit /b 0
+
+REM ---------- helper: smoke test ----------
+REM Launches the freshly built exe, waits, and checks it is still running
+REM and has a visible window. Then closes it politely.
+REM Skipped with:  build.bat notest
+:smoke_test
+if "%SKIP_TEST%"=="1" (
+    echo     Skipped ^(notest^)
+    exit /b 0
+)
+
+REM Clear the crash log so we only see errors from THIS run
+set "CRASH_LOG=%LOCALAPPDATA%\VGSCH-ARM\error.log"
+if exist "%CRASH_LOG%" del /Q "%CRASH_LOG%" >nul 2>nul
+
+taskkill /F /IM VGSCH-ARM.exe >nul 2>nul
+timeout /t 1 /nobreak >nul
+
+echo     Launching...
+set "TEST_RESULT=%TEMP%\vgsch-smoke.txt"
+if exist "%TEST_RESULT%" del /Q "%TEST_RESULT%" >nul 2>nul
+
+REM Tell the program this is a test run - it then skips the update prompt
+set "VGSCH_SMOKE_TEST=1"
+
+powershell -NoProfile -ExecutionPolicy Bypass -Command ^
+  "$ErrorActionPreference='Stop';" ^
+  "try {" ^
+  "  $p = Start-Process -FilePath '%DIST%\VGSCH-ARM.exe' -WorkingDirectory '%DIST%' -PassThru;" ^
+  "  Start-Sleep -Seconds 12;" ^
+  "  if ($p.HasExited) {" ^
+  "    Set-Content '%TEST_RESULT%' ('DEAD|exit code ' + $p.ExitCode); exit 1 }" ^
+  "  $p.Refresh();" ^
+  "  if ($p.MainWindowHandle -eq 0) {" ^
+  "    Set-Content '%TEST_RESULT%' 'NOWINDOW|process is running but no window appeared';" ^
+  "    Stop-Process -Id $p.Id -Force; exit 1 }" ^
+  "  $title = $p.MainWindowTitle;" ^
+  "  $mem = [math]::Round($p.WorkingSet64/1MB);" ^
+  "  Stop-Process -Id $p.Id -Force;" ^
+  "  Set-Content '%TEST_RESULT%' ('OK|' + $title + '|' + $mem + ' MB'); exit 0" ^
+  "} catch {" ^
+  "  Set-Content '%TEST_RESULT%' ('ERROR|' + $_.Exception.Message); exit 1 }"
+
+set "TEST_CODE=%ERRORLEVEL%"
+set "VGSCH_SMOKE_TEST="
+
+set "TEST_LINE="
+if exist "%TEST_RESULT%" (
+    for /f "usebackq tokens=* delims=" %%l in ("%TEST_RESULT%") do set "TEST_LINE=%%l"
+    del /Q "%TEST_RESULT%" >nul 2>nul
+)
+
+taskkill /F /IM VGSCH-ARM.exe >nul 2>nul
+
+if "%TEST_CODE%"=="0" (
+    for /f "tokens=2,3 delims=|" %%a in ("!TEST_LINE!") do (
+        echo     OK - window opened: %%a
+        echo     Memory used: %%b
+    )
+    exit /b 0
+)
+
+echo.
+echo     SMOKE TEST FAILED - the program does not start properly.
+for /f "tokens=1,2 delims=|" %%a in ("!TEST_LINE!") do (
+    echo     Reason: %%a - %%b
+)
+if exist "%CRASH_LOG%" (
+    echo.
+    echo     Crash log ^(%CRASH_LOG%^):
+    powershell -NoProfile -Command "Get-Content -Tail 12 '%CRASH_LOG%' | ForEach-Object { '       ' + $_ }"
+)
+echo.
+echo     What to check:
+echo       - Is Microsoft Edge WebView2 Runtime installed on this PC?
+echo         https://go.microsoft.com/fwlink/p/?LinkId=2124703
+echo       - Does %DIST%\web\index.html exist?
+echo       - Try running %DIST%\VGSCH-ARM.exe by hand to see the error.
+echo.
+echo     To build anyway, without this check:
+echo       desktop\csharp\build.bat notest
+exit /b 1
 
 REM ---------- helper: locate Inno Setup compiler ----------
 REM Kept as a subroutine: the %ProgramFiles(x86)% variable contains brackets,

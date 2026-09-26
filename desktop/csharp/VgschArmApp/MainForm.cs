@@ -82,6 +82,9 @@ public sealed class MainForm : Form
 
     private async Task CheckUpdateAsync()
     {
+        // Во время проверки сборки окно обновления только мешает
+        if (Environment.GetEnvironmentVariable("VGSCH_SMOKE_TEST") == "1") return;
+
         await Task.Delay(3000);
 
         var info = await Updater.CheckAsync(_version);
