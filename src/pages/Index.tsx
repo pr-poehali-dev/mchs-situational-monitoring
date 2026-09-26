@@ -4,6 +4,7 @@ import ReleasesSection from "@/components/ReleasesSection";
 import AlertDispatchDialog from "@/components/AlertDispatchDialog";
 import AlertStatusPanel from "@/components/AlertStatusPanel";
 import { closeAlert, forgetAlertId, recallAlertId } from "@/lib/alertsApi";
+import { fetchWeatherRaw, weatherFailText, type WeatherError } from "@/lib/weatherApi";
 import {
   type AccidentState,
   ACCIDENT_TYPES,
@@ -978,20 +979,17 @@ function WeatherWidget() {
   const [cityName, setCityName] = useState(savedCity);
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
+  const [error, setError] = useState<WeatherError | null>(null);
 
   const citiesInGroup = CITIES.filter(c => c.group === groupName);
   const city = CITIES.find(c => c.name === cityName) ?? citiesInGroup[0];
 
   const fetchWeather = async (c: typeof CITIES[0]) => {
     setLoading(true);
-    setError(false);
+    setError(null);
     try {
-      const url = `https://api.open-meteo.com/v1/forecast?latitude=${c.lat}&longitude=${c.lon}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,wind_direction_10m,surface_pressure,weather_code&wind_speed_unit=ms&timezone=${c.tz}`;
-      const res = await fetch(url);
-      const data = await res.json();
-      const cur = data.current;
-      const [desc, icon] = WMO_LABELS[cur.weather_code as number] ?? ["Нет данных", "🌡️"];
+      const cur = await fetchWeatherRaw(c.lat, c.lon, c.tz);
+      const [desc, icon] = WMO_LABELS[cur.weather_code] ?? ["Нет данных", "🌡️"];
       setWeather({
         temp: Math.round(cur.temperature_2m),
         windSpeed: Math.round(cur.wind_speed_10m),
@@ -1001,8 +999,8 @@ function WeatherWidget() {
         desc, icon,
         updated: new Date().toLocaleTimeString("ru-RU", { timeZone: c.tz, hour: "2-digit", minute: "2-digit" }),
       });
-    } catch {
-      setError(true);
+    } catch (e) {
+      setError(e as WeatherError);
     } finally {
       setLoading(false);
     }
@@ -1061,25 +1059,26 @@ function WeatherWidget() {
         {loading && (
           <div className="text-xs text-center py-4" style={{ color: "hsl(var(--muted-foreground))" }}>Загрузка…</div>
         )}
-        {error && !loading && (
-          <div className="text-center py-4">
-            <div className="text-xs mb-1.5" style={{ color: "hsl(var(--status-critical))" }}>
-              {navigator.onLine ? "Сервер погоды не отвечает" : "Нет интернета"}
+        {error && !loading && (() => {
+          const t = weatherFailText(error);
+          return (
+            <div className="text-center py-4">
+              <div className="text-xs mb-1.5 font-medium" style={{ color: "hsl(var(--status-critical))" }}>
+                {t.title}
+              </div>
+              <div className="text-xs leading-relaxed" style={{ color: "hsl(var(--muted-foreground))" }}>
+                {t.hint}
+              </div>
+              <button
+                onClick={() => fetchWeather(city)}
+                className="mt-3 text-xs px-3 py-1.5 rounded border border-border hover:bg-secondary transition-colors"
+                style={{ color: "hsl(var(--primary))" }}
+              >
+                Повторить
+              </button>
             </div>
-            <div className="text-xs leading-relaxed" style={{ color: "hsl(var(--muted-foreground))" }}>
-              {navigator.onLine
-                ? "Данные появятся, когда служба погоды заработает"
-                : "Погода обновится, когда появится связь"}
-            </div>
-            <button
-              onClick={() => fetchWeather(city)}
-              className="mt-3 text-xs px-3 py-1.5 rounded border border-border hover:bg-secondary transition-colors"
-              style={{ color: "hsl(var(--primary))" }}
-            >
-              Повторить
-            </button>
-          </div>
-        )}
+          );
+        })()}
         {weather && !loading && (
           <div className="space-y-3">
             {/* Главное */}
@@ -1183,11 +1182,8 @@ function TabloWeather() {
 
   const fetchW = async (c: typeof CITIES[0]) => {
     try {
-      const url = `https://api.open-meteo.com/v1/forecast?latitude=${c.lat}&longitude=${c.lon}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,wind_direction_10m,surface_pressure,weather_code&wind_speed_unit=ms&timezone=${c.tz}`;
-      const res = await fetch(url);
-      const data = await res.json();
-      const cur = data.current;
-      const [desc, icon] = WMO_LABELS[cur.weather_code as number] ?? ["Нет данных", "🌡️"];
+      const cur = await fetchWeatherRaw(c.lat, c.lon, c.tz);
+      const [desc, icon] = WMO_LABELS[cur.weather_code] ?? ["Нет данных", "🌡️"];
       setWeather({
         temp: Math.round(cur.temperature_2m),
         windSpeed: Math.round(cur.wind_speed_10m),

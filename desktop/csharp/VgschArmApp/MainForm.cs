@@ -37,12 +37,45 @@ public sealed class MainForm : Form
         FormClosed += (_, _) => _server.Dispose();
     }
 
+    /// <summary>
+    /// Ранние версии АРМ ставили офлайн-кэш (Service Worker). Он перехватывал
+    /// запрос погоды и по своему таймауту отдавал подделку «нет сети» вместо
+    /// настоящего ответа — виджет навсегда застревал на «сервер не отвечает».
+    /// Кэш живёт в данных WebView2 и переживает переустановку программы,
+    /// поэтому его нужно удалить принудительно — один раз.
+    /// Справочники и журнал лежат в Local Storage и НЕ затрагиваются.
+    /// </summary>
+    private static void PurgeLegacyOfflineCache(string userData)
+    {
+        string marker = Path.Combine(userData, ".sw-purged-v1");
+        if (File.Exists(marker)) return;
+
+        string[] cacheDirs =
+        {
+            "Service Worker",
+            "CacheStorage",
+            "Cache",
+        };
+
+        string profile = Path.Combine(userData, "EBWebView", "Default");
+        foreach (string dir in cacheDirs)
+        {
+            string full = Path.Combine(profile, dir);
+            try { if (Directory.Exists(full)) Directory.Delete(full, true); }
+            catch { /* занято другим процессом — не критично */ }
+        }
+
+        try { File.WriteAllText(marker, DateTime.Now.ToString("O")); } catch { }
+    }
+
     private async Task InitWebViewAsync()
     {
         string userData = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             "VGSCH-ARM", "WebView2");
         Directory.CreateDirectory(userData);
+
+        PurgeLegacyOfflineCache(userData);
 
         try
         {

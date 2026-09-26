@@ -136,12 +136,8 @@ public sealed class LocalServer : IDisposable
             ctx.Response.ContentType = Mime.TryGetValue(ext, out var m) ? m : "application/octet-stream";
             ctx.Response.Headers["Cache-Control"] = "no-store";
 
-            // Страница живёт на http://127.0.0.1, а погода и оповещение —
-            // на внешних https-адресах. Без этих заголовков браузерный
-            // движок считает запрос небезопасным и молча его режет:
-            // в АРМ это выглядит как вечное «Нет связи» у погоды.
+            // Табло открывается отдельным окном из этого же приложения
             ctx.Response.Headers["Cross-Origin-Opener-Policy"] = "same-origin-allow-popups";
-            ctx.Response.Headers["Cross-Origin-Embedder-Policy"] = "unsafe-none";
 
             byte[] data = File.ReadAllBytes(full);
             ctx.Response.ContentLength64 = data.Length;
