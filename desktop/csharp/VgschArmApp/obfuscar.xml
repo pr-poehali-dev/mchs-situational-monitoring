@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Obfuscator>
+  <Var name="InPath" value="@@INPATH@@" />
+  <Var name="OutPath" value="@@OUTPATH@@" />
+  <Var name="KeepPublicApi" value="false" />
+  <Var name="HidePrivateApi" value="true" />
+  <Var name="RenameProperties" value="true" />
+  <Var name="RenameEvents" value="true" />
+  <Var name="RenameFields" value="true" />
+  <Var name="UseUnicodeNames" value="false" />
+  <Var name="HideStrings" value="true" />
+  <Var name="OptimizeMethods" value="true" />
+  <Var name="SuppressIldasm" value="true" />
+
+  <Module file="$(InPath)\VGSCH-ARM.dll" />
+
+  <!-- Точка входа переименовывать нельзя -->
+  <SkipType name="VgschArm.Program" skipMethods="true" skipFields="true" />
+  <!-- WinForms создаёт формы по рефлексии — имена оставляем -->
+  <SkipType name="VgschArm.MainForm" skipMethods="false" skipFields="false" />
+</Obfuscator>
