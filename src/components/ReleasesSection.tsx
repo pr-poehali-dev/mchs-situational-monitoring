@@ -42,6 +42,7 @@ export default function ReleasesSection() {
   const [progress, setProgress] = useState(0);
   const [msg, setMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
   const [dragOver, setDragOver] = useState(false);
+  const [copied, setCopied] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const load = useCallback(async () => {
@@ -142,6 +143,17 @@ export default function ReleasesSection() {
   };
 
   const latest = releases.find(r => r.published);
+  const downloadLink = `${window.location.origin}/download`;
+
+  const copyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(downloadLink);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      setMsg({ type: "err", text: "Не удалось скопировать — выделите ссылку вручную" });
+    }
+  };
 
   return (
     <div className="fade-in space-y-4">
@@ -190,6 +202,53 @@ export default function ReleasesSection() {
               {loading ? "Загрузка…" : "Версий пока нет — загрузите первый установщик ниже"}
             </div>
           )}
+        </div>
+      </div>
+
+      {/* Ссылка для дежурных */}
+      <div className="panel-card">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+          <h2 className="text-sm font-semibold uppercase tracking-widest" style={{ fontFamily: "Oswald" }}>
+            Ссылка для дежурных
+          </h2>
+          <a
+            href="/download"
+            target="_blank"
+            rel="noreferrer"
+            className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded transition-colors hover:bg-secondary"
+            style={{ color: "hsl(var(--muted-foreground))" }}
+          >
+            <Icon name="ExternalLink" size={12} />
+            Открыть
+          </a>
+        </div>
+        <div className="p-4 space-y-3">
+          <p className="text-xs leading-relaxed" style={{ color: "hsl(var(--muted-foreground))" }}>
+            Отправьте эту ссылку дежурным — на странице всегда будет последняя версия
+            программы с инструкцией по установке.
+          </p>
+          <div className="flex gap-2">
+            <input
+              readOnly
+              value={downloadLink}
+              onFocus={e => e.currentTarget.select()}
+              className="flex-1 bg-secondary border border-border rounded px-3 py-2 text-sm mono outline-none focus:border-primary transition-colors"
+            />
+            <button
+              onClick={copyLink}
+              className="flex items-center gap-1.5 px-4 rounded transition-all"
+              style={{
+                background: copied ? "hsl(var(--status-active) / 0.2)" : "hsl(var(--primary) / 0.15)",
+                color: copied ? "hsl(var(--status-active))" : "hsl(var(--primary))",
+                border: `1px solid ${copied ? "hsl(var(--status-active) / 0.4)" : "hsl(var(--primary) / 0.3)"}`,
+              }}
+            >
+              <Icon name={copied ? "Check" : "Copy"} size={14} />
+              <span className="uppercase tracking-wide font-semibold text-xs" style={{ fontFamily: "Oswald" }}>
+                {copied ? "Скопировано" : "Копировать"}
+              </span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -300,8 +359,8 @@ export default function ReleasesSection() {
             <div
               className="text-sm px-3 py-2 rounded flex items-center gap-2"
               style={{
-                background: msg.type === "ok" ? "hsl(var(--status-ok) / 0.15)" : "hsl(var(--destructive) / 0.15)",
-                color: msg.type === "ok" ? "hsl(var(--status-ok))" : "hsl(var(--destructive))",
+                background: msg.type === "ok" ? "hsl(var(--status-active) / 0.15)" : "hsl(var(--destructive) / 0.15)",
+                color: msg.type === "ok" ? "hsl(var(--status-active))" : "hsl(var(--destructive))",
               }}
             >
               <Icon name={msg.type === "ok" ? "CheckCircle2" : "AlertCircle"} size={15} />
