@@ -5,11 +5,10 @@ import AlertDispatchDialog from "@/components/AlertDispatchDialog";
 import AlertStatusPanel from "@/components/AlertStatusPanel";
 import { closeAlert, forgetAlertId, recallAlertId } from "@/lib/alertsApi";
 import {
-  fetchWeatherRaw, weatherFailText, getWeatherSource, getCustomUrl,
-  setWeatherSettings, WEATHER_SOURCES,
-  type WeatherError, type WeatherSourceId,
+  fetchWeatherRaw, weatherFailText, WEATHER_SETTINGS_EVENT,
+  type WeatherError,
 } from "@/lib/weatherApi";
-import WeatherCustomUrl from "@/components/WeatherCustomUrl";
+import SettingsSection from "@/components/SettingsSection";
 import {
   type AccidentState,
   ACCIDENT_TYPES,
@@ -47,7 +46,7 @@ import {
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-type SectionId = "dashboard" | "journal" | "directory" | "releases";
+type SectionId = "dashboard" | "journal" | "directory" | "settings" | "releases";
 
 interface Unit {
   id: string;
@@ -986,8 +985,6 @@ function WeatherWidget() {
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<WeatherError | null>(null);
-  const [source, setSource] = useState<WeatherSourceId>(getWeatherSource);
-  const [editUrl, setEditUrl] = useState(false);
 
   const citiesInGroup = CITIES.filter(c => c.group === groupName);
   const city = CITIES.find(c => c.name === cityName) ?? citiesInGroup[0];
@@ -1018,7 +1015,9 @@ function WeatherWidget() {
   useEffect(() => { fetchWeather(city); }, [cityName]);
   useEffect(() => {
     const t = setInterval(() => fetchWeather(city), 5 * 60 * 1000);
-    return () => clearInterval(t);
+    const onSettings = () => fetchWeather(city);
+    window.addEventListener(WEATHER_SETTINGS_EVENT, onSettings);
+    return () => { clearInterval(t); window.removeEventListener(WEATHER_SETTINGS_EVENT, onSettings); };
   }, [cityName]);
 
   const handleGroup = (g: string) => {
@@ -1061,48 +1060,6 @@ function WeatherWidget() {
             {citiesInGroup.map(c => <option key={c.name} value={c.name}>{c.name}</option>)}
           </select>
         </div>
-        <div>
-          <label className="text-xs block mb-1 uppercase tracking-widest" style={{ color: "hsl(var(--muted-foreground))" }}>Источник</label>
-          <select
-            style={sel}
-            value={source}
-            onChange={e => {
-              const v = e.target.value as WeatherSourceId;
-              setSource(v);
-              if (v === "custom" && !getCustomUrl()) {
-                setEditUrl(true);
-                return;
-              }
-              setEditUrl(v === "custom" && editUrl);
-              setWeatherSettings(v);
-              fetchWeather(city);
-            }}
-          >
-            {WEATHER_SOURCES.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-          </select>
-          {source === "custom" && !editUrl && getCustomUrl() && (
-            <div className="flex items-center gap-2 mt-1.5">
-              <span className="mono text-[10px] truncate flex-1" style={{ color: "hsl(var(--muted-foreground))" }} title={getCustomUrl()}>
-                {getCustomUrl()}
-              </span>
-              <button
-                onClick={() => setEditUrl(true)}
-                className="text-[11px] flex-shrink-0 hover:underline"
-                style={{ color: "hsl(var(--primary))" }}
-              >
-                Изменить
-              </button>
-            </div>
-          )}
-        </div>
-        {source === "custom" && editUrl && (
-          <WeatherCustomUrl
-            lat={city.lat}
-            lon={city.lon}
-            tz={city.tz}
-            onSaved={() => { setEditUrl(false); fetchWeather(city); }}
-          />
-        )}
       </div>
 
       {/* Данные */}
@@ -2157,6 +2114,7 @@ const NAV: { id: SectionId; label: string; icon: string }[] = [
   { id: "dashboard",  label: "Главная панель",   icon: "LayoutDashboard" },
   { id: "journal",    label: "Журнал событий",    icon: "ScrollText" },
   { id: "directory",  label: "Справочники",       icon: "BookOpen" },
+  { id: "settings",   label: "Настройки",         icon: "Settings" },
 ];
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
@@ -2187,6 +2145,7 @@ export default function Index() {
       case "dashboard": return <Dashboard />;
       case "journal": return <Journal />;
       case "directory":  return <DirectorySection />;
+      case "settings":   return <SettingsSection cities={CITIES} />;
       case "releases":   return <ReleasesSection />;
     }
   };
