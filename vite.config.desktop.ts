@@ -1,6 +1,7 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
+import fs from "fs";
 
 /**
  * Десктопная сборка: программа работает на рабочем месте дежурного,
@@ -26,8 +27,28 @@ const stripOnlineScripts = {
   },
 };
 
+const KILL_SWITCH_SW = `self.addEventListener("install", () => self.skipWaiting());
+self.addEventListener("activate", (e) => {
+  e.waitUntil((async () => {
+    for (const k of await caches.keys()) await caches.delete(k);
+    await self.registration.unregister();
+    for (const c of await self.clients.matchAll({ type: "window" })) c.navigate(c.url);
+  })());
+});
+`;
+
+const replaceServiceWorker = {
+  name: "replace-service-worker",
+  closeBundle() {
+    const out = path.resolve(__dirname, "dist-desktop");
+    fs.writeFileSync(path.join(out, "sw.js"), KILL_SWITCH_SW);
+    const mf = path.join(out, "manifest.webmanifest");
+    if (fs.existsSync(mf)) fs.unlinkSync(mf);
+  },
+};
+
 export default defineConfig({
-  plugins: [react(), stripOnlineScripts],
+  plugins: [react(), stripOnlineScripts, replaceServiceWorker],
   base: "./",
   resolve: {
     alias: {

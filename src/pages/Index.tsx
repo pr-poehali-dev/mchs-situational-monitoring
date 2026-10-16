@@ -4,7 +4,11 @@ import ReleasesSection from "@/components/ReleasesSection";
 import AlertDispatchDialog from "@/components/AlertDispatchDialog";
 import AlertStatusPanel from "@/components/AlertStatusPanel";
 import { closeAlert, forgetAlertId, recallAlertId } from "@/lib/alertsApi";
-import { fetchWeatherRaw, weatherFailText, type WeatherError } from "@/lib/weatherApi";
+import {
+  fetchWeatherRaw, weatherFailText, getWeatherSource,
+  WEATHER_SOURCES, WEATHER_SOURCE_KEY,
+  type WeatherError, type WeatherSourceId,
+} from "@/lib/weatherApi";
 import {
   type AccidentState,
   ACCIDENT_TYPES,
@@ -967,6 +971,7 @@ interface WeatherData {
   desc: string;
   icon: string;
   updated: string;
+  source: string;
 }
 
 const GROUPS = ["Копейский ВГСО", "ВГСО Урала"] as const;
@@ -980,6 +985,7 @@ function WeatherWidget() {
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<WeatherError | null>(null);
+  const [source, setSource] = useState<WeatherSourceId>(getWeatherSource);
 
   const citiesInGroup = CITIES.filter(c => c.group === groupName);
   const city = CITIES.find(c => c.name === cityName) ?? citiesInGroup[0];
@@ -998,6 +1004,7 @@ function WeatherWidget() {
         pressure: Math.round(cur.surface_pressure * 0.750062),
         desc, icon,
         updated: new Date().toLocaleTimeString("ru-RU", { timeZone: c.tz, hour: "2-digit", minute: "2-digit" }),
+        source: cur.source,
       });
     } catch (e) {
       setError(e as WeatherError);
@@ -1034,7 +1041,7 @@ function WeatherWidget() {
       <div className="flex items-center justify-between px-4 py-3 border-b border-border">
         <h2 className="text-sm font-semibold uppercase tracking-widest" style={{ fontFamily: "Oswald" }}>Погода</h2>
         {weather && (
-          <span className="text-xs mono" style={{ color: "hsl(var(--muted-foreground))" }}>обн. {weather.updated}</span>
+          <span className="text-xs mono" style={{ color: "hsl(var(--muted-foreground))" }}>{weather.source} · {weather.updated}</span>
         )}
       </div>
 
@@ -1050,6 +1057,21 @@ function WeatherWidget() {
           <label className="text-xs block mb-1 uppercase tracking-widest" style={{ color: "hsl(var(--muted-foreground))" }}>Город</label>
           <select style={sel} value={cityName} onChange={e => handleCity(e.target.value)}>
             {citiesInGroup.map(c => <option key={c.name} value={c.name}>{c.name}</option>)}
+          </select>
+        </div>
+        <div>
+          <label className="text-xs block mb-1 uppercase tracking-widest" style={{ color: "hsl(var(--muted-foreground))" }}>Источник</label>
+          <select
+            style={sel}
+            value={source}
+            onChange={e => {
+              const v = e.target.value as WeatherSourceId;
+              localStorage.setItem(WEATHER_SOURCE_KEY, v);
+              setSource(v);
+              fetchWeather(city);
+            }}
+          >
+            {WEATHER_SOURCES.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
           </select>
         </div>
       </div>
@@ -1068,6 +1090,9 @@ function WeatherWidget() {
               </div>
               <div className="text-xs leading-relaxed" style={{ color: "hsl(var(--muted-foreground))" }}>
                 {t.hint}
+              </div>
+              <div className="text-[10px] mt-2 mono leading-relaxed break-words" style={{ color: "hsl(var(--muted-foreground))", opacity: 0.7 }}>
+                {error.detail}
               </div>
               <button
                 onClick={() => fetchWeather(city)}
@@ -1192,6 +1217,7 @@ function TabloWeather() {
         pressure: Math.round(cur.surface_pressure * 0.750062),
         desc, icon,
         updated: new Date().toLocaleTimeString("ru-RU", { timeZone: c.tz, hour: "2-digit", minute: "2-digit" }),
+        source: cur.source,
       });
     } catch { /* silent */ }
   };
