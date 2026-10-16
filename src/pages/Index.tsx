@@ -5,10 +5,11 @@ import AlertDispatchDialog from "@/components/AlertDispatchDialog";
 import AlertStatusPanel from "@/components/AlertStatusPanel";
 import { closeAlert, forgetAlertId, recallAlertId } from "@/lib/alertsApi";
 import {
-  fetchWeatherRaw, weatherFailText, getWeatherSource,
-  WEATHER_SOURCES, WEATHER_SOURCE_KEY,
+  fetchWeatherRaw, weatherFailText, getWeatherSource, getCustomUrl,
+  setWeatherSettings, WEATHER_SOURCES,
   type WeatherError, type WeatherSourceId,
 } from "@/lib/weatherApi";
+import WeatherCustomUrl from "@/components/WeatherCustomUrl";
 import {
   type AccidentState,
   ACCIDENT_TYPES,
@@ -986,6 +987,7 @@ function WeatherWidget() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<WeatherError | null>(null);
   const [source, setSource] = useState<WeatherSourceId>(getWeatherSource);
+  const [editUrl, setEditUrl] = useState(false);
 
   const citiesInGroup = CITIES.filter(c => c.group === groupName);
   const city = CITIES.find(c => c.name === cityName) ?? citiesInGroup[0];
@@ -1066,14 +1068,41 @@ function WeatherWidget() {
             value={source}
             onChange={e => {
               const v = e.target.value as WeatherSourceId;
-              localStorage.setItem(WEATHER_SOURCE_KEY, v);
               setSource(v);
+              if (v === "custom" && !getCustomUrl()) {
+                setEditUrl(true);
+                return;
+              }
+              setEditUrl(v === "custom" && editUrl);
+              setWeatherSettings(v);
               fetchWeather(city);
             }}
           >
             {WEATHER_SOURCES.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
           </select>
+          {source === "custom" && !editUrl && getCustomUrl() && (
+            <div className="flex items-center gap-2 mt-1.5">
+              <span className="mono text-[10px] truncate flex-1" style={{ color: "hsl(var(--muted-foreground))" }} title={getCustomUrl()}>
+                {getCustomUrl()}
+              </span>
+              <button
+                onClick={() => setEditUrl(true)}
+                className="text-[11px] flex-shrink-0 hover:underline"
+                style={{ color: "hsl(var(--primary))" }}
+              >
+                Изменить
+              </button>
+            </div>
+          )}
         </div>
+        {source === "custom" && editUrl && (
+          <WeatherCustomUrl
+            lat={city.lat}
+            lon={city.lon}
+            tz={city.tz}
+            onSaved={() => { setEditUrl(false); fetchWeather(city); }}
+          />
+        )}
       </div>
 
       {/* Данные */}

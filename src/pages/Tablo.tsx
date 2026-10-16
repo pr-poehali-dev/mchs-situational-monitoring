@@ -8,6 +8,7 @@ import {
   saveAccident,
   subscribeAccident,
 } from "@/lib/accidentStore";
+import { fetchWeatherRaw, weatherSettingsKey, WEATHER_SETTINGS_EVENT } from "@/lib/weatherApi";
 
 const WIND_DIRS = ["С","СВ","В","ЮВ","Ю","ЮЗ","З","СЗ"];
 
@@ -64,42 +65,55 @@ const WMO: Record<number, [string, string]> = {
   75:["Метель","🌨️"],80:["Ливень","🌦️"],81:["Сильный ливень","🌧️"],95:["Гроза","⛈️"],96:["Гроза с градом","⛈️"],
 };
 
+/** Город + источник погоды: табло следит за ними, чтобы показывать то же, что главная панель */
+function readWeatherKey() {
+  return `${localStorage.getItem(CITY_STORAGE_KEY) ?? "Москва"}|${weatherSettingsKey()}`;
+}
+
 function useWeather() {
   const [weather, setWeather] = useState<Weather | null>(null);
-  const [cityName, setCityName] = useState(() => localStorage.getItem(CITY_STORAGE_KEY) ?? "Москва");
+  const [failed, setFailed] = useState(false);
+  const [key, setKey] = useState(readWeatherKey);
 
   useEffect(() => {
-    const onStorage = () => { const v = localStorage.getItem(CITY_STORAGE_KEY) ?? "Москва"; setCityName(v); };
-    window.addEventListener("storage", onStorage);
-    const poll = setInterval(onStorage, 3000);
-    return () => { window.removeEventListener("storage", onStorage); clearInterval(poll); };
+    const sync = () => setKey(readWeatherKey());
+    window.addEventListener("storage", sync);
+    window.addEventListener(WEATHER_SETTINGS_EVENT, sync);
+    const poll = setInterval(sync, 3000);
+    return () => {
+      window.removeEventListener("storage", sync);
+      window.removeEventListener(WEATHER_SETTINGS_EVENT, sync);
+      clearInterval(poll);
+    };
   }, []);
 
   useEffect(() => {
+    const cityName = key.split("|")[0];
     const city = CITIES_GEO.find(c => c.name === cityName) ?? CITIES_GEO[0];
-    const fetch_w = async () => {
+    let alive = true;
+    const load = async () => {
       try {
-        const url = `https://api.open-meteo.com/v1/forecast?latitude=${city.lat}&longitude=${city.lon}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,wind_direction_10m,surface_pressure,weather_code&wind_speed_unit=ms&timezone=${city.tz}`;
-        const res = await fetch(url);
-        const data = await res.json();
-        const c = data.current;
-        const [desc, icon] = WMO[c.weather_code as number] ?? ["Нет данных","🌡️"];
+        const c = await fetchWeatherRaw(city.lat, city.lon, city.tz);
+        if (!alive) return;
+        const [desc, icon] = WMO[c.weather_code] ?? ["Нет данных", "🌡️"];
         setWeather({
           temp: Math.round(c.temperature_2m), windSpeed: Math.round(c.wind_speed_10m),
           windDir: c.wind_direction_10m, humidity: c.relative_humidity_2m,
           pressure: Math.round(c.surface_pressure * 0.750062), desc, icon,
           updated: `${city.name} · ${new Date().toLocaleTimeString("ru-RU", { timeZone: city.tz, hour: "2-digit", minute: "2-digit" })}`,
         });
+        setFailed(false);
       } catch {
-        setWeather({ temp: 0, windSpeed: 0, windDir: 0, humidity: 0, pressure: 0, desc: "Нет связи", icon: "❌", updated: "--:--" });
+        // Последние удачные данные оставляем на экране — это лучше, чем нули
+        if (alive) setFailed(true);
       }
     };
-    fetch_w();
-    const t = setInterval(fetch_w, 5 * 60 * 1000);
-    return () => clearInterval(t);
-  }, [cityName]);
+    load();
+    const t = setInterval(load, 5 * 60 * 1000);
+    return () => { alive = false; clearInterval(t); };
+  }, [key]);
 
-  return weather;
+  return { weather, failed };
 }
 
 // ─── Цвета темы (светло-синяя, как щит ВГСЧ) ────────────────────────────────
@@ -147,7 +161,7 @@ const RED = {
 export default function TabloPage() {
   const time    = useClock();
   const mskTime = useMoscowTime();
-  const weather = useWeather();
+  const { weather, failed: weatherFailed } = useWeather();
 
   const [acc, setAcc] = useState<AccidentState>(loadAccident);
   useEffect(() => subscribeAccident(setAcc), []);
@@ -250,7 +264,7 @@ export default function TabloPage() {
             <>
               <div style={{ width: 1, height: 44, background: T.borderHdr }} />
               <div>
-                <div style={lbl(T.hdrSub)}>Погода · {weather.updated}</div>
+                <div style={lbl(T.hdrSub)}>Погода · {weather.updated}{weatherFailed ? " · нет обновления" : ""}</div>
                 <div className="flex items-center gap-2">
                   <span style={{ fontSize: 28 }}>{weather.icon}</span>
                   <div>
@@ -434,7 +448,7 @@ export default function TabloPage() {
             <div className="rounded-xl p-5 flex flex-col"
               style={{ background: T.cardBg, border: `1px solid ${T.border}` }}>
               <div style={{ fontSize: 12, color: T.orange, textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: 14, fontWeight: 700 }}>
-                Погодные условия{weather ? ` · ${weather.updated}` : ""}
+                Погодные условия{weather ? ` · ${weather.updated}` : ""}{weatherFailed && weather ? " · нет обновления" : ""}
               </div>
               <div className="flex items-center gap-5 mb-4 flex-wrap">
                 {weather && (
@@ -461,7 +475,7 @@ export default function TabloPage() {
                   ) : null;
                 })()}
                 {!weather && !acc.weatherCondition && (
-                  <div style={{ color: T.textMuted, fontSize: 16 }}>Нет данных</div>
+                  <div style={{ color: T.textMuted, fontSize: 16 }}>{weatherFailed ? "Нет связи с метеослужбой" : "Загрузка…"}</div>
                 )}
               </div>
               {weather && (
