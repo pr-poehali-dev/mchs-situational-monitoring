@@ -8,6 +8,7 @@ import {
   saveAccident,
   subscribeAccident,
 } from "@/lib/accidentStore";
+import WeatherEffect from "@/components/WeatherEffect";
 import { fetchWeatherRaw, weatherSettingsKey, WEATHER_SETTINGS_EVENT } from "@/lib/weatherApi";
 
 const WIND_DIRS = ["С","СВ","В","ЮВ","Ю","ЮЗ","З","СЗ"];
@@ -341,8 +342,9 @@ export default function TabloPage() {
           <div className="grid grid-cols-2 gap-3 flex-1 min-h-0">
 
             {/* Погода */}
-            <div className="rounded-xl p-4 flex flex-col"
+            <div className="rounded-xl p-4 flex flex-col relative overflow-hidden weather-card"
               style={{ background: "hsl(213 50% 20%)", border: "1px solid hsl(213 45% 32%)" }}>
+              <WeatherEffect condition={acc.weatherCondition} theme="dark" />
               <div style={{ fontSize: 11, color: "hsl(24 80% 56%)", textTransform: "uppercase", letterSpacing: "0.1em", fontWeight: 700, marginBottom: 10 }}>
                 Погодные условия
               </div>
@@ -445,8 +447,9 @@ export default function TabloPage() {
           <div className="grid grid-cols-2 gap-3 flex-1 min-h-0">
 
             {/* Погода */}
-            <div className="rounded-xl p-5 flex flex-col"
+            <div className="rounded-xl p-5 flex flex-col relative overflow-hidden weather-card"
               style={{ background: T.cardBg, border: `1px solid ${T.border}` }}>
+              <WeatherEffect condition={acc.weatherCondition} theme="light" />
               <div style={{ fontSize: 12, color: T.orange, textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: 14, fontWeight: 700 }}>
                 Погодные условия{weather ? ` · ${weather.updated}` : ""}{weatherFailed && weather ? " · нет обновления" : ""}
               </div>
